@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { FoodItem } from "@shared/schema";
-import { getExpirationStatus } from "@/lib/date-utils";
-import { CheckCircle, AlertTriangle, Plus, Clock } from "lucide-react";
+import { getExpirationStatus, getCurrentDateTime } from "@/lib/date-utils";
+import { CheckCircle, AlertTriangle, Plus, Clock, MapPin, Search } from "lucide-react";
 
 export default function Home() {
   const { data: foodItems = [], isLoading } = useQuery<FoodItem[]>({
@@ -37,21 +37,116 @@ export default function Home() {
   }
 
   return (
-    <div className="p-4">
-      {/* Welcome Section */}
-      <div className="bg-gradient-to-br from-apple-green to-cal-poly-green rounded-xl p-6 text-white mb-6">
-        <h2 className="text-xl font-semibold mb-2">Welcome back, John!</h2>
-        <p className="text-sm opacity-90">
-          You have <span className="font-medium">{stats.totalItems} items</span> in your fridge
-        </p>
+    <div className="p-4 pb-24">
+      {/* Header with Time and Location */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-3xl font-bold text-white mb-1">Good evening!</h1>
+            <div className="flex items-center text-gray-400 text-sm">
+              <MapPin size={14} className="mr-1" />
+              <span>Your Kitchen</span>
+            </div>
+          </div>
+        </div>
+        
+        {/* Illustrated Food Basket */}
+        <div className="bg-gradient-to-br from-orange-400 via-yellow-400 to-orange-500 rounded-3xl p-6 mb-6 relative overflow-hidden">
+          <div className="relative z-10">
+            <h2 className="text-white text-xl font-semibold mb-2">Fresh ingredients await!</h2>
+            <p className="text-white/90 text-sm">
+              You have {stats.totalItems} items ready to cook
+            </p>
+          </div>
+          {/* Decorative organic shape */}
+          <div className="absolute -top-8 -right-8 w-32 h-32 bg-white/10 rounded-full"></div>
+          <div className="absolute -bottom-6 -left-6 w-24 h-24 bg-white/10 rounded-full"></div>
+        </div>
+        
+        {/* Search Bar */}
+        <div className="relative mb-6">
+          <div className="bg-gray-800 rounded-2xl p-4 flex items-center">
+            <Search className="text-gray-400 mr-3" size={20} />
+            <input 
+              type="text" 
+              placeholder="Search food or items..."
+              className="bg-transparent text-white placeholder-gray-400 flex-1 outline-none"
+            />
+            <div className="w-10 h-10 bg-apple-green rounded-xl flex items-center justify-center">
+              <Search className="text-white" size={16} />
+            </div>
+          </div>
+        </div>
       </div>
 
+      {/* My Meal Plans Section */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-white">My meal plans</h3>
+          <button className="text-apple-green text-sm font-medium">View all</button>
+        </div>
+        
+        <div className="bg-gray-800 rounded-2xl p-4 border border-gray-700">
+          <div className="flex items-center">
+            <div className="w-16 h-16 bg-gradient-to-br from-orange-400 to-red-500 rounded-2xl mr-4 flex items-center justify-center">
+              <div className="text-white text-xs font-bold">🥗</div>
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center mb-1">
+                <span className="text-xs bg-gray-700 text-gray-300 px-2 py-1 rounded-full mr-2">BREAKFAST</span>
+                <span className="text-xs text-orange-400 font-medium">🔥 125 kcal</span>
+              </div>
+              <h4 className="text-white font-semibold mb-1">Fresh Garden Salad</h4>
+              <p className="text-gray-400 text-xs mb-2">Mixed greens with seasonal vegetables</p>
+              <div className="flex items-center text-xs text-gray-400">
+                <span className="mr-3">🚗 Ready to prepare</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Food Categories */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-white">Food categories</h3>
+          <button className="text-apple-green text-sm font-medium">View all</button>
+        </div>
+        
+        <div className="grid grid-cols-4 gap-4">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-emerald-500 rounded-2xl mx-auto mb-2 flex items-center justify-center">
+              <span className="text-white text-lg">🥬</span>
+            </div>
+            <p className="text-white text-xs font-medium">Vegetables</p>
+          </div>
+          <div className="text-center">
+            <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl mx-auto mb-2 flex items-center justify-center">
+              <span className="text-white text-lg">🥜</span>
+            </div>
+            <p className="text-white text-xs font-medium">Nuts & Seed</p>
+          </div>
+          <div className="text-center">
+            <div className="w-16 h-16 bg-gradient-to-br from-red-400 to-pink-500 rounded-2xl mx-auto mb-2 flex items-center justify-center">
+              <span className="text-white text-lg">🥩</span>
+            </div>
+            <p className="text-white text-xs font-medium">Protein</p>
+          </div>
+          <div className="text-center">
+            <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-2xl mx-auto mb-2 flex items-center justify-center">
+              <span className="text-white text-lg">🧀</span>
+            </div>
+            <p className="text-white text-xs font-medium">Low Fats</p>
+          </div>
+        </div>
+      </div>
+      
       {/* Quick Stats */}
       <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-700">
+        <div className="bg-gray-800 rounded-2xl p-4 border border-gray-700">
           <div className="flex items-center">
-            <div className="w-8 h-8 bg-apple-green/10 rounded-lg flex items-center justify-center mr-3">
-              <CheckCircle className="text-apple-green" size={16} />
+            <div className="w-12 h-12 bg-apple-green/20 rounded-2xl flex items-center justify-center mr-3">
+              <CheckCircle className="text-apple-green" size={20} />
             </div>
             <div>
               <p className="text-2xl font-bold text-white">{stats.freshItems}</p>
@@ -59,10 +154,10 @@ export default function Home() {
             </div>
           </div>
         </div>
-        <div className="bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-700">
+        <div className="bg-gray-800 rounded-2xl p-4 border border-gray-700">
           <div className="flex items-center">
-            <div className="w-8 h-8 bg-vermillion/10 rounded-lg flex items-center justify-center mr-3">
-              <AlertTriangle className="text-vermillion" size={16} />
+            <div className="w-12 h-12 bg-orange-500/20 rounded-2xl flex items-center justify-center mr-3">
+              <AlertTriangle className="text-orange-400" size={20} />
             </div>
             <div>
               <p className="text-2xl font-bold text-white">{stats.expiringItems}</p>
@@ -74,20 +169,27 @@ export default function Home() {
 
       {/* Recent Activity */}
       <div className="mb-6">
-        <h3 className="text-lg font-semibold text-white mb-3">Recent Activity</h3>
+        <h3 className="text-lg font-semibold text-white mb-4">Recent Activity</h3>
         {recentActivity.length === 0 ? (
-          <div className="bg-gray-800 rounded-xl p-8 shadow-sm border border-gray-700 text-center">
-            <p className="text-gray-400">No items in your fridge yet</p>
-            <p className="text-sm text-gray-500 mt-2">Add your first item to get started!</p>
+          <div className="bg-gray-800 rounded-3xl p-8 border border-gray-700 text-center relative overflow-hidden">
+            <div className="relative z-10">
+              <div className="w-20 h-20 bg-gradient-to-br from-apple-green to-emerald-500 rounded-3xl mx-auto mb-4 flex items-center justify-center">
+                <span className="text-white text-2xl">🍽️</span>
+              </div>
+              <p className="text-gray-300 font-medium mb-2">Your kitchen story begins here</p>
+              <p className="text-sm text-gray-500">Add your first ingredient and start cooking!</p>
+            </div>
+            <div className="absolute -top-6 -right-6 w-24 h-24 bg-white/5 rounded-full"></div>
+            <div className="absolute -bottom-4 -left-4 w-16 h-16 bg-white/5 rounded-full"></div>
           </div>
         ) : (
           recentActivity.map((item) => {
             const expirationInfo = getExpirationStatus(new Date(item.expirationDate));
             return (
-              <div key={item.id} className="bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-700 mb-3">
+              <div key={item.id} className="bg-gray-800 rounded-2xl p-4 border border-gray-700 mb-3">
                 <div className="flex items-center">
-                  <div className="w-10 h-10 bg-apple-green/20 rounded-lg flex items-center justify-center mr-3">
-                    <Plus className="text-apple-green" size={16} />
+                  <div className="w-12 h-12 bg-gradient-to-br from-apple-green to-emerald-500 rounded-2xl flex items-center justify-center mr-3">
+                    <Plus className="text-white" size={16} />
                   </div>
                   <div className="flex-1">
                     <p className="font-medium text-white">Added {item.name}</p>

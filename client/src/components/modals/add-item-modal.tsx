@@ -77,8 +77,8 @@ export default function AddItemModal({ isOpen, onClose }: AddItemModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50">
-      <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-gray-800 rounded-t-2xl p-6">
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 backdrop-blur-sm">
+      <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-gray-800 rounded-t-3xl p-6 border-t border-gray-700">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-white">Add New Item</h3>
           <button 
@@ -99,7 +99,7 @@ export default function AddItemModal({ isOpen, onClose }: AddItemModalProps) {
               placeholder="e.g., Organic Apples"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full p-3 border border-gray-600 bg-gray-700 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-apple-green/20 focus:border-apple-green"
+              className="w-full p-4 border border-gray-600 bg-gray-700 text-white rounded-2xl focus:outline-none focus:ring-2 focus:ring-apple-green/30 focus:border-apple-green transition-all"
             />
           </div>
           
@@ -112,7 +112,7 @@ export default function AddItemModal({ isOpen, onClose }: AddItemModalProps) {
               placeholder="e.g., 5 pieces, 1 bag"
               value={formData.quantity}
               onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-              className="w-full p-3 border border-gray-600 bg-gray-700 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-apple-green/20 focus:border-apple-green"
+              className="w-full p-4 border border-gray-600 bg-gray-700 text-white rounded-2xl focus:outline-none focus:ring-2 focus:ring-apple-green/30 focus:border-apple-green transition-all"
             />
           </div>
           
@@ -124,7 +124,7 @@ export default function AddItemModal({ isOpen, onClose }: AddItemModalProps) {
               type="date"
               value={formData.expirationDate}
               onChange={(e) => setFormData({ ...formData, expirationDate: e.target.value })}
-              className="w-full p-3 border border-gray-600 bg-gray-700 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-apple-green/20 focus:border-apple-green"
+              className="w-full p-4 border border-gray-600 bg-gray-700 text-white rounded-2xl focus:outline-none focus:ring-2 focus:ring-apple-green/30 focus:border-apple-green transition-all"
             />
           </div>
 
@@ -137,23 +137,23 @@ export default function AddItemModal({ isOpen, onClose }: AddItemModalProps) {
               placeholder="https://example.com/image.jpg"
               value={formData.imageUrl}
               onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-              className="w-full p-3 border border-gray-600 bg-gray-700 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-apple-green/20 focus:border-apple-green"
+              className="w-full p-4 border border-gray-600 bg-gray-700 text-white rounded-2xl focus:outline-none focus:ring-2 focus:ring-apple-green/30 focus:border-apple-green transition-all"
             />
           </div>
           
-          <div className="grid grid-cols-2 gap-3 pt-4">
+          <div className="grid grid-cols-2 gap-4 pt-6">
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
-              className="py-3 px-4 bg-gray-700 text-gray-300 border-gray-600 rounded-xl font-medium hover:bg-gray-600"
+              className="py-4 px-6 bg-gray-700 text-gray-300 border-gray-600 rounded-2xl font-medium hover:bg-gray-600 transition-all"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={addItemMutation.isPending}
-              className="py-3 px-4 bg-apple-green text-white rounded-xl font-medium hover:bg-cal-poly-green"
+              className="py-4 px-6 bg-gradient-to-r from-apple-green to-emerald-500 text-white rounded-2xl font-medium hover:shadow-lg transition-all duration-300"
             >
               {addItemMutation.isPending ? "Adding..." : "Add Item"}
             </Button>

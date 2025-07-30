@@ -6,14 +6,20 @@ export default function Header() {
   };
 
   return (
-    <header className="bg-gray-900 border-b border-gray-700 sticky top-0 z-50">
+    <header className="bg-gray-900 sticky top-0 z-50">
       <div className="flex items-center justify-between p-4">
-        <div>
-          <h1 className="text-3xl font-bold text-white">Fresh AI</h1>
-          <p className="text-sm text-gray-400">{getCurrentDateTime()}</p>
+        <div className="text-gray-400 text-sm font-medium">
+          {getCurrentDateTime()}
         </div>
-        <div className="w-10 h-10 bg-apple-green rounded-full flex items-center justify-center cursor-pointer hover:bg-opacity-80 transition-colors">
-          <span className="text-white font-semibold text-sm">{getUserInitials()}</span>
+        <div className="flex items-center space-x-2">
+          <div className="flex space-x-1">
+            <div className="w-1 h-1 bg-white rounded-full"></div>
+            <div className="w-1 h-1 bg-white rounded-full"></div>
+            <div className="w-1 h-1 bg-white rounded-full"></div>
+          </div>
+          <div className="w-6 h-3 bg-white rounded-sm"></div>
+          <div className="w-6 h-3 bg-white rounded-sm"></div>
+          <div className="w-4 h-2 bg-white rounded-sm"></div>
         </div>
       </div>
     </header>

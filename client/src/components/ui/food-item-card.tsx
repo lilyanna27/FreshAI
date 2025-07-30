@@ -12,29 +12,34 @@ export default function FoodItemCard({ item, onClick }: FoodItemCardProps) {
   return (
     <div 
       onClick={onClick}
-      className={`bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-700 relative cursor-pointer hover:shadow-md transition-shadow ${
+      className={`bg-gray-800 rounded-3xl p-5 border border-gray-700 relative cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-105 ${
         expirationInfo.status === 'expired' ? 'opacity-75' : ''
       }`}
     >
-      <div className={`absolute top-2 right-2 w-3 h-3 rounded-full ${expirationInfo.dotColor}`}></div>
+      <div className={`absolute top-3 right-3 w-3 h-3 rounded-full ${expirationInfo.dotColor}`}></div>
       
       {item.imageUrl ? (
         <img 
           src={item.imageUrl} 
           alt={item.name} 
-          className="w-full h-24 object-cover rounded-lg mb-3"
+          className="w-full h-28 object-cover rounded-2xl mb-4"
         />
       ) : (
-        <div className="w-full h-24 bg-gray-700 rounded-lg mb-3 flex items-center justify-center">
-          <span className="text-gray-500 text-xs">No image</span>
+        <div className="w-full h-28 bg-gradient-to-br from-gray-700 to-gray-600 rounded-2xl mb-4 flex items-center justify-center relative overflow-hidden">
+          <span className="text-4xl opacity-50">🍎</span>
+          <div className="absolute -top-4 -right-4 w-12 h-12 bg-white/5 rounded-full"></div>
         </div>
       )}
       
-      <h4 className="font-medium text-white mb-1">{item.name}</h4>
-      <p className="text-xs text-gray-400 mb-2">{item.quantity}</p>
-      <p className={`text-xs font-medium ${expirationInfo.color}`}>
+      <h4 className="font-semibold text-white mb-1 text-sm">{item.name}</h4>
+      <p className="text-xs text-gray-400 mb-3">{item.quantity}</p>
+      <div className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+        expirationInfo.status === 'fresh' ? 'bg-emerald-500/20 text-emerald-400' :
+        expirationInfo.status === 'expired' ? 'bg-red-500/20 text-red-400' :
+        'bg-orange-500/20 text-orange-400'
+      }`}>
         {expirationInfo.message}
-      </p>
+      </div>
     </div>
   );
 }
