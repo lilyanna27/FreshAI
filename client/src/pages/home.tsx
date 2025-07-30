@@ -38,18 +38,8 @@ export default function Home() {
 
   return (
     <div className="p-4 pb-24">
-      {/* Header with Time and Location */}
+      {/* Header */}
       <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-3xl font-bold text-white mb-1">Good evening!</h1>
-            <div className="flex items-center text-gray-400 text-sm">
-              <MapPin size={14} className="mr-1" />
-              <span>Your Kitchen</span>
-            </div>
-          </div>
-        </div>
-        
         {/* Illustrated Food Basket */}
         <div className="bg-gradient-to-br from-orange-400 via-yellow-400 to-orange-500 rounded-3xl p-6 mb-6 relative overflow-hidden">
           <div className="relative z-10">
