@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { FoodItem } from "@shared/schema";
 import { getExpirationStatus, getCurrentDateTime } from "@/lib/date-utils";
 import { CheckCircle, AlertTriangle, Plus, Clock, MapPin, Search } from "lucide-react";
+import { Link } from "wouter";
 
 export default function Home() {
   const { data: foodItems = [], isLoading } = useQuery<FoodItem[]>({
@@ -87,28 +88,32 @@ export default function Home() {
       
       {/* Quick Stats */}
       <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="bg-gray-800 rounded-2xl p-4 border border-gray-700">
-          <div className="flex items-center">
-            <div className="w-12 h-12 bg-apple-green/20 rounded-2xl flex items-center justify-center mr-3">
-              <CheckCircle className="text-apple-green" size={20} />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-white">{stats.freshItems}</p>
-              <p className="text-xs text-gray-400">Fresh items</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-gray-800 rounded-2xl p-4 border border-gray-700">
-          <div className="flex items-center">
-            <div className="w-12 h-12 bg-orange-500/20 rounded-2xl flex items-center justify-center mr-3">
-              <AlertTriangle className="text-orange-400" size={20} />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-white">{stats.expiringItems}</p>
-              <p className="text-xs text-gray-400">Expiring soon</p>
+        <Link href="/fresh-items">
+          <div className="bg-gray-800 rounded-2xl p-4 border border-gray-700 hover:bg-gray-750 transition-colors cursor-pointer">
+            <div className="flex items-center">
+              <div className="w-12 h-12 bg-apple-green/20 rounded-2xl flex items-center justify-center mr-3">
+                <CheckCircle className="text-apple-green" size={20} />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-white">{stats.freshItems}</p>
+                <p className="text-xs text-gray-400">Fresh items</p>
+              </div>
             </div>
           </div>
-        </div>
+        </Link>
+        <Link href="/expiring-items">
+          <div className="bg-gray-800 rounded-2xl p-4 border border-gray-700 hover:bg-gray-750 transition-colors cursor-pointer">
+            <div className="flex items-center">
+              <div className="w-12 h-12 bg-orange-500/20 rounded-2xl flex items-center justify-center mr-3">
+                <AlertTriangle className="text-orange-400" size={20} />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-white">{stats.expiringItems}</p>
+                <p className="text-xs text-gray-400">Expiring soon</p>
+              </div>
+            </div>
+          </div>
+        </Link>
       </div>
 
       {/* Recent Activity */}

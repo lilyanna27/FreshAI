@@ -17,6 +17,8 @@ import Expiring from "@/pages/expiring";
 import ReceiptScan from "@/pages/receipt-scan";
 import Sustainability from "@/pages/sustainability";
 import Profile from "@/pages/profile";
+import FreshItems from "@/pages/fresh-items";
+import ExpiringItems from "@/pages/expiring-items";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -35,6 +37,8 @@ function Router() {
           <Route path="/sustainability" component={Sustainability} />
           <Route path="/expiring" component={Expiring} />
           <Route path="/profile" component={Profile} />
+          <Route path="/fresh-items" component={FreshItems} />
+          <Route path="/expiring-items" component={ExpiringItems} />
           <Route component={NotFound} />
         </Switch>
       </main>
