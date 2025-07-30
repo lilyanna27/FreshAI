@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { FoodItem } from "@shared/schema";
 import { getExpirationStatus, getCurrentDateTime } from "@/lib/date-utils";
-import { CheckCircle, AlertTriangle, Plus, Clock, MapPin, Search } from "lucide-react";
+import { CheckCircle, AlertTriangle, Plus, Clock, MapPin, Search, User } from "lucide-react";
 import { Link } from "wouter";
 
 export default function Home() {
@@ -41,10 +41,17 @@ export default function Home() {
     <div className="pb-24">
       {/* Green Header Section */}
       <div className="bg-gradient-to-br from-green-400 to-green-600 px-6 pt-8 pb-6 rounded-b-3xl">
-        {/* Greeting */}
-        <div className="mb-6">
-          <h1 className="text-white text-2xl font-bold mb-2">Hey there! 👋</h1>
-          <p className="text-white/90 text-sm">What are you cooking today?</p>
+        {/* Header with Profile Button */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-white text-2xl font-bold mb-2">Hey there! 👋</h1>
+            <p className="text-white/90 text-sm">What are you cooking today?</p>
+          </div>
+          <Link href="/profile">
+            <button className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
+              <User className="text-white" size={20} />
+            </button>
+          </Link>
         </div>
 
         {/* Search Bar */}
