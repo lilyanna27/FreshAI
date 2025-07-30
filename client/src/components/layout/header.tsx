@@ -13,7 +13,6 @@ export default function Header() {
             <div className="w-1 h-1 bg-white rounded-full"></div>
           </div>
           <div className="w-6 h-3 bg-white rounded-sm"></div>
-          <div className="w-6 h-3 bg-white rounded-sm"></div>
           <div className="w-4 h-2 bg-white rounded-sm"></div>
         </div>
         
