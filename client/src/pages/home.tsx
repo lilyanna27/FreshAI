@@ -39,8 +39,8 @@ export default function Home() {
 
   return (
     <div className="pb-24">
-      {/* Orange Header Section */}
-      <div className="bg-gradient-to-br from-orange-400 to-orange-500 px-6 pt-8 pb-6 rounded-b-3xl">
+      {/* Green Header Section */}
+      <div className="bg-gradient-to-br from-green-400 to-green-600 px-6 pt-8 pb-6 rounded-b-3xl">
         {/* Greeting */}
         <div className="mb-6">
           <h1 className="text-white text-2xl font-bold mb-2">Hey there! 👋</h1>
@@ -120,7 +120,7 @@ export default function Home() {
               <h4 className="text-gray-800 font-bold text-sm mb-1">Scrambled Eggs</h4>
               <p className="text-gray-500 text-xs mb-2">5 min • Easy</p>
               <div className="flex items-center">
-                <span className="text-xs text-orange-500">⭐ 4.8</span>
+                <span className="text-xs text-green-500">⭐ 4.8</span>
               </div>
             </div>
             
@@ -131,7 +131,7 @@ export default function Home() {
               <h4 className="text-gray-800 font-bold text-sm mb-1">Garden Salad</h4>
               <p className="text-gray-500 text-xs mb-2">10 min • Fresh</p>
               <div className="flex items-center">
-                <span className="text-xs text-orange-500">⭐ 4.6</span>
+                <span className="text-xs text-green-500">⭐ 4.6</span>
               </div>
             </div>
           </div>
@@ -139,12 +139,12 @@ export default function Home() {
         
         {/* Featured Recipe */}
         <div className="mb-6">
-          <div className="bg-gradient-to-br from-yellow-400 to-orange-400 rounded-3xl p-6 relative overflow-hidden">
+          <div className="bg-gradient-to-br from-green-400 to-green-500 rounded-3xl p-6 relative overflow-hidden">
             <div className="relative z-10">
               <span className="text-white/80 text-xs font-medium uppercase tracking-wide">Recipe of the week</span>
               <h3 className="text-white text-xl font-bold mb-2">Healthy Pasta Bowl</h3>
               <p className="text-white/90 text-sm mb-3">Fresh ingredients, bold flavors</p>
-              <button className="bg-white text-orange-500 px-4 py-2 rounded-xl text-sm font-bold">
+              <button className="bg-white text-green-600 px-4 py-2 rounded-xl text-sm font-bold">
                 Cook now
               </button>
             </div>
