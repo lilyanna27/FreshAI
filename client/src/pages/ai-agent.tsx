@@ -64,7 +64,7 @@ export default function AIAgent() {
   };
 
   return (
-    <div className="flex flex-col h-screen pb-20">
+    <div className="flex flex-col h-screen">
       {/* Header */}
       <div className="bg-gradient-to-br from-purple-600 to-blue-600 p-6 text-white">
         <div className="flex items-center">
@@ -140,7 +140,7 @@ export default function AIAgent() {
       </div>
 
       {/* Input */}
-      <div className="p-4 bg-gray-900 border-t border-gray-800">
+      <div className="p-4 bg-gray-900 border-t border-gray-800 pb-20">
         <div className="flex items-center space-x-3">
           <div className="flex-1 bg-gray-800 rounded-2xl border border-gray-700">
             <input
@@ -163,7 +163,7 @@ export default function AIAgent() {
       </div>
 
       {/* Quick Actions */}
-      <div className="p-4 bg-gray-900">
+      <div className="p-4 bg-gray-900 pb-24">
         <div className="flex space-x-2 overflow-x-auto">
           {[
             "Suggest a recipe",
