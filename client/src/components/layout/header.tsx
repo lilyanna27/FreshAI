@@ -20,18 +20,18 @@ export default function Header() {
           {!isHomePage && (
             <button 
               onClick={handleBack}
-              className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-gray-700 transition-colors mr-3"
+              className="w-10 h-10 bg-gray-10 rounded-full flex items-center justify-center hover:bg-gray-700 transition-colors mr-3"
             >
               <ArrowLeft className="w-5 h-5 text-white" />
             </button>
           )}
-          <h1 className="text-2xl font-bold text-white tracking-tight">
+          <h1 className="text-3xl font-bold text-white tracking-tight">
             FreshAI
           </h1>
         </div>
         
         <Link href="/profile">
-          <button className="w-12 h-12 bg-white rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors">
+          <button className="w-12 h-12 bg-white rounded-full flex items-center justify-center hover:bg-gray-500 transition-colors">
             <User className="w-7 h-7 text-gray-600" />
           </button>
         </Link>
