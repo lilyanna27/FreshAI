@@ -122,6 +122,44 @@ export default function Home() {
         </Link>
       </div>
 
+      {/* Cute AI Agent Button */}
+      <div className="flex justify-center mb-8">
+        <Link href="/ai-agent">
+          <div className="relative group cursor-pointer">
+            {/* Main button with apple */}
+            <div className="bg-gradient-to-br from-red-400 via-red-500 to-red-600 rounded-full w-32 h-32 flex items-center justify-center shadow-2xl transform transition-all duration-300 group-hover:scale-110 group-hover:shadow-red-500/30 animate-pulse">
+              {/* Apple SVG */}
+              <div className="relative">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" className="text-white">
+                  <path d="M12 2c-4.97 0-9 4.03-9 9 0 3.31 1.79 6.2 4.47 7.74.26.15.53-.07.53-.36V16.5c0-.83.67-1.5 1.5-1.5h5c.83 0 1.5.67 1.5 1.5v1.88c0 .29.27.51.53.36C19.21 17.2 21 14.31 21 11c0-4.97-4.03-9-9-9z" fill="currentColor"/>
+                  <path d="M12 8c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z" fill="currentColor" opacity="0.7"/>
+                  <path d="M15 6c0-.55-.45-1-1-1s-1 .45-1 1c0 .28.11.53.29.71L12 8l1.29-1.29c.18-.18.29-.43.29-.71z" fill="currentColor" opacity="0.5"/>
+                </svg>
+                {/* Cute eyes */}
+                <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 flex space-x-1">
+                  <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                  <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                </div>
+                {/* Smile */}
+                <div className="absolute top-2 left-1/2 transform -translate-x-1/2 w-3 h-1.5 border-b-2 border-white rounded-full"></div>
+              </div>
+            </div>
+            
+            {/* Speech bubble */}
+            <div className="absolute -top-16 left-1/2 transform -translate-x-1/2 bg-white rounded-2xl px-4 py-2 shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:scale-100 scale-95 z-10">
+              <div className="text-gray-800 font-bold text-sm whitespace-nowrap">Talk to me! 🍎</div>
+              {/* Speech bubble tail */}
+              <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-white"></div>
+            </div>
+            
+            {/* Label below */}
+            <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-center">
+              <p className="text-white font-semibold text-sm">Ask your AI Chef</p>
+              <p className="text-gray-400 text-xs">Get recipes & cooking tips</p>
+            </div>
+          </div>
+        </Link>
+      </div>
 
     </div>
   );
