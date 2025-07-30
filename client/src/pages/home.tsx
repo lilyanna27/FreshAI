@@ -69,7 +69,7 @@ export default function Home() {
               <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-green-500 rounded-2xl flex items-center justify-center mb-2 shadow-lg">
                 <span className="text-2xl">🥬</span>
               </div>
-              <span className="text-white text-xs font-medium">Fresh</span>
+              <span className="text-white text-xs font-medium">Currently in fridge</span>
             </div>
           </Link>
           
