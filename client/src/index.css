@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -62,8 +64,9 @@
 
   body {
     @apply font-sans antialiased;
-    background-color: hsl(var(--mint-cream));
-    color: hsl(var(--rose-ebony));
+    background-color: hsl(240, 10%, 3.9%);
+    color: hsl(0, 0%, 98%);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
 }
 
@@ -125,7 +128,7 @@
 
 /* Mobile-first navigation styles */
 .nav-item {
-  color: #6B7280;
+  color: #9CA3AF;
   transition: color 0.2s ease;
 }
 

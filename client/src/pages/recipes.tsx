@@ -50,12 +50,12 @@ export default function Recipes() {
     return (
       <div className="p-4">
         <div className="mb-6">
-          <div className="bg-gray-200 animate-pulse rounded h-6 w-32 mb-2"></div>
-          <div className="bg-gray-200 animate-pulse rounded h-4 w-48"></div>
+          <div className="bg-gray-700 animate-pulse rounded h-6 w-32 mb-2"></div>
+          <div className="bg-gray-700 animate-pulse rounded h-4 w-48"></div>
         </div>
         <div className="space-y-4">
           {[1,2].map(i => (
-            <div key={i} className="bg-gray-200 animate-pulse rounded-xl h-48"></div>
+            <div key={i} className="bg-gray-700 animate-pulse rounded-xl h-48"></div>
           ))}
         </div>
       </div>
@@ -65,26 +65,26 @@ export default function Recipes() {
   return (
     <div className="p-4">
       <div className="mb-6">
-        <h2 className="text-xl font-semibold text-rose-ebony mb-2">Your Recipes</h2>
-        <p className="text-gray-500 text-sm">Based on items in your fridge</p>
+        <h2 className="text-xl font-semibold text-white mb-2">Your Recipes</h2>
+        <p className="text-gray-400 text-sm">Based on items in your fridge</p>
       </div>
 
       {/* Suggested Recipes */}
       <div className="mb-6">
-        <h3 className="text-lg font-medium text-rose-ebony mb-3">Suggested for You</h3>
+        <h3 className="text-lg font-medium text-white mb-3">Suggested for You</h3>
         
         {suggestedRecipes.map((recipe) => (
-          <div key={recipe.id} className="bg-white rounded-xl shadow-sm border border-gray-100 mb-4 overflow-hidden">
+          <div key={recipe.id} className="bg-gray-800 rounded-xl shadow-sm border border-gray-700 mb-4 overflow-hidden">
             <img 
               src={recipe.imageUrl} 
               alt={recipe.name} 
               className="w-full h-32 object-cover"
             />
             <div className="p-4">
-              <h4 className="font-semibold text-rose-ebony mb-2">{recipe.name}</h4>
-              <p className="text-sm text-gray-600 mb-3">{recipe.description}</p>
+              <h4 className="font-semibold text-white mb-2">{recipe.name}</h4>
+              <p className="text-sm text-gray-400 mb-3">{recipe.description}</p>
               <div className="flex items-center justify-between">
-                <div className="flex items-center text-xs text-gray-500">
+                <div className="flex items-center text-xs text-gray-400">
                   <Clock className="mr-1" size={12} />
                   <span>{recipe.cookTime}</span>
                 </div>
@@ -104,25 +104,25 @@ export default function Recipes() {
 
       {/* Saved Recipes */}
       <div>
-        <h3 className="text-lg font-medium text-rose-ebony mb-3">Saved Recipes</h3>
+        <h3 className="text-lg font-medium text-white mb-3">Saved Recipes</h3>
         {savedRecipes.length === 0 ? (
-          <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100 text-center">
-            <BookOpen className="mx-auto text-gray-400 mb-3" size={48} />
-            <p className="text-gray-500">No saved recipes yet</p>
-            <p className="text-sm text-gray-400 mt-2">Save recipes you love to access them quickly</p>
+          <div className="bg-gray-800 rounded-xl p-8 shadow-sm border border-gray-700 text-center">
+            <BookOpen className="mx-auto text-gray-500 mb-3" size={48} />
+            <p className="text-gray-400">No saved recipes yet</p>
+            <p className="text-sm text-gray-500 mt-2">Save recipes you love to access them quickly</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-4">
             {savedRecipes.map((recipe) => (
-              <div key={recipe.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+              <div key={recipe.id} className="bg-gray-800 rounded-xl shadow-sm border border-gray-700 overflow-hidden">
                 <img 
                   src={recipe.imageUrl} 
                   alt={recipe.name} 
                   className="w-full h-20 object-cover"
                 />
                 <div className="p-3">
-                  <h4 className="font-medium text-rose-ebony text-sm mb-1">{recipe.name}</h4>
-                  <p className="text-xs text-gray-500">{recipe.cookTime}</p>
+                  <h4 className="font-medium text-white text-sm mb-1">{recipe.name}</h4>
+                  <p className="text-xs text-gray-400">{recipe.cookTime}</p>
                 </div>
               </div>
             ))}

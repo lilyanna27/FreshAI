@@ -78,20 +78,20 @@ export default function AddItemModal({ isOpen, onClose }: AddItemModalProps) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50">
-      <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white rounded-t-2xl p-6">
+      <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-gray-800 rounded-t-2xl p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-rose-ebony">Add New Item</h3>
+          <h3 className="text-lg font-semibold text-white">Add New Item</h3>
           <button 
             onClick={onClose}
-            className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center"
+            className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center"
           >
-            <X className="text-gray-500" size={16} />
+            <X className="text-gray-400" size={16} />
           </button>
         </div>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label className="block text-sm font-medium text-rose-ebony mb-2">
+            <Label className="block text-sm font-medium text-white mb-2">
               Item Name *
             </Label>
             <Input
@@ -99,12 +99,12 @@ export default function AddItemModal({ isOpen, onClose }: AddItemModalProps) {
               placeholder="e.g., Organic Apples"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-apple-green/20 focus:border-apple-green"
+              className="w-full p-3 border border-gray-600 bg-gray-700 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-apple-green/20 focus:border-apple-green"
             />
           </div>
           
           <div>
-            <Label className="block text-sm font-medium text-rose-ebony mb-2">
+            <Label className="block text-sm font-medium text-white mb-2">
               Quantity *
             </Label>
             <Input
@@ -112,24 +112,24 @@ export default function AddItemModal({ isOpen, onClose }: AddItemModalProps) {
               placeholder="e.g., 5 pieces, 1 bag"
               value={formData.quantity}
               onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-              className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-apple-green/20 focus:border-apple-green"
+              className="w-full p-3 border border-gray-600 bg-gray-700 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-apple-green/20 focus:border-apple-green"
             />
           </div>
           
           <div>
-            <Label className="block text-sm font-medium text-rose-ebony mb-2">
+            <Label className="block text-sm font-medium text-white mb-2">
               Expiration Date *
             </Label>
             <Input
               type="date"
               value={formData.expirationDate}
               onChange={(e) => setFormData({ ...formData, expirationDate: e.target.value })}
-              className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-apple-green/20 focus:border-apple-green"
+              className="w-full p-3 border border-gray-600 bg-gray-700 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-apple-green/20 focus:border-apple-green"
             />
           </div>
 
           <div>
-            <Label className="block text-sm font-medium text-rose-ebony mb-2">
+            <Label className="block text-sm font-medium text-white mb-2">
               Image URL (optional)
             </Label>
             <Input
@@ -137,7 +137,7 @@ export default function AddItemModal({ isOpen, onClose }: AddItemModalProps) {
               placeholder="https://example.com/image.jpg"
               value={formData.imageUrl}
               onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-              className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-apple-green/20 focus:border-apple-green"
+              className="w-full p-3 border border-gray-600 bg-gray-700 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-apple-green/20 focus:border-apple-green"
             />
           </div>
           
@@ -146,7 +146,7 @@ export default function AddItemModal({ isOpen, onClose }: AddItemModalProps) {
               type="button"
               variant="outline"
               onClick={onClose}
-              className="py-3 px-4 bg-gray-100 text-gray-600 rounded-xl font-medium"
+              className="py-3 px-4 bg-gray-700 text-gray-300 border-gray-600 rounded-xl font-medium hover:bg-gray-600"
             >
               Cancel
             </Button>

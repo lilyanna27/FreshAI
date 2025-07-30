@@ -46,16 +46,16 @@ export default function Fridge() {
     return (
       <div className="p-4">
         <div className="mb-4 space-y-3">
-          <div className="bg-gray-200 animate-pulse rounded-xl h-12"></div>
+          <div className="bg-gray-700 animate-pulse rounded-xl h-12"></div>
           <div className="flex gap-2">
             {[1,2,3,4].map(i => (
-              <div key={i} className="bg-gray-200 animate-pulse rounded-full h-8 w-16"></div>
+              <div key={i} className="bg-gray-700 animate-pulse rounded-full h-8 w-16"></div>
             ))}
           </div>
         </div>
         <div className="grid grid-cols-2 gap-4">
           {[1,2,3,4].map(i => (
-            <div key={i} className="bg-gray-200 animate-pulse rounded-xl h-40"></div>
+            <div key={i} className="bg-gray-700 animate-pulse rounded-xl h-40"></div>
           ))}
         </div>
       </div>
@@ -72,9 +72,9 @@ export default function Fridge() {
             placeholder="Search your fridge..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full p-3 pl-10 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-apple-green/20 focus:border-apple-green"
+            className="w-full p-3 pl-10 border border-gray-600 bg-gray-700 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-apple-green/20 focus:border-apple-green"
           />
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={16} />
         </div>
         <div className="flex gap-2 overflow-x-auto pb-2">
           {filterButtons.map(({ key, label }) => (
@@ -84,7 +84,7 @@ export default function Fridge() {
               className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
                 activeFilter === key
                   ? 'bg-apple-green text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
               }`}
             >
               {label}
@@ -97,14 +97,14 @@ export default function Fridge() {
       {filteredItems.length === 0 ? (
         <div className="text-center py-12">
           {searchTerm ? (
-            <p className="text-gray-500">No items match your search</p>
+            <p className="text-gray-400">No items match your search</p>
           ) : foodItems.length === 0 ? (
             <>
-              <p className="text-gray-500 text-lg mb-2">Your fridge is empty</p>
-              <p className="text-gray-400">Add your first item to get started!</p>
+              <p className="text-gray-400 text-lg mb-2">Your fridge is empty</p>
+              <p className="text-gray-500">Add your first item to get started!</p>
             </>
           ) : (
-            <p className="text-gray-500">No items in this category</p>
+            <p className="text-gray-400">No items in this category</p>
           )}
         </div>
       ) : (

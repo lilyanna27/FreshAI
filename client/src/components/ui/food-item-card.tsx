@@ -12,7 +12,7 @@ export default function FoodItemCard({ item, onClick }: FoodItemCardProps) {
   return (
     <div 
       onClick={onClick}
-      className={`bg-white rounded-xl p-4 shadow-sm border border-gray-100 relative cursor-pointer hover:shadow-md transition-shadow ${
+      className={`bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-700 relative cursor-pointer hover:shadow-md transition-shadow ${
         expirationInfo.status === 'expired' ? 'opacity-75' : ''
       }`}
     >
@@ -25,13 +25,13 @@ export default function FoodItemCard({ item, onClick }: FoodItemCardProps) {
           className="w-full h-24 object-cover rounded-lg mb-3"
         />
       ) : (
-        <div className="w-full h-24 bg-gray-100 rounded-lg mb-3 flex items-center justify-center">
-          <span className="text-gray-400 text-xs">No image</span>
+        <div className="w-full h-24 bg-gray-700 rounded-lg mb-3 flex items-center justify-center">
+          <span className="text-gray-500 text-xs">No image</span>
         </div>
       )}
       
-      <h4 className="font-medium text-rose-ebony mb-1">{item.name}</h4>
-      <p className="text-xs text-gray-500 mb-2">{item.quantity}</p>
+      <h4 className="font-medium text-white mb-1">{item.name}</h4>
+      <p className="text-xs text-gray-400 mb-2">{item.quantity}</p>
       <p className={`text-xs font-medium ${expirationInfo.color}`}>
         {expirationInfo.message}
       </p>
