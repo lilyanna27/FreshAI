@@ -64,8 +64,8 @@
 
   body {
     @apply antialiased;
-    background-color: hsl(240, 10%, 3.9%);
-    color: hsl(0, 0%, 98%);
+    background-color: hsl(0, 0%, 98%);
+    color: hsl(240, 10%, 3.9%);
     font-family: 'Times New Roman', Times, serif;
     overflow-x: hidden;
   }

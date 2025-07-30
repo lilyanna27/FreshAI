@@ -26,7 +26,7 @@ function Router() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   return (
-    <div className="max-w-md mx-auto bg-gray-900 min-h-screen shadow-xl relative">
+    <div className="max-w-md mx-auto bg-gray-50 min-h-screen shadow-xl relative">
       <Header />
       
       <main className="pb-20">
