@@ -67,6 +67,20 @@
     background-color: hsl(240, 10%, 3.9%);
     color: hsl(0, 0%, 98%);
     font-family: 'Times New Roman', Times, serif;
+    overflow-x: hidden;
+  }
+  
+  /* Ensure bottom navigation doesn't interfere with scrolling */
+  nav[class*="fixed bottom-0"] {
+    pointer-events: none;
+  }
+  
+  nav[class*="fixed bottom-0"] > div {
+    pointer-events: auto;
+  }
+  
+  nav[class*="fixed bottom-0"] button {
+    pointer-events: auto;
   }
 }
 
