@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { X, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,6 +7,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { InsertFoodItem } from "@shared/schema";
+import { estimateShelfLife, getStorageTips, categorizeFood } from "@shared/food-data";
 
 interface AddItemModalProps {
   isOpen: boolean;
@@ -20,7 +21,10 @@ export default function AddItemModal({ isOpen, onClose }: AddItemModalProps) {
     expirationDate: "",
     imageUrl: "",
     category: "",
+    storageTips: "",
   });
+  
+  const [showStorageTips, setShowStorageTips] = useState(false);
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -43,7 +47,9 @@ export default function AddItemModal({ isOpen, onClose }: AddItemModalProps) {
         expirationDate: "",
         imageUrl: "",
         category: "",
+        storageTips: "",
       });
+      setShowStorageTips(false);
     },
     onError: () => {
       toast({
