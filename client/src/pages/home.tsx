@@ -122,45 +122,7 @@ export default function Home() {
         </Link>
       </div>
 
-      {/* Recent Activity */}
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold text-white mb-4">Recent Activity</h3>
-        {recentActivity.length === 0 ? (
-          <div className="bg-gray-800 rounded-3xl p-8 border border-gray-700 text-center relative overflow-hidden">
-            <div className="relative z-10">
-              <div className="w-20 h-20 bg-gradient-to-br from-apple-green to-emerald-500 rounded-3xl mx-auto mb-4 flex items-center justify-center">
-                <span className="text-white text-2xl">🍽️</span>
-              </div>
-              <p className="text-gray-300 font-medium mb-2">Your kitchen story begins here</p>
-              <p className="text-sm text-gray-500">Add your first ingredient and start cooking!</p>
-            </div>
-            <div className="absolute -top-6 -right-6 w-24 h-24 bg-white/5 rounded-full"></div>
-            <div className="absolute -bottom-4 -left-4 w-16 h-16 bg-white/5 rounded-full"></div>
-          </div>
-        ) : (
-          recentActivity.map((item) => {
-            const expirationInfo = getExpirationStatus(new Date(item.expirationDate));
-            return (
-              <div key={item.id} className="bg-gray-800 rounded-2xl p-4 border border-gray-700 mb-3">
-                <div className="flex items-center">
-                  <div className="w-12 h-12 bg-gradient-to-br from-apple-green to-emerald-500 rounded-2xl flex items-center justify-center mr-3">
-                    <Plus className="text-white" size={16} />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium text-white">Added {item.name}</p>
-                    <p className="text-xs text-gray-400">Recently added</p>
-                  </div>
-                  <div className="text-right">
-                    <p className={`text-xs font-medium ${expirationInfo.color}`}>
-                      {expirationInfo.message}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            );
-          })
-        )}
-      </div>
+
     </div>
   );
 }
