@@ -39,6 +39,12 @@ export default function Home() {
 
   return (
     <div className="p-4 pb-24">
+      {/* Welcome Message */}
+      <div className="mb-6">
+        <h2 className="text-3xl font-bold text-white mb-2">Good evening!</h2>
+        <p className="text-gray-400">Welcome back to your smart kitchen companion</p>
+      </div>
+
       {/* Header */}
       <div className="mb-6">
         {/* Illustrated Food Basket */}
