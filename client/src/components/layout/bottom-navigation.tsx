@@ -1,11 +1,11 @@
 import { Link, useLocation } from "wouter";
-import { Home, Snowflake, Book, Clock } from "lucide-react";
+import { Home, Refrigerator, ChefHat, Clock } from "lucide-react";
 
 const navigationItems = [
   { path: "/", icon: Home, label: "Home", emoji: "🏠" },
-  { path: "/fridge", icon: Snowflake, label: "Fridge", emoji: "🥬" },
-  { path: "/receipt-scan", icon: Book, label: "Scan", emoji: "📄" },
-  { path: "/sustainability", icon: Clock, label: "Impact", emoji: "🌱" },
+  { path: "/fridge", icon: Refrigerator, label: "Fridge", emoji: "🥬" },
+  { path: "/recipes", icon: ChefHat, label: "Recipes", emoji: "👨‍🍳" },
+  { path: "/expiring", icon: Clock, label: "Expiring", emoji: "⏰" },
 ];
 
 export default function BottomNavigation() {

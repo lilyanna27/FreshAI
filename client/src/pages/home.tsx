@@ -96,40 +96,7 @@ export default function Home() {
         </div>
       </div>
       
-      {/* Food Categories */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-white">Food categories</h3>
-          <button className="text-apple-green text-sm font-medium">View all</button>
-        </div>
-        
-        <div className="grid grid-cols-4 gap-4">
-          <div className="text-center">
-            <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-emerald-500 rounded-2xl mx-auto mb-2 flex items-center justify-center">
-              <span className="text-white text-lg">🥬</span>
-            </div>
-            <p className="text-white text-xs font-medium">Vegetables</p>
-          </div>
-          <div className="text-center">
-            <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl mx-auto mb-2 flex items-center justify-center">
-              <span className="text-white text-lg">🥜</span>
-            </div>
-            <p className="text-white text-xs font-medium">Nuts & Seed</p>
-          </div>
-          <div className="text-center">
-            <div className="w-16 h-16 bg-gradient-to-br from-red-400 to-pink-500 rounded-2xl mx-auto mb-2 flex items-center justify-center">
-              <span className="text-white text-lg">🥩</span>
-            </div>
-            <p className="text-white text-xs font-medium">Protein</p>
-          </div>
-          <div className="text-center">
-            <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-2xl mx-auto mb-2 flex items-center justify-center">
-              <span className="text-white text-lg">🧀</span>
-            </div>
-            <p className="text-white text-xs font-medium">Low Fats</p>
-          </div>
-        </div>
-      </div>
+
       
       {/* Quick Stats */}
       <div className="grid grid-cols-2 gap-4 mb-6">
