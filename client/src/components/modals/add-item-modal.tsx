@@ -1,0 +1,165 @@
+import { useState } from "react";
+import { X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { InsertFoodItem } from "@shared/schema";
+
+interface AddItemModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export default function AddItemModal({ isOpen, onClose }: AddItemModalProps) {
+  const [formData, setFormData] = useState({
+    name: "",
+    quantity: "",
+    expirationDate: "",
+    imageUrl: "",
+    category: "",
+  });
+
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const addItemMutation = useMutation({
+    mutationFn: async (data: InsertFoodItem) => {
+      const response = await apiRequest("POST", "/api/food-items", data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/food-items"] });
+      toast({
+        title: "Success",
+        description: "Food item added successfully",
+      });
+      onClose();
+      setFormData({
+        name: "",
+        quantity: "",
+        expirationDate: "",
+        imageUrl: "",
+        category: "",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to add food item",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name || !formData.quantity || !formData.expirationDate) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    addItemMutation.mutate({
+      name: formData.name,
+      quantity: formData.quantity,
+      expirationDate: new Date(formData.expirationDate),
+      imageUrl: formData.imageUrl || undefined,
+      category: formData.category || undefined,
+    });
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50">
+      <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white rounded-t-2xl p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-rose-ebony">Add New Item</h3>
+          <button 
+            onClick={onClose}
+            className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center"
+          >
+            <X className="text-gray-500" size={16} />
+          </button>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label className="block text-sm font-medium text-rose-ebony mb-2">
+              Item Name *
+            </Label>
+            <Input
+              type="text"
+              placeholder="e.g., Organic Apples"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-apple-green/20 focus:border-apple-green"
+            />
+          </div>
+          
+          <div>
+            <Label className="block text-sm font-medium text-rose-ebony mb-2">
+              Quantity *
+            </Label>
+            <Input
+              type="text"
+              placeholder="e.g., 5 pieces, 1 bag"
+              value={formData.quantity}
+              onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+              className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-apple-green/20 focus:border-apple-green"
+            />
+          </div>
+          
+          <div>
+            <Label className="block text-sm font-medium text-rose-ebony mb-2">
+              Expiration Date *
+            </Label>
+            <Input
+              type="date"
+              value={formData.expirationDate}
+              onChange={(e) => setFormData({ ...formData, expirationDate: e.target.value })}
+              className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-apple-green/20 focus:border-apple-green"
+            />
+          </div>
+
+          <div>
+            <Label className="block text-sm font-medium text-rose-ebony mb-2">
+              Image URL (optional)
+            </Label>
+            <Input
+              type="url"
+              placeholder="https://example.com/image.jpg"
+              value={formData.imageUrl}
+              onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+              className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-apple-green/20 focus:border-apple-green"
+            />
+          </div>
+          
+          <div className="grid grid-cols-2 gap-3 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              className="py-3 px-4 bg-gray-100 text-gray-600 rounded-xl font-medium"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={addItemMutation.isPending}
+              className="py-3 px-4 bg-apple-green text-white rounded-xl font-medium hover:bg-cal-poly-green"
+            >
+              {addItemMutation.isPending ? "Adding..." : "Add Item"}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}

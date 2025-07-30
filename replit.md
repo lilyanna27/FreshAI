@@ -1,0 +1,128 @@
+# Fresh AI - Smart Fridge Management App
+
+## Overview
+
+Fresh AI is a modern mobile-first web application designed to help users manage their food inventory and reduce food waste. The app allows users to track food items in their fridge, monitor expiration dates, discover recipes based on available ingredients, and receive notifications about items that are expiring soon.
+
+## User Preferences
+
+Preferred communication style: Simple, everyday language.
+
+## System Architecture
+
+### Frontend Architecture
+- **Framework**: React 18 with TypeScript
+- **Routing**: Wouter (lightweight React router)
+- **UI Library**: Radix UI components with shadcn/ui
+- **Styling**: Tailwind CSS with custom design tokens
+- **State Management**: TanStack React Query for server state
+- **Build Tool**: Vite for fast development and building
+- **Mobile-First Design**: Responsive layout optimized for mobile devices
+
+### Backend Architecture
+- **Framework**: Express.js with TypeScript
+- **API Pattern**: RESTful API endpoints
+- **Runtime**: Node.js with ES modules
+- **Development**: Hot reload with tsx
+
+### Database Layer
+- **ORM**: Drizzle ORM
+- **Database**: PostgreSQL (configured for Neon Database)
+- **Schema Management**: Drizzle Kit for migrations
+- **Connection**: @neondatabase/serverless for serverless PostgreSQL
+
+## Key Components
+
+### Data Models
+- **Users**: Basic user management with username/password
+- **Food Items**: Core inventory items with name, quantity, expiration date, category, and optional images
+- **Recipes**: Recipe management with ingredients, instructions, and cooking time
+
+### Core Features
+1. **Food Inventory Management**
+   - Add, edit, and delete food items
+   - Track quantities and expiration dates
+   - Categorize items for better organization
+   - Upload/link images for visual identification
+
+2. **Expiration Tracking**
+   - Smart status indicators (fresh, expiring soon, expired)
+   - Color-coded visual system
+   - Dedicated expiring items view
+
+3. **Recipe Discovery**
+   - Recipe suggestions based on available ingredients
+   - Save favorite recipes
+   - Recipe search and filtering
+
+4. **Mobile-Optimized UI**
+   - Bottom navigation for easy thumb access
+   - Floating action button for quick item addition
+   - Swipe-friendly interactions
+
+### UI Components
+- **Design System**: Custom color palette with apple-green primary and rose-ebony text
+- **Layout**: Mobile-first responsive design with max-width container
+- **Navigation**: Bottom tab navigation with header and floating action button
+- **Modals**: Slide-up modals for adding items and viewing details
+- **Cards**: Food item cards with status indicators and images
+
+## Data Flow
+
+### Client-Server Communication
+1. **API Requests**: RESTful endpoints under `/api/` prefix
+2. **Query Management**: TanStack React Query handles caching, background updates, and error states
+3. **Form Handling**: React Hook Form with Zod validation
+4. **Real-time Updates**: Optimistic updates with query invalidation
+
+### State Management
+- **Server State**: Managed by React Query with automatic caching
+- **UI State**: Local React state for modals, forms, and interactions
+- **Persistent State**: No localStorage usage currently implemented
+
+### Error Handling
+- **API Errors**: Centralized error handling with toast notifications
+- **Form Validation**: Zod schemas for type-safe validation
+- **Network Errors**: React Query retry mechanisms
+
+## External Dependencies
+
+### Core Dependencies
+- **UI Framework**: React, Wouter for routing
+- **Data Fetching**: TanStack React Query
+- **Database**: Drizzle ORM with PostgreSQL driver
+- **UI Components**: Radix UI primitives with shadcn/ui styling
+- **Styling**: Tailwind CSS with PostCSS
+- **Validation**: Zod for schema validation
+- **Date Handling**: date-fns for date manipulation
+- **Icons**: Lucide React for consistent iconography
+
+### Development Tools
+- **Build**: Vite with React plugin
+- **TypeScript**: Full TypeScript support with strict mode
+- **Linting**: Built-in TypeScript checking
+- **Database Tools**: Drizzle Kit for schema management
+
+## Deployment Strategy
+
+### Build Process
+1. **Frontend Build**: Vite builds React app to `dist/public`
+2. **Backend Build**: esbuild bundles server code to `dist/index.js`
+3. **Database**: Drizzle push for schema deployment
+
+### Environment Configuration
+- **Database**: `DATABASE_URL` environment variable required
+- **Development**: NODE_ENV=development for dev server
+- **Production**: NODE_ENV=production for optimized builds
+
+### Hosting Requirements
+- **Node.js**: ES modules support required
+- **PostgreSQL**: Compatible database (Neon Database recommended)
+- **Static Assets**: Frontend files served from `dist/public`
+
+### Development Workflow
+- **Dev Server**: `npm run dev` starts both frontend and backend with hot reload
+- **Database Sync**: `npm run db:push` applies schema changes
+- **Type Checking**: `npm run check` validates TypeScript
+
+The application follows a clean separation of concerns with a shared schema between frontend and backend, enabling type-safe development across the full stack. The mobile-first approach ensures optimal user experience on smartphones while maintaining desktop compatibility.
