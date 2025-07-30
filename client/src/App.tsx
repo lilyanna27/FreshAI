@@ -14,6 +14,8 @@ import Home from "@/pages/home";
 import Fridge from "@/pages/fridge";
 import Recipes from "@/pages/recipes";
 import Expiring from "@/pages/expiring";
+import ReceiptScan from "@/pages/receipt-scan";
+import Sustainability from "@/pages/sustainability";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -28,6 +30,8 @@ function Router() {
           <Route path="/" component={Home} />
           <Route path="/fridge" component={Fridge} />
           <Route path="/recipes" component={Recipes} />
+          <Route path="/receipt-scan" component={ReceiptScan} />
+          <Route path="/sustainability" component={Sustainability} />
           <Route path="/expiring" component={Expiring} />
           <Route component={NotFound} />
         </Switch>
