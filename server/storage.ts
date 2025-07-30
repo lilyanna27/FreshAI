@@ -52,7 +52,10 @@ export class MemStorage implements IStorage {
       ...insertUser, 
       id,
       firstName: insertUser.firstName ?? null,
-      lastName: insertUser.lastName ?? null
+      lastName: insertUser.lastName ?? null,
+      dietaryRestrictions: insertUser.dietaryRestrictions ?? null,
+      preferredCuisines: insertUser.preferredCuisines ?? null,
+      sustainabilityGoals: insertUser.sustainabilityGoals ?? null
     };
     this.users.set(id, user);
     return user;
@@ -76,7 +79,10 @@ export class MemStorage implements IStorage {
       id, 
       addedAt: new Date(),
       imageUrl: insertItem.imageUrl ?? null,
-      category: insertItem.category ?? null
+      category: insertItem.category ?? null,
+      storageTips: insertItem.storageTips ?? null,
+      estimatedShelfLife: insertItem.estimatedShelfLife ?? null,
+      isFromReceipt: insertItem.isFromReceipt ?? null
     };
     this.foodItems.set(id, item);
     return item;
@@ -114,7 +120,12 @@ export class MemStorage implements IStorage {
       createdAt: new Date(),
       imageUrl: insertRecipe.imageUrl ?? null,
       description: insertRecipe.description ?? null,
-      isSaved: insertRecipe.isSaved ?? false
+      isSaved: insertRecipe.isSaved ?? false,
+      dietaryTags: insertRecipe.dietaryTags ?? null,
+      cuisineType: insertRecipe.cuisineType ?? null,
+      difficulty: insertRecipe.difficulty ?? null,
+      servings: insertRecipe.servings ?? null,
+      isAiGenerated: insertRecipe.isAiGenerated ?? null
     };
     this.recipes.set(id, recipe);
     return recipe;
