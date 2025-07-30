@@ -27,9 +27,10 @@ Preferred communication style: Simple, everyday language.
 
 ### Database Layer
 - **ORM**: Drizzle ORM
-- **Database**: PostgreSQL (configured for Neon Database)
+- **Database**: PostgreSQL (live database configured)
 - **Schema Management**: Drizzle Kit for migrations
 - **Connection**: @neondatabase/serverless for serverless PostgreSQL
+- **Storage**: DatabaseStorage implementation using live PostgreSQL database
 
 ## Key Components
 
@@ -124,5 +125,19 @@ Preferred communication style: Simple, everyday language.
 - **Dev Server**: `npm run dev` starts both frontend and backend with hot reload
 - **Database Sync**: `npm run db:push` applies schema changes
 - **Type Checking**: `npm run check` validates TypeScript
+
+## Recent Changes: Latest modifications with dates
+
+### July 30, 2025
+- **Database Integration**: Added PostgreSQL database with DatabaseStorage implementation
+- **Dark Theme Update**: Applied dark theme throughout the application
+  - Dark background (gray-900)
+  - Updated all cards, modals, and content styling
+  - Improved contrast and readability
+- **UI Enhancements**: 
+  - Increased "Fresh AI" title size (text-3xl)
+  - Added Inter font family
+  - Made bottom navigation icons larger (28px) and more spread out
+  - Enhanced touch-friendly interface
 
 The application follows a clean separation of concerns with a shared schema between frontend and backend, enabling type-safe development across the full stack. The mobile-first approach ensures optimal user experience on smartphones while maintaining desktop compatibility.
