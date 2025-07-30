@@ -19,6 +19,7 @@ import Sustainability from "@/pages/sustainability";
 import Profile from "@/pages/profile";
 import FreshItems from "@/pages/fresh-items";
 import ExpiringItems from "@/pages/expiring-items";
+import AIAgent from "@/pages/ai-agent";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -39,6 +40,7 @@ function Router() {
           <Route path="/profile" component={Profile} />
           <Route path="/fresh-items" component={FreshItems} />
           <Route path="/expiring-items" component={ExpiringItems} />
+          <Route path="/ai-agent" component={AIAgent} />
           <Route component={NotFound} />
         </Switch>
       </main>
