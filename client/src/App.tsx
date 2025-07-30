@@ -16,6 +16,7 @@ import Recipes from "@/pages/recipes";
 import Expiring from "@/pages/expiring";
 import ReceiptScan from "@/pages/receipt-scan";
 import Sustainability from "@/pages/sustainability";
+import Profile from "@/pages/profile";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -33,6 +34,7 @@ function Router() {
           <Route path="/receipt-scan" component={ReceiptScan} />
           <Route path="/sustainability" component={Sustainability} />
           <Route path="/expiring" component={Expiring} />
+          <Route path="/profile" component={Profile} />
           <Route component={NotFound} />
         </Switch>
       </main>

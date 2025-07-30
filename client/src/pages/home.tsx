@@ -53,20 +53,7 @@ export default function Home() {
           <div className="absolute -bottom-6 -left-6 w-24 h-24 bg-white/10 rounded-full"></div>
         </div>
         
-        {/* Search Bar */}
-        <div className="relative mb-6">
-          <div className="bg-gray-800 rounded-2xl p-4 flex items-center">
-            <Search className="text-gray-400 mr-3" size={20} />
-            <input 
-              type="text" 
-              placeholder="Search food or items..."
-              className="bg-transparent text-white placeholder-gray-400 flex-1 outline-none"
-            />
-            <div className="w-10 h-10 bg-apple-green rounded-xl flex items-center justify-center">
-              <Search className="text-white" size={16} />
-            </div>
-          </div>
-        </div>
+
       </div>
 
       {/* My Meal Plans Section */}
