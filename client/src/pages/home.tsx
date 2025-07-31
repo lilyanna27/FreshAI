@@ -44,8 +44,8 @@ export default function Home() {
         {/* Header with Profile Button */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-white text-2xl font-bold mb-2">Hey there! 👋</h1>
-            <p className="text-white/90 text-sm">What are you cooking today?</p>
+            <h1 className="text-white text-2xl font-bold mb-2">Welcome to FreshAI!</h1>
+            <p className="text-white/90 text-sm">What is in your fridge today?</p>
           </div>
           <Link href="/profile">
             <button className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
@@ -54,20 +54,7 @@ export default function Home() {
           </Link>
         </div>
 
-        {/* Search Bar */}
-        <div className="relative mb-6">
-          <div className="bg-white rounded-2xl flex items-center px-4 py-3 shadow-lg">
-            <Search className="text-gray-400 mr-3" size={20} />
-            <input
-              type="text"
-              placeholder="Search for recipes, ingredients..."
-              className="flex-1 text-gray-700 placeholder-gray-400 bg-transparent outline-none"
-            />
-            <div className="bg-apple-green rounded-xl p-2">
-              <Search className="text-white" size={16} />
-            </div>
-          </div>
-        </div>
+
 
         {/* Action Buttons */}
         <div className="flex gap-3">
