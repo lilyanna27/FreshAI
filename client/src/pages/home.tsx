@@ -40,7 +40,7 @@ export default function Home() {
   return (
     <div className="pb-24">
       {/* Illustrated Header Section */}
-      <div className="bg-gradient-to-br from-pink-400 via-purple-500 to-indigo-600 px-6 pt-8 pb-6 rounded-b-3xl relative overflow-hidden">
+      <div className="px-6 pt-8 pb-6 rounded-b-3xl relative overflow-hidden" style={{backgroundColor: '#A0E8AF'}}>
         {/* Decorative Food Illustrations - Hand-drawn style */}
         <div className="absolute top-4 left-4 text-4xl opacity-70 transform rotate-12 filter drop-shadow-lg">🥑</div>
         <div className="absolute top-12 right-8 text-3xl opacity-60 transform -rotate-12 filter drop-shadow-lg">🍊</div>
