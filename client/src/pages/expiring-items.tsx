@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { FoodItem } from "@shared/schema";
 import { getExpirationStatus } from "@/lib/date-utils";
 import { AlertTriangle, Calendar, Clock } from "lucide-react";
+import { Link } from "wouter";
 
 export default function ExpiringItems() {
   const { data: foodItems = [], isLoading } = useQuery<FoodItem[]>({
@@ -40,119 +41,110 @@ export default function ExpiringItems() {
     <div className="p-4 pb-24">
       {/* Header */}
       <div className="mb-6">
-        <div className="bg-gradient-to-br from-orange-500 to-red-600 rounded-3xl p-6 mb-4">
-          <div className="flex items-center">
-            <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mr-4">
-              <AlertTriangle className="text-white" size={32} />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-white mb-1">Expiring Items</h1>
-              <p className="text-white/90">{expiringItems.length} items need your attention</p>
-            </div>
-          </div>
-        </div>
-
-        {expiringItems.length === 0 && (
-          <div className="bg-gray-800 rounded-3xl p-8 border border-gray-700 text-center">
-            <div className="w-20 h-20 bg-green-500/20 rounded-3xl mx-auto mb-4 flex items-center justify-center">
-              <Clock className="text-green-400" size={32} />
-            </div>
-            <h3 className="text-white font-semibold mb-2">All items are fresh!</h3>
-            <p className="text-gray-400 text-sm">No items are expiring soon. Great job managing your food!</p>
-          </div>
-        )}
+        <h1 className="text-2xl font-bold text-gray-800 mb-2" style={{fontFamily: 'Times New Roman, serif'}}>Expiring Items</h1>
+        <p className="text-gray-600" style={{fontFamily: 'Times New Roman, serif'}}>{expiringItems.length} items need your attention</p>
       </div>
 
-      {/* Expiring Items List */}
-      <div className="space-y-4">
-        {sortedItems.map((item) => {
-          const expirationInfo = getExpirationStatus(new Date(item.expirationDate));
-          const daysLeft = Math.ceil((new Date(item.expirationDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-          
-          const getUrgencyColor = (status: string) => {
-            switch (status) {
-              case 'expired': return 'from-red-500 to-red-600';
-              case 'today': return 'from-red-400 to-orange-500';
-              case 'tomorrow': return 'from-orange-400 to-yellow-500';
-              case 'soon': return 'from-yellow-400 to-orange-400';
-              default: return 'from-gray-500 to-gray-600';
-            }
-          };
-
-          const getStatusIcon = (status: string) => {
-            switch (status) {
-              case 'expired': return '⚠️';
-              case 'today': return '🔴';
-              case 'tomorrow': return '🟡';
-              case 'soon': return '🟠';
-              default: return '⏰';
-            }
-          };
-
-          return (
-            <div key={item.id} className="bg-gray-800 rounded-2xl p-4 border border-gray-700">
-              <div className="flex items-center">
-                <div className={`w-14 h-14 bg-gradient-to-br ${getUrgencyColor(expirationInfo.status)} rounded-2xl flex items-center justify-center mr-4`}>
-                  <span className="text-white text-lg">
-                    {item.category === 'vegetables' ? '🥬' : 
-                     item.category === 'fruits' ? '🍎' :
-                     item.category === 'dairy' ? '🥛' :
-                     item.category === 'meat' ? '🥩' : '🍽️'}
-                  </span>
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-1">
-                    <h3 className="font-semibold text-white">{item.name}</h3>
-                    <div className="flex items-center">
-                      <span className="mr-2">{getStatusIcon(expirationInfo.status)}</span>
-                      <span className={`text-sm font-medium ${expirationInfo.color}`}>
-                        {expirationInfo.message}
-                      </span>
-                    </div>
-                  </div>
-                  <p className="text-gray-400 text-sm mb-2">Quantity: {item.quantity}</p>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center text-xs text-gray-400">
-                      <Calendar className="w-4 h-4 mr-1" />
-                      <span>
-                        {expirationInfo.status === 'expired' 
-                          ? `Expired ${Math.abs(daysLeft)} days ago`
-                          : expirationInfo.status === 'today'
-                          ? 'Expires today'
-                          : expirationInfo.status === 'tomorrow'
-                          ? 'Expires tomorrow'
-                          : `Expires in ${daysLeft} days`
-                        }
-                      </span>
-                    </div>
-                    {item.category && (
-                      <span className="bg-gray-700 text-gray-300 px-2 py-1 rounded-full text-xs">
-                        {item.category}
-                      </span>
-                    )}
-                  </div>
-                </div>
+      {/* Expiration Tracker */}
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold text-gray-800 mb-4" style={{fontFamily: 'Times New Roman, serif'}}>Expiration Tracker</h2>
+        <div className="bg-gray-50 rounded-3xl p-6 border-2 border-gray-200">
+          {foodItems.length === 0 ? (
+            <p className="text-gray-500 text-center" style={{fontFamily: 'Times New Roman, serif'}}>No items in your fridge yet</p>
+          ) : expiringItems.length === 0 ? (
+            <div className="text-center py-8">
+              <div className="w-20 h-20 bg-green-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+                <Clock className="text-green-600" size={32} />
               </div>
-              
-              {expirationInfo.status === 'expired' && (
-                <div className="mt-3 pt-3 border-t border-gray-700">
-                  <p className="text-red-400 text-xs">
-                    <span className="font-medium">⚠️ Action needed:</span> This item has expired and should be disposed of safely.
-                  </p>
-                </div>
-              )}
-              
-              {item.storageTips && expirationInfo.status !== 'expired' && (
-                <div className="mt-3 pt-3 border-t border-gray-700">
-                  <p className="text-gray-400 text-xs">
-                    <span className="text-orange-400 font-medium">💡 Tip:</span> {item.storageTips}
-                  </p>
-                </div>
-              )}
+              <h3 className="text-gray-800 font-semibold mb-2" style={{fontFamily: 'Times New Roman, serif'}}>All items are fresh!</h3>
+              <p className="text-gray-600" style={{fontFamily: 'Times New Roman, serif'}}>No items are expiring soon. Great job managing your food!</p>
             </div>
-          );
-        })}
+          ) : (
+            <div className="space-y-3">
+              {foodItems
+                .map(item => ({
+                  ...item,
+                  expirationInfo: getExpirationStatus(new Date(item.expirationDate))
+                }))
+                .filter(item => item.expirationInfo.status !== 'fresh' || new Date(item.expirationDate).getTime() - new Date().getTime() <= 7 * 24 * 60 * 60 * 1000)
+                .sort((a, b) => {
+                  const priorityOrder = { expired: 0, today: 1, tomorrow: 2, soon: 3, fresh: 4 };
+                  return priorityOrder[a.expirationInfo.status] - priorityOrder[b.expirationInfo.status];
+                })
+                .map(item => {
+                  const getColorByStatus = (status: string) => {
+                    switch (status) {
+                      case 'expired':
+                      case 'today':
+                        return 'text-red-600';
+                      case 'tomorrow':
+                      case 'soon':
+                        return 'text-yellow-600';
+                      default:
+                        return 'text-green-600';
+                    }
+                  };
+
+                  const getDaysText = (status: string, message: string) => {
+                    if (status === 'expired') return message;
+                    if (status === 'today') return '1 day left';
+                    if (status === 'tomorrow') return '2 days left';
+                    const match = message.match(/(\d+) days/);
+                    return match ? `${match[1]} days left` : message;
+                  };
+
+                  return (
+                    <div key={item.id} className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center">
+                          <span className="font-medium text-gray-800" style={{fontFamily: 'Times New Roman, serif'}}>
+                            {item.name}
+                          </span>
+                          <span className="mx-2 text-gray-400">-</span>
+                          <span className={`font-medium ${getColorByStatus(item.expirationInfo.status)}`} style={{fontFamily: 'Times New Roman, serif'}}>
+                            {getDaysText(item.expirationInfo.status, item.expirationInfo.message)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              }
+            </div>
+          )}
+          
+          {/* Recipe Suggestions */}
+          {foodItems.filter(item => {
+            const status = getExpirationStatus(new Date(item.expirationDate));
+            return ['expired', 'today', 'tomorrow'].includes(status.status);
+          }).length > 0 && (
+            <div className="mt-6 pt-4 border-t border-gray-200">
+              <h3 className="font-semibold text-gray-800 mb-2" style={{fontFamily: 'Times New Roman, serif'}}>
+                Recipe Suggestions
+              </h3>
+              <div className="space-y-2">
+                {foodItems
+                  .filter(item => {
+                    const status = getExpirationStatus(new Date(item.expirationDate));
+                    return ['expired', 'today', 'tomorrow'].includes(status.status);
+                  })
+                  .slice(0, 3)
+                  .map(item => (
+                    <div key={`recipe-${item.id}`}>
+                      <p className="text-gray-700 font-medium" style={{fontFamily: 'Times New Roman, serif'}}>
+                        {item.name} Salad - <Link href="/recipes" className="text-blue-600 hover:underline">link</Link>
+                      </p>
+                      <p className="text-gray-600 text-sm ml-4" style={{fontFamily: 'Times New Roman, serif'}}>
+                        • uses {item.name.toLowerCase()}
+                      </p>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
+
     </div>
   );
 }
