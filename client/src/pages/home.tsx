@@ -41,7 +41,7 @@ export default function Home() {
   return (
     <div className="pb-24">
       {/* Header Section */}
-      <div className="px-6 pt-8 pb-6 relative">
+      <div className="px-6 pt-8 pb-6 relative rounded-b-3xl overflow-hidden">
         {/* Blurred background image */}
         <div 
           className="absolute inset-0"
