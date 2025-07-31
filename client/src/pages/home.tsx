@@ -3,7 +3,7 @@ import { FoodItem } from "@shared/schema";
 import { getExpirationStatus, getCurrentDateTime } from "@/lib/date-utils";
 import { CheckCircle, AlertTriangle, Plus, Clock, MapPin, Search, User } from "lucide-react";
 import { Link } from "wouter";
-import ginghamPattern from "@assets/Big Gingham_1753924418144.jpg";
+import texturedBackground from "@assets/download_1753924929079.jpg";
 
 export default function Home() {
   const { data: foodItems = [], isLoading } = useQuery<FoodItem[]>({
@@ -46,7 +46,7 @@ export default function Home() {
         <div 
           className="absolute inset-0"
           style={{
-            backgroundImage: `url(${ginghamPattern})`,
+            backgroundImage: `url(${texturedBackground})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
