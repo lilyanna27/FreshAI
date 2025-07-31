@@ -40,7 +40,7 @@ export default function Home() {
   return (
     <div className="pb-24">
       {/* Header Section */}
-      <div className="px-6 pt-8 pb-6 rounded-b-3xl" style={{backgroundColor: '#A0E8AF'}}>
+      <div className="px-6 pt-8 pb-6 rounded-b-3xl" style={{backgroundColor: '#3F784C'}}>
         {/* Header with Profile Button */}
         <div className="flex items-center justify-between mb-6">
           <div>
