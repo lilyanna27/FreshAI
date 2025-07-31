@@ -82,10 +82,10 @@ export default function Home() {
       <div className="px-6 mt-6">
 
         {/* Recipe Cards Section */}
-        <div className="mb-6">
+        <div className="mb-6 bg-green-800 rounded-3xl p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-800">Most recent recipes</h3>
-            <button className="text-apple-green text-sm font-medium">View all</button>
+            <h3 className="text-lg font-semibold text-white">Most recent recipes</h3>
+            <button className="text-green-200 text-sm font-medium hover:text-white transition-colors">View all</button>
           </div>
           
           <div className="grid grid-cols-2 gap-4">
@@ -113,20 +113,7 @@ export default function Home() {
           </div>
         </div>
         
-        {/* Featured Recipe */}
-        <div className="mb-6">
-          <div className="bg-gradient-to-br from-green-400 to-green-500 rounded-3xl p-6 relative overflow-hidden">
-            <div className="relative z-10">
-              <span className="text-white/80 text-xs font-medium uppercase tracking-wide">Recipe of the week</span>
-              <h3 className="text-white text-xl font-bold mb-2">Healthy Pasta Bowl</h3>
-              <p className="text-white/90 text-sm mb-3">Fresh ingredients, bold flavors</p>
-              <button className="bg-white text-green-600 px-4 py-2 rounded-xl text-sm font-bold">
-                Cook now
-              </button>
-            </div>
-            <div className="absolute -bottom-4 -right-4 text-6xl opacity-20">🍝</div>
-          </div>
-        </div>
+
       
 
         {/* Your Kitchen Stats */}
