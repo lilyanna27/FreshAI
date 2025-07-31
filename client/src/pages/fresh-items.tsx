@@ -29,7 +29,7 @@ export default function FreshItems() {
     <div className="p-4 pb-24">
       {/* Header */}
       <div className="mb-6">
-        <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-3xl p-6 mb-4">
+        <div className="bg-green-600 rounded-3xl p-6 mb-4">
           <div className="flex items-center">
             <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mr-4">
               <CheckCircle className="text-white" size={32} />
@@ -61,7 +61,7 @@ export default function FreshItems() {
           return (
             <div key={item.id} className="bg-gray-800 rounded-2xl p-4 border border-gray-700">
               <div className="flex items-center">
-                <div className="w-14 h-14 bg-gradient-to-br from-green-400 to-emerald-500 rounded-2xl flex items-center justify-center mr-4">
+                <div className="w-14 h-14 bg-green-500 rounded-2xl flex items-center justify-center mr-4">
                   <span className="text-white text-lg">
                     {item.category === 'vegetables' ? '🥬' : 
                      item.category === 'fruits' ? '🍎' :

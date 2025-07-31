@@ -12,7 +12,7 @@ export default function Profile() {
       {/* Profile Header */}
       <div className="bg-gray-800 rounded-3xl p-6 mb-6 border border-gray-700">
         <div className="flex items-center mb-4">
-          <div className="w-20 h-20 bg-gradient-to-br from-apple-green to-emerald-500 rounded-full flex items-center justify-center mr-4">
+          <div className="w-20 h-20 bg-green-600 rounded-full flex items-center justify-center mr-4">
             <User className="w-10 h-10 text-white" />
           </div>
           <div>
@@ -38,7 +38,7 @@ export default function Profile() {
       </div>
 
       {/* Sustainability Impact */}
-      <div className="bg-gradient-to-br from-green-600 to-emerald-600 rounded-3xl p-6 mb-6">
+      <div className="bg-emerald-600 rounded-3xl p-6 mb-6">
         <div className="flex items-center mb-3">
           <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center mr-3">
             <span className="text-white text-xl">🌱</span>

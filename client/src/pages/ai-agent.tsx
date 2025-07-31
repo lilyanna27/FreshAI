@@ -66,7 +66,7 @@ export default function AIAgent() {
   return (
     <div className="flex flex-col h-screen">
       {/* Header */}
-      <div className="bg-gradient-to-br from-purple-600 to-blue-600 p-6 text-white">
+      <div className="bg-blue-600 p-6 text-white">
         <div className="flex items-center">
           <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mr-4">
             <Bot className="text-white" size={32} />
