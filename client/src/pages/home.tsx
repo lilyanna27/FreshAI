@@ -42,25 +42,33 @@ export default function Home() {
     <div className="pb-24">
       {/* Header Section */}
       <div className="px-6 pt-8 pb-6 relative overflow-hidden">
-        {/* Wavy background */}
+        {/* Abstract flowing pattern background */}
         <div 
           className="absolute inset-0"
           style={{
-            background: `linear-gradient(45deg, 
-              #4ade80 0%, 
-              #22c55e 25%, 
-              #16a34a 50%, 
-              #15803d 75%, 
-              #166534 100%),
-              radial-gradient(circle at 20% 30%, #4ade80 0%, transparent 50%),
-              radial-gradient(circle at 80% 70%, #15803d 0%, transparent 50%),
-              radial-gradient(circle at 40% 80%, #22c55e 0%, transparent 40%)`,
-            backgroundSize: '300% 300%, 200% 200%, 250% 250%, 180% 180%',
-            animation: 'wave 8s ease-in-out infinite'
+            background: `linear-gradient(135deg, #7c8471 0%, #8b9475 50%, #9aa485 100%)`
           }}
         ></div>
-        {/* Dark overlay for text readability */}
-        <div className="absolute inset-0 bg-black bg-opacity-40"></div>
+        {/* Abstract flowing shapes overlay */}
+        <div 
+          className="absolute inset-0 opacity-30"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='200' height='200' viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20,40 C50,20 70,50 100,30 C130,10 140,40 160,40 C180,40 190,20 200,40 L200,200 L0,200 L0,60 C10,45 10,55 20,40 Z' fill='%23f5f5dc' fill-opacity='0.4'/%3E%3Cpath d='M40,80 C65,65 85,95 115,75 C145,55 150,80 175,80 C195,80 200,65 200,80 L200,200 L20,200 L20,100 C28,88 36,92 40,80 Z' fill='%23f5f5dc' fill-opacity='0.3'/%3E%3Cpath d='M60,120 C80,110 100,140 130,120 C160,100 160,120 180,120 C195,120 200,110 200,120 L200,200 L40,200 L40,140 C46,130 54,128 60,120 Z' fill='%23f5f5dc' fill-opacity='0.2'/%3E%3C/svg%3E")`,
+            backgroundSize: '150px 150px',
+            animation: 'float 12s ease-in-out infinite'
+          }}
+        ></div>
+        {/* Additional flowing layer */}
+        <div 
+          className="absolute inset-0 opacity-20"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='180' height='180' viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30,60 C55,45 75,75 105,55 C135,35 140,60 165,60 C175,60 180,50 180,60 L180,180 L0,180 L0,80 C15,70 20,75 30,60 Z' fill='%23f5f5dc' fill-opacity='0.6'/%3E%3Cpath d='M50,100 C70,85 90,115 120,95 C150,75 155,100 175,100 C180,100 180,90 180,100 L180,180 L30,180 L30,120 C38,108 42,105 50,100 Z' fill='%23f5f5dc' fill-opacity='0.4'/%3E%3C/svg%3E")`,
+            backgroundSize: '120px 120px',
+            animation: 'float-reverse 15s ease-in-out infinite'
+          }}
+        ></div>
+        {/* Subtle overlay for text readability */}
+        <div className="absolute inset-0 bg-black bg-opacity-20"></div>
         <div className="relative z-10">
         {/* Header with Profile Button */}
         <div className="flex items-center justify-between mb-6">

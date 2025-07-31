@@ -87,6 +87,31 @@
     }
   }
 
+  /* Floating animations for abstract patterns */
+  @keyframes float {
+    0%, 100% {
+      transform: translateX(0) translateY(0) scale(1);
+    }
+    33% {
+      transform: translateX(10px) translateY(-5px) scale(1.02);
+    }
+    66% {
+      transform: translateX(-8px) translateY(8px) scale(0.98);
+    }
+  }
+
+  @keyframes float-reverse {
+    0%, 100% {
+      transform: translateX(0) translateY(0) scale(1);
+    }
+    33% {
+      transform: translateX(-12px) translateY(6px) scale(0.99);
+    }
+    66% {
+      transform: translateX(15px) translateY(-10px) scale(1.01);
+    }
+  }
+
   /* Ensure bottom navigation doesn't interfere with scrolling */
   nav[class*="fixed bottom-0"] {
     pointer-events: none;
