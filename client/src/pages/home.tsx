@@ -66,8 +66,8 @@ export default function Home() {
         <div className="flex items-center justify-between mb-6">
           <div className="flex-1">
             <div className="text-center">
-              <h1 className="text-white text-3xl font-bold mb-2" style={{fontFamily: 'Times New Roman, serif'}}>Hi, Anika!</h1>
-              <p className="text-white/90 text-base" style={{fontFamily: 'Times New Roman, serif'}}>Smart food management for modern kitchens</p>
+              <h1 className="text-white text-3xl font-bold mb-2" style={{fontFamily: 'Dancing Script, cursive'}}>Hi, Anika!</h1>
+              <p className="text-white/90 text-base" style={{fontFamily: 'Caveat, cursive'}}>Smart food management for modern kitchens</p>
             </div>
           </div>
           <Link href="/profile">
