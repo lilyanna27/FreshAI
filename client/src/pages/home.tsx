@@ -41,16 +41,18 @@ export default function Home() {
   return (
     <div className="pb-24">
       {/* Header Section */}
-      <div 
-        className="px-6 pt-8 pb-6 relative"
-        style={{
-          backgroundImage: `url(${ginghamPattern})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-          filter: 'blur(2px)'
-        }}
-      >
+      <div className="px-6 pt-8 pb-6 relative">
+        {/* Blurred background image */}
+        <div 
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `url(${ginghamPattern})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            filter: 'blur(2px)'
+          }}
+        ></div>
         {/* Dark overlay for text readability */}
         <div className="absolute inset-0 bg-black bg-opacity-40"></div>
         <div className="relative z-10">
