@@ -40,7 +40,7 @@ export default function Home() {
   return (
     <div className="pb-24">
       {/* Header Section */}
-      <div className="px-6 pt-8 pb-6 rounded-b-3xl" style={{backgroundColor: '#3F784C'}}>
+      <div className="px-6 pt-8 pb-6 rounded-b-3xl" style={{backgroundColor: '#35AB56'}}>
         {/* Header with Profile Button */}
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -57,19 +57,19 @@ export default function Home() {
         {/* Action Buttons */}
         <div className="flex gap-3">
           <Link href="/receipt-scan" className="flex-1">
-            <button className="w-full bg-gradient-to-r from-orange-400 to-orange-500 backdrop-blur-sm rounded-2xl p-4 flex items-center justify-center hover:from-orange-500 hover:to-orange-600 transition-all duration-300 shadow-lg border-2 border-white/20 transform hover:scale-105">
+            <button className="w-full bg-orange-500 rounded-2xl p-4 flex items-center justify-center hover:bg-orange-600 transition-all duration-300 shadow-lg border-2 border-white/20 transform hover:scale-105">
               <div className="flex items-center">
-                <span className="text-2xl mr-3 filter drop-shadow-sm">📋</span>
-                <span className="text-white font-medium drop-shadow-sm" style={{fontFamily: 'Times New Roman, serif'}}>Scan Receipt</span>
+                <span className="text-2xl mr-3">📋</span>
+                <span className="text-white font-medium" style={{fontFamily: 'Times New Roman, serif'}}>Scan Receipt</span>
               </div>
             </button>
           </Link>
           
           <Link href="/ai-agent" className="flex-1">
-            <button className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 backdrop-blur-sm rounded-2xl p-4 flex items-center justify-center hover:from-emerald-600 hover:to-emerald-700 transition-all duration-300 shadow-lg border-2 border-white/20 transform hover:scale-105">
+            <button className="w-full bg-emerald-600 rounded-2xl p-4 flex items-center justify-center hover:bg-emerald-700 transition-all duration-300 shadow-lg border-2 border-white/20 transform hover:scale-105">
               <div className="flex items-center">
-                <span className="text-2xl mr-3 filter drop-shadow-sm">🤖</span>
-                <span className="text-white font-medium drop-shadow-sm" style={{fontFamily: 'Times New Roman, serif'}}>AI Chef</span>
+                <span className="text-2xl mr-3">🤖</span>
+                <span className="text-white font-medium" style={{fontFamily: 'Times New Roman, serif'}}>AI Chef</span>
               </div>
             </button>
           </Link>
@@ -87,24 +87,22 @@ export default function Home() {
           </div>
           
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-gradient-to-br from-orange-400 to-red-500 rounded-3xl p-4 shadow-xl transform hover:scale-105 transition-all duration-300 border-2 border-white/20">
-              <div className="w-full h-24 bg-gradient-to-br from-yellow-200 to-orange-200 rounded-2xl mb-3 flex items-center justify-center shadow-lg relative overflow-hidden">
-                <div className="absolute inset-0 bg-yellow-100/50 rounded-2xl"></div>
-                <span className="text-3xl relative z-10 filter drop-shadow-sm">🍳</span>
+            <div className="bg-red-500 rounded-3xl p-4 shadow-xl transform hover:scale-105 transition-all duration-300 border-2 border-white/20">
+              <div className="w-full h-24 bg-orange-200 rounded-2xl mb-3 flex items-center justify-center shadow-lg">
+                <span className="text-3xl">🍳</span>
               </div>
-              <h4 className="text-white font-bold text-sm mb-1 drop-shadow-sm" style={{fontFamily: 'Times New Roman, serif'}}>Scrambled Eggs</h4>
+              <h4 className="text-white font-bold text-sm mb-1" style={{fontFamily: 'Times New Roman, serif'}}>Scrambled Eggs</h4>
               <p className="text-orange-100 text-xs mb-2" style={{fontFamily: 'Times New Roman, serif'}}>5 min • Easy</p>
               <div className="flex items-center">
                 <span className="text-xs text-yellow-200" style={{fontFamily: 'Times New Roman, serif'}}>⭐ 4.8</span>
               </div>
             </div>
             
-            <div className="bg-gradient-to-br from-emerald-500 to-green-600 rounded-3xl p-4 shadow-xl transform hover:scale-105 transition-all duration-300 border-2 border-white/20">
-              <div className="w-full h-24 bg-gradient-to-br from-green-200 to-emerald-200 rounded-2xl mb-3 flex items-center justify-center shadow-lg relative overflow-hidden">
-                <div className="absolute inset-0 bg-green-100/50 rounded-2xl"></div>
-                <span className="text-3xl relative z-10 filter drop-shadow-sm">🥗</span>
+            <div className="bg-green-600 rounded-3xl p-4 shadow-xl transform hover:scale-105 transition-all duration-300 border-2 border-white/20">
+              <div className="w-full h-24 bg-green-200 rounded-2xl mb-3 flex items-center justify-center shadow-lg">
+                <span className="text-3xl">🥗</span>
               </div>
-              <h4 className="text-white font-bold text-sm mb-1 drop-shadow-sm" style={{fontFamily: 'Times New Roman, serif'}}>Garden Salad</h4>
+              <h4 className="text-white font-bold text-sm mb-1" style={{fontFamily: 'Times New Roman, serif'}}>Garden Salad</h4>
               <p className="text-green-100 text-xs mb-2" style={{fontFamily: 'Times New Roman, serif'}}>10 min • Fresh</p>
               <div className="flex items-center">
                 <span className="text-xs text-green-200" style={{fontFamily: 'Times New Roman, serif'}}>⭐ 4.6</span>
@@ -119,26 +117,26 @@ export default function Home() {
         {/* Your Kitchen Stats */}
         <div className="grid grid-cols-2 gap-4 mb-6">
           <Link href="/fresh-items">
-            <div className="bg-gradient-to-br from-emerald-400 to-teal-500 rounded-3xl p-4 shadow-xl transform hover:scale-105 transition-all duration-300 border-2 border-white/20">
+            <div className="bg-emerald-500 rounded-3xl p-4 shadow-xl transform hover:scale-105 transition-all duration-300 border-2 border-white/20">
               <div className="flex items-center">
-                <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mr-3 shadow-lg">
-                  <span className="text-2xl filter drop-shadow-sm">✨</span>
+                <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center mr-3 shadow-lg">
+                  <span className="text-2xl">✨</span>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-white drop-shadow-sm" style={{fontFamily: 'Times New Roman, serif'}}>{stats.freshItems}</p>
+                  <p className="text-2xl font-bold text-white" style={{fontFamily: 'Times New Roman, serif'}}>{stats.freshItems}</p>
                   <p className="text-xs text-emerald-100" style={{fontFamily: 'Times New Roman, serif'}}>Fresh items</p>
                 </div>
               </div>
             </div>
           </Link>
           <Link href="/expiring-items">
-            <div className="bg-gradient-to-br from-amber-400 to-orange-500 rounded-3xl p-4 shadow-xl transform hover:scale-105 transition-all duration-300 border-2 border-white/20">
+            <div className="bg-orange-500 rounded-3xl p-4 shadow-xl transform hover:scale-105 transition-all duration-300 border-2 border-white/20">
               <div className="flex items-center">
-                <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mr-3 shadow-lg">
-                  <span className="text-2xl filter drop-shadow-sm">⏰</span>
+                <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center mr-3 shadow-lg">
+                  <span className="text-2xl">⏰</span>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-white drop-shadow-sm" style={{fontFamily: 'Times New Roman, serif'}}>{stats.expiringItems}</p>
+                  <p className="text-2xl font-bold text-white" style={{fontFamily: 'Times New Roman, serif'}}>{stats.expiringItems}</p>
                   <p className="text-xs text-orange-100" style={{fontFamily: 'Times New Roman, serif'}}>Expiring soon</p>
                 </div>
               </div>
