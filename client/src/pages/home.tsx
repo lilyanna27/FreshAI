@@ -3,6 +3,7 @@ import { FoodItem } from "@shared/schema";
 import { getExpirationStatus, getCurrentDateTime } from "@/lib/date-utils";
 import { CheckCircle, AlertTriangle, Plus, Clock, MapPin, Search, User } from "lucide-react";
 import { Link } from "wouter";
+import ginghamPattern from "@assets/Big Gingham_1753924418144.jpg";
 
 export default function Home() {
   const { data: foodItems = [], isLoading } = useQuery<FoodItem[]>({
@@ -40,7 +41,18 @@ export default function Home() {
   return (
     <div className="pb-24">
       {/* Header Section */}
-      <div className="px-6 pt-8 pb-6" style={{backgroundColor: '#3F784C'}}>
+      <div 
+        className="px-6 pt-8 pb-6 relative"
+        style={{
+          backgroundImage: `url(${ginghamPattern})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        }}
+      >
+        {/* Dark overlay for text readability */}
+        <div className="absolute inset-0 bg-black bg-opacity-40"></div>
+        <div className="relative z-10">
         {/* Header with Profile Button */}
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -68,6 +80,7 @@ export default function Home() {
             <div className="text-2xl font-bold text-white" style={{fontFamily: 'Times New Roman, serif'}}>{stats.expiringItems}</div>
             <div className="text-white/80 text-sm" style={{fontFamily: 'Times New Roman, serif'}}>Expiring</div>
           </div>
+        </div>
         </div>
       </div>
 
