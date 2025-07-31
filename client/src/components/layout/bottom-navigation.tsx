@@ -14,7 +14,7 @@ export default function BottomNavigation() {
 
   return (
     <nav 
-      className="fixed bottom-0 left-0 right-0 border-t border-gray-200 z-30 relative"
+      className="fixed bottom-4 left-4 right-4 border border-gray-200 z-30 relative rounded-2xl overflow-hidden"
       style={{
         backgroundImage: `url(${texturedBackground})`,
         backgroundSize: 'cover',
