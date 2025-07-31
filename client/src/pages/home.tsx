@@ -47,7 +47,8 @@ export default function Home() {
           backgroundImage: `url(${ginghamPattern})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat'
+          backgroundRepeat: 'no-repeat',
+          filter: 'blur(2px)'
         }}
       >
         {/* Dark overlay for text readability */}
