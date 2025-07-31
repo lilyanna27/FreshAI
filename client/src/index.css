@@ -70,6 +70,22 @@
     overflow-x: hidden;
   }
   
+  /* Wavy animation for header background */
+  @keyframes wave {
+    0%, 100% {
+      background-position: 0% 50%, 0% 0%, 100% 100%, 50% 50%;
+    }
+    25% {
+      background-position: 100% 50%, 50% 50%, 0% 0%, 100% 0%;
+    }
+    50% {
+      background-position: 50% 100%, 100% 100%, 50% 50%, 0% 100%;
+    }
+    75% {
+      background-position: 0% 0%, 0% 50%, 100% 0%, 50% 0%;
+    }
+  }
+
   /* Ensure bottom navigation doesn't interfere with scrolling */
   nav[class*="fixed bottom-0"] {
     pointer-events: none;

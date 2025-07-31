@@ -42,15 +42,21 @@ export default function Home() {
     <div className="pb-24">
       {/* Header Section */}
       <div className="px-6 pt-8 pb-6 relative overflow-hidden">
-        {/* Blurred background image */}
+        {/* Wavy background */}
         <div 
           className="absolute inset-0"
           style={{
-            backgroundImage: `url(${texturedBackground})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat',
-            filter: 'blur(2px)'
+            background: `linear-gradient(45deg, 
+              #4ade80 0%, 
+              #22c55e 25%, 
+              #16a34a 50%, 
+              #15803d 75%, 
+              #166534 100%),
+              radial-gradient(circle at 20% 30%, #4ade80 0%, transparent 50%),
+              radial-gradient(circle at 80% 70%, #15803d 0%, transparent 50%),
+              radial-gradient(circle at 40% 80%, #22c55e 0%, transparent 40%)`,
+            backgroundSize: '300% 300%, 200% 200%, 250% 250%, 180% 180%',
+            animation: 'wave 8s ease-in-out infinite'
           }}
         ></div>
         {/* Dark overlay for text readability */}
