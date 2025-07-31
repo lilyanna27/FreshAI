@@ -12,7 +12,7 @@ export default function BottomNavigation() {
   const [location] = useLocation();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-gray-900/90 backdrop-blur-sm border-t border-gray-700 z-30">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 z-30">
       <div className="max-w-md mx-auto flex justify-around px-4 py-3">
         {navigationItems.map(({ path, icon: Icon, label, emoji }) => {
           const isActive = location === path;
@@ -20,11 +20,11 @@ export default function BottomNavigation() {
             <Link key={path} href={path}>
               <button className={`flex flex-col items-center py-2 px-3 rounded-xl transition-all duration-200 ${
                 isActive 
-                  ? 'bg-apple-green text-white' 
-                  : 'text-gray-400 hover:text-gray-300'
+                  ? 'bg-green-500 text-white' 
+                  : 'text-gray-500 hover:text-gray-700'
               }`}>
                 <div className="w-6 h-6 flex items-center justify-center mb-1">
-                  <Icon size={20} className={isActive ? 'text-white' : 'text-gray-400'} />
+                  <Icon size={20} className={isActive ? 'text-white' : 'text-gray-500'} strokeWidth={1.5} />
                 </div>
                 <span className="text-xs font-medium">{label}</span>
               </button>
