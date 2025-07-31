@@ -82,32 +82,32 @@ export default function Home() {
       <div className="px-6 mt-6">
 
         {/* Recipe Cards Section */}
-        <div className="mb-6 bg-green-800 rounded-3xl p-6">
+        <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-white">Most recent recipes</h3>
-            <button className="text-green-200 text-sm font-medium hover:text-white transition-colors">View all</button>
+            <h3 className="text-lg font-semibold text-gray-800">Most recent recipes</h3>
+            <button className="text-apple-green text-sm font-medium">View all</button>
           </div>
           
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-white rounded-3xl p-4 shadow-lg">
+            <div className="bg-green-800 rounded-3xl p-4 shadow-lg">
               <div className="w-full h-24 bg-gradient-to-br from-orange-200 to-orange-300 rounded-2xl mb-3 flex items-center justify-center">
                 <span className="text-3xl">🍳</span>
               </div>
-              <h4 className="text-gray-800 font-bold text-sm mb-1">Scrambled Eggs</h4>
-              <p className="text-gray-500 text-xs mb-2">5 min • Easy</p>
+              <h4 className="text-white font-bold text-sm mb-1">Scrambled Eggs</h4>
+              <p className="text-green-200 text-xs mb-2">5 min • Easy</p>
               <div className="flex items-center">
-                <span className="text-xs text-green-500">⭐ 4.8</span>
+                <span className="text-xs text-green-300">⭐ 4.8</span>
               </div>
             </div>
             
-            <div className="bg-white rounded-3xl p-4 shadow-lg">
+            <div className="bg-green-800 rounded-3xl p-4 shadow-lg">
               <div className="w-full h-24 bg-gradient-to-br from-green-200 to-green-300 rounded-2xl mb-3 flex items-center justify-center">
                 <span className="text-3xl">🥗</span>
               </div>
-              <h4 className="text-gray-800 font-bold text-sm mb-1">Garden Salad</h4>
-              <p className="text-gray-500 text-xs mb-2">10 min • Fresh</p>
+              <h4 className="text-white font-bold text-sm mb-1">Garden Salad</h4>
+              <p className="text-green-200 text-xs mb-2">10 min • Fresh</p>
               <div className="flex items-center">
-                <span className="text-xs text-green-500">⭐ 4.6</span>
+                <span className="text-xs text-green-300">⭐ 4.6</span>
               </div>
             </div>
           </div>
