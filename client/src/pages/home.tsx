@@ -39,18 +39,10 @@ export default function Home() {
 
   return (
     <div className="pb-24">
-      {/* Illustrated Header Section */}
-      <div className="px-6 pt-8 pb-6 rounded-b-3xl relative overflow-hidden" style={{backgroundColor: '#A0E8AF'}}>
-        {/* Decorative Food Illustrations - Hand-drawn style */}
-        <div className="absolute top-4 left-4 text-4xl opacity-70 transform rotate-12 filter drop-shadow-lg">🥑</div>
-        <div className="absolute top-12 right-8 text-3xl opacity-60 transform -rotate-12 filter drop-shadow-lg">🍊</div>
-        <div className="absolute bottom-8 left-8 text-3xl opacity-50 transform rotate-45 filter drop-shadow-lg">🍇</div>
-        <div className="absolute bottom-4 right-4 text-2xl opacity-60 transform -rotate-12 filter drop-shadow-lg">🥕</div>
-        <div className="absolute top-20 left-20 text-2xl opacity-40 transform rotate-90 filter drop-shadow-lg">🍌</div>
-        <div className="absolute bottom-16 right-16 text-3xl opacity-50 transform -rotate-45 filter drop-shadow-lg">🍅</div>
-        
+      {/* Header Section */}
+      <div className="px-6 pt-8 pb-6 rounded-b-3xl" style={{backgroundColor: '#A0E8AF'}}>
         {/* Header with Profile Button */}
-        <div className="flex items-center justify-between mb-6 relative z-10">
+        <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-white text-2xl font-bold mb-2 drop-shadow-lg" style={{fontFamily: 'Times New Roman, serif'}}>Fresh & Creative! 🎨</h1>
             <p className="text-white/90 text-sm drop-shadow-sm" style={{fontFamily: 'Times New Roman, serif'}}>What delicious art will you create today?</p>
@@ -63,7 +55,7 @@ export default function Home() {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-3 relative z-10">
+        <div className="flex gap-3">
           <Link href="/receipt-scan" className="flex-1">
             <button className="w-full bg-gradient-to-r from-orange-400 to-orange-500 backdrop-blur-sm rounded-2xl p-4 flex items-center justify-center hover:from-orange-500 hover:to-orange-600 transition-all duration-300 shadow-lg border-2 border-white/20 transform hover:scale-105">
               <div className="flex items-center">
