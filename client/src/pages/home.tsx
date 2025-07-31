@@ -69,42 +69,24 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Category Circles */}
-        <div className="flex justify-between">
-          <Link href="/fridge">
-            <div className="flex flex-col items-center">
-              <div className="w-16 h-16 bg--to-br to-pink-500 rounded-2xl flex items-center justify-center mb-2 shadow-lg">
-                <span className="text-2xl">◫</span>
+        {/* Action Buttons */}
+        <div className="flex gap-3">
+          <Link href="/receipt-scan" className="flex-1">
+            <button className="w-full bg-white/20 backdrop-blur-sm rounded-2xl p-4 flex items-center justify-center hover:bg-white/30 transition-colors">
+              <div className="flex items-center">
+                <span className="text-2xl mr-3">📋</span>
+                <span className="text-white font-medium">Scan Receipt</span>
               </div>
-              <span className="text-white text-xs font-medium">Currently in fridge</span>
-            </div>
+            </button>
           </Link>
           
-          <Link href="/recipes">
-            <div className="flex flex-col items-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-red-400 to-red-500 rounded-2xl flex items-center justify-center mb-2 shadow-lg">
-                <span className="text-2xl">🍝</span>
+          <Link href="/ai-agent" className="flex-1">
+            <button className="w-full bg-white/20 backdrop-blur-sm rounded-2xl p-4 flex items-center justify-center hover:bg-white/30 transition-colors">
+              <div className="flex items-center">
+                <span className="text-2xl mr-3">🤖</span>
+                <span className="text-white font-medium">AI Chef</span>
               </div>
-              <span className="text-white text-xs font-medium">Recipes</span>
-            </div>
-          </Link>
-          
-          <Link href="/expiring-items">
-            <div className="flex flex-col items-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-400 rounded-2xl flex items-center justify-center mb-2 shadow-lg">
-                <span className="text-2xl">⏰</span>
-              </div>
-              <span className="text-white text-xs font-medium">Expiring</span>
-            </div>
-          </Link>
-          
-          <Link href="/ai-agent">
-            <div className="flex flex-col items-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-purple-500 rounded-2xl flex items-center justify-center mb-2 shadow-lg">
-                <span className="text-2xl">🤖</span>
-              </div>
-              <span className="text-white text-xs font-medium">AI Chef</span>
-            </div>
+            </button>
           </Link>
         </div>
       </div>
