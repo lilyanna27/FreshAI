@@ -64,9 +64,11 @@ export default function Home() {
         <div className="relative z-10">
         {/* Header with Profile Button */}
         <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-white text-3xl font-bold mb-2" style={{fontFamily: 'Times New Roman, serif'}}>FreshAI</h1>
-            <p className="text-white/90 text-base" style={{fontFamily: 'Times New Roman, serif'}}>Smart food management for modern kitchens</p>
+          <div className="flex-1">
+            <div className="text-center">
+              <h1 className="text-white text-3xl font-bold mb-2" style={{fontFamily: 'Times New Roman, serif'}}>Hi, Anika!</h1>
+              <p className="text-white/90 text-base" style={{fontFamily: 'Times New Roman, serif'}}>Smart food management for modern kitchens</p>
+            </div>
           </div>
           <Link href="/profile">
             <button className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
