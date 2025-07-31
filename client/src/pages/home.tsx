@@ -84,7 +84,7 @@ export default function Home() {
         {/* Recipe Cards Section */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-800">Popular recipes</h3>
+            <h3 className="text-lg font-semibold text-gray-800">Most recent recipes</h3>
             <button className="text-apple-green text-sm font-medium">View all</button>
           </div>
           
