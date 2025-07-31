@@ -153,6 +153,52 @@ export default function Home() {
             </div>
           </Link>
         </div>
+
+        {/* Bottom Doodle Illustration */}
+        <div className="mt-8 mb-4 px-4">
+          <div className="relative h-24 bg-gradient-to-r from-yellow-100 via-pink-50 to-purple-100 rounded-3xl overflow-hidden border-2 border-purple-200/50">
+            {/* Doodle Elements */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              {/* Wavy lines */}
+              <svg className="absolute w-full h-full opacity-30" viewBox="0 0 400 100">
+                <path 
+                  d="M0,50 Q50,20 100,50 T200,50 T300,50 T400,50" 
+                  stroke="#7c3aed" 
+                  strokeWidth="2" 
+                  fill="none"
+                  className="animate-pulse"
+                />
+                <path 
+                  d="M0,70 Q30,40 60,70 T120,70 T180,70 T240,70 T300,70 T360,70 T400,70" 
+                  stroke="#ec4899" 
+                  strokeWidth="1.5" 
+                  fill="none"
+                  className="animate-pulse"
+                  style={{animationDelay: '0.5s'}}
+                />
+              </svg>
+              
+              {/* Scattered food doodles */}
+              <div className="absolute top-2 left-8 text-lg opacity-60 transform rotate-12">🍎</div>
+              <div className="absolute top-4 left-20 text-sm opacity-50 transform -rotate-12">✨</div>
+              <div className="absolute bottom-3 left-16 text-xs opacity-40">•</div>
+              <div className="absolute top-3 right-20 text-lg opacity-60 transform -rotate-12">🥕</div>
+              <div className="absolute bottom-2 right-8 text-sm opacity-50 transform rotate-12">🌿</div>
+              <div className="absolute top-6 left-32 text-xs opacity-40 transform rotate-45">•</div>
+              <div className="absolute bottom-4 right-32 text-xs opacity-40 transform -rotate-45">•</div>
+              <div className="absolute top-2 left-48 text-sm opacity-50">○</div>
+              <div className="absolute bottom-2 left-56 text-xs opacity-40">•</div>
+              <div className="absolute top-4 right-48 text-sm opacity-50 transform rotate-12">○</div>
+              
+              {/* Center message */}
+              <div className="text-center z-10">
+                <p className="text-purple-600/70 text-xs font-medium" style={{fontFamily: 'Times New Roman, serif'}}>
+                  Happy cooking! 🍽️
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
     </div>
