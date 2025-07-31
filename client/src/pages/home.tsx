@@ -41,7 +41,7 @@ export default function Home() {
   return (
     <div className="pb-24">
       {/* Header Section */}
-      <div className="px-6 pt-8 pb-6 relative rounded-t-3xl rounded-b-3xl overflow-hidden">
+      <div className="px-6 pt-8 pb-6 relative overflow-hidden">
         {/* Blurred background image */}
         <div 
           className="absolute inset-0"
@@ -88,7 +88,7 @@ export default function Home() {
       </div>
 
       {/* Content Section */}
-      <div className="px-6 mt-8">
+      <div className="px-6 pt-8 rounded-t-3xl -mt-6 relative z-10" style={{backgroundColor: 'hsl(45, 20%, 97%)'}}>
         {/* Quick Actions */}
         <div className="mb-8">
           <h2 className="text-xl font-semibold text-gray-800 mb-4" style={{fontFamily: 'Times New Roman, serif'}}>Quick Actions</h2>
