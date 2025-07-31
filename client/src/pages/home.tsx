@@ -66,8 +66,8 @@ export default function Home() {
         <div className="flex items-center justify-between mb-6">
           <div className="flex-1">
             <div className="text-center">
-              <h1 className="text-white text-3xl font-bold mb-2" style={{fontFamily: 'JetBrains Mono, monospace'}}>Hi, Anika!</h1>
-              <p className="text-white/90 text-base" style={{fontFamily: 'JetBrains Mono, monospace'}}>Smart food management for modern kitchens</p>
+              <h1 className="text-white text-3xl font-bold mb-2" style={{fontFamily: 'Poppins, sans-serif'}}>Hi, Anika!</h1>
+              <p className="text-white/90 text-base" style={{fontFamily: 'Poppins, sans-serif'}}>Smart food management for modern kitchens</p>
             </div>
           </div>
           <Link href="/profile">
