@@ -63,11 +63,25 @@ export default function Fridge() {
   }
 
   return (
-    <div className="p-4 pb-24">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-white mb-1">What would you like to cook?</h1>
+    <div className="pb-24">
+      {/* Header Section */}
+      <div className="px-6 pt-8 pb-6 relative overflow-hidden">
+        {/* Solid dark green background */}
+        <div 
+          className="absolute inset-0 bg-green-800"
+          style={{
+            backgroundColor: '#1e3a2e'
+          }}
+        ></div>
+        <div className="relative z-10">
+          <h1 className="text-2xl font-bold text-white mb-1" style={{fontFamily: 'Times New Roman, serif'}}>My Fridge</h1>
+          <p className="text-white/90" style={{fontFamily: 'Times New Roman, serif'}}>Manage your food inventory</p>
+        </div>
       </div>
+      
+      {/* Content Section */}
+      <div className="px-6 pt-8 rounded-t-3xl -mt-6 relative z-10" style={{backgroundColor: 'hsl(45, 20%, 97%)'}}>
+      {/* Search and Filters Section */}
       
       {/* Search Bar */}
       <div className="relative mb-6">
@@ -177,6 +191,7 @@ export default function Fridge() {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 }

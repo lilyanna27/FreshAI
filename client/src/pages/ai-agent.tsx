@@ -65,21 +65,32 @@ export default function AIAgent() {
 
   return (
     <div className="flex flex-col h-screen">
-      {/* Header */}
-      <div className="bg-blue-600 p-6 text-white">
-        <div className="flex items-center">
-          <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mr-4">
-            <Bot className="text-white" size={32} />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold mb-1">AI Kitchen Assistant</h1>
-            <p className="text-white/90">Your smart cooking companion</p>
+      {/* Header Section */}
+      <div className="px-6 pt-8 pb-6 relative overflow-hidden">
+        {/* Solid dark green background */}
+        <div 
+          className="absolute inset-0 bg-green-800"
+          style={{
+            backgroundColor: '#1e3a2e'
+          }}
+        ></div>
+        <div className="relative z-10">
+          <div className="flex items-center">
+            <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mr-4">
+              <Bot className="text-white" size={32} />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold mb-1 text-white" style={{fontFamily: 'Times New Roman, serif'}}>AI Kitchen Assistant</h1>
+              <p className="text-white/90" style={{fontFamily: 'Times New Roman, serif'}}>Your smart cooking companion</p>
+            </div>
           </div>
         </div>
       </div>
-
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      
+      {/* Content Section */}
+      <div className="flex-1 rounded-t-3xl -mt-6 relative z-10 flex flex-col" style={{backgroundColor: 'hsl(45, 20%, 97%)'}}>
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message) => (
           <div
             key={message.id}
@@ -162,24 +173,25 @@ export default function AIAgent() {
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="p-4 bg-gray-900 pb-24">
-        <div className="flex space-x-2 overflow-x-auto">
-          {[
-            "Suggest a recipe",
-            "Storage tips",
-            "Meal planning help",
-            "Ingredient substitutes"
-          ].map((suggestion) => (
-            <button
-              key={suggestion}
-              onClick={() => setInputMessage(suggestion)}
-              className="flex-shrink-0 bg-gray-800 text-gray-300 px-4 py-2 rounded-full text-sm border border-gray-700 hover:bg-gray-700 transition-colors"
-            >
-              <Sparkles className="inline mr-2" size={14} />
-              {suggestion}
-            </button>
-          ))}
+        {/* Quick Actions */}
+        <div className="p-4 pb-24" style={{backgroundColor: 'hsl(45, 20%, 97%)'}}>
+          <div className="flex space-x-2 overflow-x-auto">
+            {[
+              "Suggest a recipe",
+              "Storage tips",
+              "Meal planning help",
+              "Ingredient substitutes"
+            ].map((suggestion) => (
+              <button
+                key={suggestion}
+                onClick={() => setInputMessage(suggestion)}
+                className="flex-shrink-0 bg-gray-800 text-gray-300 px-4 py-2 rounded-full text-sm border border-gray-700 hover:bg-gray-700 transition-colors"
+              >
+                <Sparkles className="inline mr-2" size={14} />
+                {suggestion}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </div>
