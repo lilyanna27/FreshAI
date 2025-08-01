@@ -26,18 +26,25 @@ export default function FreshItems() {
   }
 
   return (
-    <div className="pb-24 px-6 pt-8" style={{backgroundColor: 'hsl(45, 20%, 97%)'}}>
-      <div className="mb-6">
+    <div className="pb-24" style={{backgroundColor: 'hsl(45, 20%, 97%)'}}>
+      {/* Header */}
+      <div className="px-6 py-4" style={{backgroundColor: '#1e3a2e'}}>
+        <div className="text-center">
+          <h1 className="text-white text-xl font-bold" style={{fontFamily: 'Times New Roman, serif'}}>FreshAI</h1>
+        </div>
+      </div>
 
-        {freshItems.length === 0 && (
-          <div className="bg-gray-800 rounded-3xl p-8 border border-gray-700 text-center">
-            <div className="w-20 h-20 bg-green-500/20 rounded-3xl mx-auto mb-4 flex items-center justify-center">
-              <CheckCircle className="text-green-400" size={32} />
+      <div className="px-6 pt-8">
+        <div className="mb-6">
+          {freshItems.length === 0 && (
+            <div className="bg-gray-800 rounded-3xl p-8 border border-gray-700 text-center">
+              <div className="w-20 h-20 bg-green-500/20 rounded-3xl mx-auto mb-4 flex items-center justify-center">
+                <CheckCircle className="text-green-400" size={32} />
+              </div>
+              <h3 className="text-white font-semibold mb-2">No fresh items yet</h3>
+              <p className="text-gray-400 text-sm">Add some ingredients to start tracking freshness</p>
             </div>
-            <h3 className="text-white font-semibold mb-2">No fresh items yet</h3>
-            <p className="text-gray-400 text-sm">Add some ingredients to start tracking freshness</p>
-          </div>
-        )}
+          )}
         </div>
 
         {/* Fresh Items List */}
@@ -91,6 +98,7 @@ export default function FreshItems() {
           );
         })}
         </div>
+      </div>
     </div>
   );
 }

@@ -38,12 +38,20 @@ export default function ExpiringItems() {
   }
 
   return (
-    <div className="p-4 pb-24">
+    <div className="pb-24" style={{backgroundColor: 'hsl(45, 20%, 97%)'}}>
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800 mb-2" style={{fontFamily: 'Times New Roman, serif'}}>Expiring Items</h1>
-        <p className="text-gray-600" style={{fontFamily: 'Times New Roman, serif'}}>{expiringItems.length} items need your attention</p>
+      <div className="px-6 py-4" style={{backgroundColor: '#1e3a2e'}}>
+        <div className="text-center">
+          <h1 className="text-white text-xl font-bold" style={{fontFamily: 'Times New Roman, serif'}}>FreshAI</h1>
+        </div>
       </div>
+
+      <div className="p-4">
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-800 mb-2" style={{fontFamily: 'Times New Roman, serif'}}>Expiring Items</h1>
+          <p className="text-gray-600" style={{fontFamily: 'Times New Roman, serif'}}>{expiringItems.length} items need your attention</p>
+        </div>
 
       {/* Expiration Tracker */}
       <div className="mb-6">
@@ -144,7 +152,7 @@ export default function ExpiringItems() {
           )}
         </div>
       </div>
-
+      </div>
     </div>
   );
 }

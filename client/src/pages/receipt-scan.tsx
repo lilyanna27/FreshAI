@@ -49,9 +49,17 @@ export default function ReceiptScan() {
 
   if (scanState === 'scanning') {
     return (
-      <div className="p-4 pb-24">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-white mb-6">Scanning Receipt</h1>
+      <div className="pb-24" style={{backgroundColor: 'hsl(45, 20%, 97%)'}}>
+        {/* Header */}
+        <div className="px-6 py-4" style={{backgroundColor: '#1e3a2e'}}>
+          <div className="text-center">
+            <h1 className="text-white text-xl font-bold" style={{fontFamily: 'Times New Roman, serif'}}>FreshAI</h1>
+          </div>
+        </div>
+        
+        <div className="p-4">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-white mb-6">Scanning Receipt</h1>
           <div className="bg-gray-800 rounded-3xl p-8 border border-gray-700 relative overflow-hidden">
             <div className="relative z-10">
               <div className="w-32 h-32 bg-gradient-to-br from-apple-green to-emerald-500 rounded-3xl mx-auto mb-6 flex items-center justify-center animate-pulse">
@@ -63,6 +71,7 @@ export default function ReceiptScan() {
             <div className="absolute -top-8 -right-8 w-32 h-32 bg-white/5 rounded-full"></div>
             <div className="absolute -bottom-6 -left-6 w-24 h-24 bg-white/5 rounded-full"></div>
           </div>
+          </div>
         </div>
       </div>
     );
@@ -70,9 +79,17 @@ export default function ReceiptScan() {
 
   if (scanState === 'processing') {
     return (
-      <div className="p-4 pb-24">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-white mb-6">Processing Receipt</h1>
+      <div className="pb-24" style={{backgroundColor: 'hsl(45, 20%, 97%)'}}>
+        {/* Header */}
+        <div className="px-6 py-4" style={{backgroundColor: '#1e3a2e'}}>
+          <div className="text-center">
+            <h1 className="text-white text-xl font-bold" style={{fontFamily: 'Times New Roman, serif'}}>FreshAI</h1>
+          </div>
+        </div>
+        
+        <div className="p-4">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-white mb-6">Processing Receipt</h1>
           <div className="bg-gray-800 rounded-3xl p-8 border border-gray-700 relative overflow-hidden">
             <div className="relative z-10">
               <div className="w-32 h-32 bg-gradient-to-br from-orange-400 to-red-500 rounded-3xl mx-auto mb-6 flex items-center justify-center">
@@ -87,6 +104,7 @@ export default function ReceiptScan() {
             <div className="absolute -top-8 -right-8 w-32 h-32 bg-white/5 rounded-full"></div>
             <div className="absolute -bottom-6 -left-6 w-24 h-24 bg-white/5 rounded-full"></div>
           </div>
+          </div>
         </div>
       </div>
     );
@@ -94,11 +112,19 @@ export default function ReceiptScan() {
 
   if (scanState === 'results') {
     return (
-      <div className="p-4 pb-24">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-white mb-1">Items Found</h1>
-          <p className="text-gray-400 text-sm">Review and confirm the items to add to your fridge</p>
+      <div className="pb-24" style={{backgroundColor: 'hsl(45, 20%, 97%)'}}>
+        {/* Header */}
+        <div className="px-6 py-4" style={{backgroundColor: '#1e3a2e'}}>
+          <div className="text-center">
+            <h1 className="text-white text-xl font-bold" style={{fontFamily: 'Times New Roman, serif'}}>FreshAI</h1>
+          </div>
         </div>
+        
+        <div className="p-4">
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-white mb-1">Items Found</h1>
+            <p className="text-gray-400 text-sm">Review and confirm the items to add to your fridge</p>
+          </div>
 
         <div className="space-y-3 mb-6">
           {scannedItems.map((item, index) => (
@@ -149,16 +175,25 @@ export default function ReceiptScan() {
             Add Items
           </Button>
         </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="p-4 pb-24">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-white mb-1">Scan Receipt</h1>
-        <p className="text-gray-400 text-sm">Quickly add items from your grocery receipt</p>
+    <div className="pb-24" style={{backgroundColor: 'hsl(45, 20%, 97%)'}}>
+      {/* Header */}
+      <div className="px-6 py-4" style={{backgroundColor: '#1e3a2e'}}>
+        <div className="text-center">
+          <h1 className="text-white text-xl font-bold" style={{fontFamily: 'Times New Roman, serif'}}>FreshAI</h1>
+        </div>
       </div>
+
+      <div className="p-4">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-white mb-1">Scan Receipt</h1>
+          <p className="text-gray-400 text-sm">Quickly add items from your grocery receipt</p>
+        </div>
 
       {/* Scan Options */}
       <div className="space-y-4 mb-8">
@@ -224,6 +259,7 @@ export default function ReceiptScan() {
             </div>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

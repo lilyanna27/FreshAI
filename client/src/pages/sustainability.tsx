@@ -62,11 +62,19 @@ export default function Sustainability() {
   };
 
   return (
-    <div className="p-4 pb-24">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-white mb-1">Your Impact</h1>
-        <p className="text-gray-400 text-sm">Track your sustainability progress this month</p>
+    <div className="pb-24" style={{backgroundColor: 'hsl(45, 20%, 97%)'}}>
+      {/* Header */}
+      <div className="px-6 py-4" style={{backgroundColor: '#1e3a2e'}}>
+        <div className="text-center">
+          <h1 className="text-white text-xl font-bold" style={{fontFamily: 'Times New Roman, serif'}}>FreshAI</h1>
+        </div>
       </div>
+
+      <div className="p-4">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-white mb-1">Your Impact</h1>
+          <p className="text-gray-400 text-sm">Track your sustainability progress this month</p>
+        </div>
 
       {/* Main Stats Grid */}
       <div className="grid grid-cols-2 gap-4 mb-6">
@@ -174,6 +182,7 @@ export default function Sustainability() {
               <p className="text-gray-400 text-xs">Turn unavoidable waste into nutrient-rich soil</p>
             </div>
           </div>
+        </div>
         </div>
       </div>
     </div>

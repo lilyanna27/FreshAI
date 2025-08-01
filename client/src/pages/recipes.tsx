@@ -48,25 +48,42 @@ export default function Recipes() {
 
   if (recipesLoading) {
     return (
-      <div className="p-4">
-        <div className="mb-6">
-          <div className="bg-gray-700 animate-pulse rounded h-6 w-32 mb-2"></div>
-          <div className="bg-gray-700 animate-pulse rounded h-4 w-48"></div>
+      <div className="pb-24" style={{backgroundColor: 'hsl(45, 20%, 97%)'}}>
+        {/* Header */}
+        <div className="px-6 py-4" style={{backgroundColor: '#1e3a2e'}}>
+          <div className="text-center">
+            <h1 className="text-white text-xl font-bold" style={{fontFamily: 'Times New Roman, serif'}}>FreshAI</h1>
+          </div>
         </div>
-        <div className="space-y-4">
-          {[1,2].map(i => (
-            <div key={i} className="bg-gray-700 animate-pulse rounded-xl h-48"></div>
-          ))}
+        
+        <div className="p-4">
+          <div className="mb-6">
+            <div className="bg-gray-700 animate-pulse rounded h-6 w-32 mb-2"></div>
+            <div className="bg-gray-700 animate-pulse rounded h-4 w-48"></div>
+          </div>
+          <div className="space-y-4">
+            {[1,2].map(i => (
+              <div key={i} className="bg-gray-700 animate-pulse rounded-xl h-48"></div>
+            ))}
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="pb-24 px-6 pt-8" style={{backgroundColor: 'hsl(45, 20%, 97%)'}}>
-      {/* Recipe Content */}
+    <div className="pb-24" style={{backgroundColor: 'hsl(45, 20%, 97%)'}}>
+      {/* Header */}
+      <div className="px-6 py-4" style={{backgroundColor: '#1e3a2e'}}>
+        <div className="text-center">
+          <h1 className="text-white text-xl font-bold" style={{fontFamily: 'Times New Roman, serif'}}>FreshAI</h1>
+        </div>
+      </div>
 
-      {/* Suggested Recipes */}
+      <div className="px-6 pt-8">
+        {/* Recipe Content */}
+
+        {/* Suggested Recipes */}
       <div className="mb-6">
         <h3 className="text-lg font-medium text-white mb-3">Suggested for You</h3>
         
@@ -125,6 +142,7 @@ export default function Recipes() {
             ))}
           </div>
         )}
+      </div>
       </div>
     </div>
   );

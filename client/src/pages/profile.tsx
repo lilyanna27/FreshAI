@@ -8,8 +8,16 @@ export default function Profile() {
   ];
 
   return (
-    <div className="pb-24 px-6 pt-8" style={{backgroundColor: 'hsl(45, 20%, 97%)'}}>
-      {/* Profile Header */}
+    <div className="pb-24" style={{backgroundColor: 'hsl(45, 20%, 97%)'}}>
+      {/* Header */}
+      <div className="px-6 py-4" style={{backgroundColor: '#1e3a2e'}}>
+        <div className="text-center">
+          <h1 className="text-white text-xl font-bold" style={{fontFamily: 'Times New Roman, serif'}}>FreshAI</h1>
+        </div>
+      </div>
+
+      <div className="px-6 pt-8">
+        {/* Profile Header */}
       <div className="bg-gray-800 rounded-3xl p-6 mb-6 border border-gray-700">
         <div className="flex items-center mb-4">
           <div className="w-20 h-20 bg-green-600 rounded-full flex items-center justify-center mr-4">
@@ -85,6 +93,7 @@ export default function Profile() {
           </div>
           <span className="text-red-400 font-medium">Sign Out</span>
         </button>
+      </div>
       </div>
     </div>
   );

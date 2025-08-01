@@ -65,8 +65,15 @@ export default function AIAgent() {
 
   return (
     <div className="flex flex-col h-screen" style={{backgroundColor: 'hsl(45, 20%, 97%)'}}>
+      {/* Header */}
+      <div className="px-6 py-4" style={{backgroundColor: '#1e3a2e'}}>
+        <div className="text-center">
+          <h1 className="text-white text-xl font-bold" style={{fontFamily: 'Times New Roman, serif'}}>FreshAI</h1>
+        </div>
+      </div>
+
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 pt-8">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message) => (
           <div
             key={message.id}
