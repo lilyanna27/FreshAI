@@ -65,15 +65,8 @@ export default function Fridge() {
   }
 
   return (
-    <div className="pb-24 min-h-screen" style={{backgroundColor: 'hsl(45, 20%, 97%)'}}>
-      {/* Header */}
-      <div className="px-6 py-4" style={{backgroundColor: '#1e3a2e'}}>
-        <div className="text-center">
-          <h1 className="text-white text-xl font-bold" style={{fontFamily: 'Times New Roman, serif'}}>FreshAI</h1>
-        </div>
-      </div>
-
-      <div className="px-6 pt-8">
+    <div className="pb-24 px-6 pt-8 min-h-screen" style={{backgroundColor: 'hsl(45, 20%, 97%)'}}>
+      <div>
         {/* Header with title and add button */}
       <div className="flex items-center justify-between mb-2">
         <div>

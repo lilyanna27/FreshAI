@@ -49,14 +49,7 @@ export default function Recipes() {
   if (recipesLoading) {
     return (
       <div className="pb-24" style={{backgroundColor: 'hsl(45, 20%, 97%)'}}>
-        {/* Header */}
-        <div className="px-6 py-4" style={{backgroundColor: '#1e3a2e'}}>
-          <div className="text-center">
-            <h1 className="text-white text-xl font-bold" style={{fontFamily: 'Times New Roman, serif'}}>FreshAI</h1>
-          </div>
-        </div>
-        
-        <div className="p-4">
+        <div className="px-6 pt-8">
           <div className="mb-6">
             <div className="bg-gray-700 animate-pulse rounded h-6 w-32 mb-2"></div>
             <div className="bg-gray-700 animate-pulse rounded h-4 w-48"></div>
@@ -72,15 +65,8 @@ export default function Recipes() {
   }
 
   return (
-    <div className="pb-24" style={{backgroundColor: 'hsl(45, 20%, 97%)'}}>
-      {/* Header */}
-      <div className="px-6 py-4" style={{backgroundColor: '#1e3a2e'}}>
-        <div className="text-center">
-          <h1 className="text-white text-xl font-bold" style={{fontFamily: 'Times New Roman, serif'}}>FreshAI</h1>
-        </div>
-      </div>
-
-      <div className="px-6 pt-8">
+    <div className="pb-24 px-6 pt-8" style={{backgroundColor: 'hsl(45, 20%, 97%)'}}>
+      <div>
         {/* Recipe Content */}
 
         {/* Suggested Recipes */}

@@ -26,15 +26,8 @@ export default function FreshItems() {
   }
 
   return (
-    <div className="pb-24" style={{backgroundColor: 'hsl(45, 20%, 97%)'}}>
-      {/* Header */}
-      <div className="px-6 py-4" style={{backgroundColor: '#1e3a2e'}}>
-        <div className="text-center">
-          <h1 className="text-white text-xl font-bold" style={{fontFamily: 'Times New Roman, serif'}}>FreshAI</h1>
-        </div>
-      </div>
-
-      <div className="px-6 pt-8">
+    <div className="px-6 pt-8 pb-24" style={{backgroundColor: 'hsl(45, 20%, 97%)'}}>
+      <div>
         <div className="mb-6">
           {freshItems.length === 0 && (
             <div className="bg-gray-800 rounded-3xl p-8 border border-gray-700 text-center">
