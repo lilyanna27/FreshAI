@@ -15,7 +15,7 @@ export default function BottomNavigation() {
 
   return (
     <nav 
-      className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-80 max-w-sm border border-gray-200 z-30 relative rounded-2xl overflow-hidden"
+      className="fixed bottom-0 left-0 right-0 border-t border-gray-200 z-30 relative"
       style={{
         backgroundColor: '#1e3a2e'
       }}
@@ -28,8 +28,7 @@ export default function BottomNavigation() {
             return (
               <Link key={path} href={path}>
                 <button className="flex flex-col items-center transition-all duration-200">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center mb-1 shadow-lg" 
-                       style={{backgroundColor: '#1e3a2e'}}>
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center mb-1 shadow-lg bg-orange-500">
                     <Icon size={24} className="text-white" strokeWidth={1.5} />
                   </div>
                   <span className="text-xs font-medium text-white" style={{fontFamily: 'Times New Roman, serif'}}>{label}</span>
