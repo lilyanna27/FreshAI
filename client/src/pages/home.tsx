@@ -43,33 +43,13 @@ export default function Home() {
     <div className="pb-24">
       {/* Header Section */}
       <div className="px-6 pt-8 pb-6 relative overflow-hidden">
-        {/* Deep green abstract pattern background */}
+        {/* Solid dark green background */}
         <div 
-          className="absolute inset-0"
+          className="absolute inset-0 bg-green-800"
           style={{
-            background: `linear-gradient(135deg, #1f4037 0%, #2d5a3d 25%, #16402b 50%, #0d2818 75%, #0a1f14 100%)`
+            backgroundColor: '#1e3a2e'
           }}
         ></div>
-        {/* Abstract flowing shapes overlay to mimic the pattern */}
-        <div 
-          className="absolute inset-0 opacity-30"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='400' height='400' viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50,100 C120,60 180,140 280,100 C350,70 380,120 400,120 L400,400 L0,400 L0,150 C20,120 30,130 50,100 Z' fill='%23f5f5dc' fill-opacity='0.4'/%3E%3Cpath d='M80,180 C140,150 200,220 300,180 C360,150 380,200 400,200 L400,400 L40,400 L40,230 C55,205 65,210 80,180 Z' fill='%23f5f5dc' fill-opacity='0.3'/%3E%3Cpath d='M120,260 C170,240 220,300 320,260 C370,240 390,280 400,280 L400,400 L80,400 L80,310 C95,285 105,280 120,260 Z' fill='%23f5f5dc' fill-opacity='0.25'/%3E%3Cpath d='M20,80 C80,50 140,110 200,80 C260,50 300,90 340,80 C370,75 390,85 400,90 L400,400 L0,400 L0,120 C10,100 15,95 20,80 Z' fill='%23f5f5dc' fill-opacity='0.2'/%3E%3C/svg%3E")`,
-            backgroundSize: '200px 200px',
-            animation: 'float 15s ease-in-out infinite'
-          }}
-        ></div>
-        {/* Additional flowing layer for depth */}
-        <div 
-          className="absolute inset-0 opacity-20"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='300' height='300' viewBox='0 0 300 300' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M60,120 C100,90 150,150 210,120 C260,95 280,135 300,135 L300,300 L0,300 L0,160 C25,140 40,145 60,120 Z' fill='%23f5f5dc' fill-opacity='0.35'/%3E%3Cpath d='M90,200 C130,170 180,230 240,200 C280,175 300,215 300,215 L300,300 L60,300 L60,240 C72,220 82,225 90,200 Z' fill='%23f5f5dc' fill-opacity='0.25'/%3E%3C/svg%3E")`,
-            backgroundSize: '150px 150px',
-            animation: 'float-reverse 18s ease-in-out infinite'
-          }}
-        ></div>
-        {/* Subtle overlay for text readability */}
-        <div className="absolute inset-0 bg-black bg-opacity-25"></div>
         <div className="relative z-10">
         {/* Header with Profile Button */}
         <div className="flex items-center justify-between mb-6">
