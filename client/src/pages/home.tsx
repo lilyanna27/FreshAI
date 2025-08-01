@@ -44,7 +44,7 @@ export default function Home() {
   }
 
   return (
-    <div className="pb-24">
+    <div className="pb-8">
       {/* Header Section */}
       <div className="px-6 pt-8 pb-6 relative overflow-hidden">
         {/* Solid dark green background */}
