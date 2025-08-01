@@ -4,7 +4,7 @@ import { getExpirationStatus, getCurrentDateTime } from "@/lib/date-utils";
 import { CheckCircle, AlertTriangle, Plus, Clock, MapPin, Search, User } from "lucide-react";
 import { Link } from "wouter";
 import texturedBackground from "@assets/download_1753924929079.jpg";
-import abstractPatternImage from "@assets/download (1)_1753926143358.jpg";
+import abstractPatternImage from "@assets/download (2)_1754078671579.jpg";
 
 export default function Home() {
   const { data: foodItems = [], isLoading } = useQuery<FoodItem[]>({
