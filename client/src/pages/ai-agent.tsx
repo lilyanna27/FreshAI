@@ -64,33 +64,9 @@ export default function AIAgent() {
   };
 
   return (
-    <div className="flex flex-col h-screen">
-      {/* Header Section */}
-      <div className="px-6 pt-8 pb-6 relative overflow-hidden">
-        {/* Solid dark green background */}
-        <div 
-          className="absolute inset-0 bg-green-800"
-          style={{
-            backgroundColor: '#1e3a2e'
-          }}
-        ></div>
-        <div className="relative z-10">
-          <div className="flex items-center">
-            <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mr-4">
-              <Bot className="text-white" size={32} />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold mb-1 text-white" style={{fontFamily: 'Times New Roman, serif'}}>AI Kitchen Assistant</h1>
-              <p className="text-white/90" style={{fontFamily: 'Times New Roman, serif'}}>Your smart cooking companion</p>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      {/* Content Section */}
-      <div className="flex-1 rounded-t-3xl -mt-6 relative z-10 flex flex-col" style={{backgroundColor: 'hsl(45, 20%, 97%)'}}>
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+    <div className="flex flex-col h-screen" style={{backgroundColor: 'hsl(45, 20%, 97%)'}}>
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 pt-8">
         {messages.map((message) => (
           <div
             key={message.id}
@@ -193,7 +169,6 @@ export default function AIAgent() {
             ))}
           </div>
         </div>
-      </div>
     </div>
   );
 }

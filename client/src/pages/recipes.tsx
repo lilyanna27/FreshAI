@@ -63,24 +63,7 @@ export default function Recipes() {
   }
 
   return (
-    <div className="pb-24">
-      {/* Header Section */}
-      <div className="px-6 pt-8 pb-6 relative overflow-hidden">
-        {/* Solid dark green background */}
-        <div 
-          className="absolute inset-0 bg-green-800"
-          style={{
-            backgroundColor: '#1e3a2e'
-          }}
-        ></div>
-        <div className="relative z-10">
-          <h1 className="text-2xl font-bold text-white mb-1" style={{fontFamily: 'Times New Roman, serif'}}>Recipes</h1>
-          <p className="text-white/90" style={{fontFamily: 'Times New Roman, serif'}}>Based on items in your fridge</p>
-        </div>
-      </div>
-      
-      {/* Content Section */}
-      <div className="px-6 pt-8 rounded-t-3xl -mt-6 relative z-10" style={{backgroundColor: 'hsl(45, 20%, 97%)'}}>
+    <div className="pb-24 px-6 pt-8" style={{backgroundColor: 'hsl(45, 20%, 97%)'}}>
       {/* Recipe Content */}
 
       {/* Suggested Recipes */}
@@ -142,7 +125,6 @@ export default function Recipes() {
             ))}
           </div>
         )}
-      </div>
       </div>
     </div>
   );

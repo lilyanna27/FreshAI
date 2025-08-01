@@ -26,32 +26,8 @@ export default function FreshItems() {
   }
 
   return (
-    <div className="pb-24">
-      {/* Header Section */}
-      <div className="px-6 pt-8 pb-6 relative overflow-hidden">
-        {/* Solid dark green background */}
-        <div 
-          className="absolute inset-0 bg-green-800"
-          style={{
-            backgroundColor: '#1e3a2e'
-          }}
-        ></div>
-        <div className="relative z-10">
-          <div className="flex items-center">
-            <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mr-4">
-              <CheckCircle className="text-white" size={32} />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-white mb-1" style={{fontFamily: 'Times New Roman, serif'}}>Fresh Items</h1>
-              <p className="text-white/90" style={{fontFamily: 'Times New Roman, serif'}}>{freshItems.length} items are fresh and ready to use</p>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      {/* Content Section */}
-      <div className="px-6 pt-8 rounded-t-3xl -mt-6 relative z-10" style={{backgroundColor: 'hsl(45, 20%, 97%)'}}>
-        <div className="mb-6">
+    <div className="pb-24 px-6 pt-8" style={{backgroundColor: 'hsl(45, 20%, 97%)'}}>
+      <div className="mb-6">
 
         {freshItems.length === 0 && (
           <div className="bg-gray-800 rounded-3xl p-8 border border-gray-700 text-center">
@@ -115,7 +91,6 @@ export default function FreshItems() {
           );
         })}
         </div>
-      </div>
     </div>
   );
 }

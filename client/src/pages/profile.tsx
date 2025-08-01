@@ -8,31 +8,7 @@ export default function Profile() {
   ];
 
   return (
-    <div className="pb-24">
-      {/* Header Section */}
-      <div className="px-6 pt-8 pb-6 relative overflow-hidden">
-        {/* Solid dark green background */}
-        <div 
-          className="absolute inset-0 bg-green-800"
-          style={{
-            backgroundColor: '#1e3a2e'
-          }}
-        ></div>
-        <div className="relative z-10">
-          <div className="flex items-center">
-            <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mr-4">
-              <User className="text-white" size={32} />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-white mb-1" style={{fontFamily: 'Times New Roman, serif'}}>Profile</h1>
-              <p className="text-white/90" style={{fontFamily: 'Times New Roman, serif'}}>Manage your account and preferences</p>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      {/* Content Section */}
-      <div className="px-6 pt-8 rounded-t-3xl -mt-6 relative z-10" style={{backgroundColor: 'hsl(45, 20%, 97%)'}}>
+    <div className="pb-24 px-6 pt-8" style={{backgroundColor: 'hsl(45, 20%, 97%)'}}>
       {/* Profile Header */}
       <div className="bg-gray-800 rounded-3xl p-6 mb-6 border border-gray-700">
         <div className="flex items-center mb-4">
@@ -109,7 +85,6 @@ export default function Profile() {
           </div>
           <span className="text-red-400 font-medium">Sign Out</span>
         </button>
-      </div>
       </div>
     </div>
   );
