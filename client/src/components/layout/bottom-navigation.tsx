@@ -16,14 +16,9 @@ export default function BottomNavigation() {
     <nav 
       className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-80 max-w-sm border border-gray-200 z-30 relative rounded-2xl overflow-hidden"
       style={{
-        backgroundImage: `url(${texturedBackground})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
+        backgroundColor: '#1e3a2e'
       }}
     >
-      {/* Dark overlay for content readability */}
-      <div className="absolute inset-0 bg-black bg-opacity-40"></div>
       <div className="flex justify-around px-4 py-3 relative z-10">
         {navigationItems.map(({ path, icon: Icon, label, emoji }) => {
           const isActive = location === path;
