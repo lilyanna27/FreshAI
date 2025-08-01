@@ -85,7 +85,7 @@ export default function Home() {
             <div className="text-white/80 text-sm" style={{fontFamily: 'Times New Roman, serif'}}>Fresh</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-white" style={{fontFamily: 'Times New Roman, serif'}}>{stats.expiringItems}</div>
+            <div className="text-2xl font-bold text-red-500" style={{fontFamily: 'Times New Roman, serif'}}>{stats.expiringItems}</div>
             <div className="text-white/80 text-sm" style={{fontFamily: 'Times New Roman, serif'}}>Expiring</div>
           </div>
         </div>
