@@ -1,12 +1,13 @@
 import { Link, useLocation } from "wouter";
-import { Home, Refrigerator, ChefHat, Bot } from "lucide-react";
+import { Home, Refrigerator, ChefHat, Bot, User, ScanLine } from "lucide-react";
 import texturedBackground from "@assets/download_1753924929079.jpg";
 
 const navigationItems = [
   { path: "/", icon: Home, label: "Home", emoji: "🏠" },
   { path: "/fridge", icon: Refrigerator, label: "Fridge", emoji: "🥬" },
-  { path: "/recipes", icon: ChefHat, label: "Recipes", emoji: "👨‍🍳" },
-  { path: "/ai-agent", icon: Bot, label: "AI Agent", emoji: "🤖" },
+  { path: "/receipt-scan", icon: ScanLine, label: "Scan", emoji: "📷", isCenter: true },
+  { path: "/ai-agent", icon: Bot, label: "AI Chat", emoji: "🤖" },
+  { path: "/profile", icon: User, label: "Profile", emoji: "👤" },
 ];
 
 export default function BottomNavigation() {
@@ -19,9 +20,24 @@ export default function BottomNavigation() {
         backgroundColor: '#1e3a2e'
       }}
     >
-      <div className="flex justify-around px-4 py-3 relative z-10">
-        {navigationItems.map(({ path, icon: Icon, label, emoji }) => {
+      <div className="flex justify-around items-center px-4 py-3 relative z-10">
+        {navigationItems.map(({ path, icon: Icon, label, emoji, isCenter }) => {
           const isActive = location === path;
+          
+          if (isCenter) {
+            return (
+              <Link key={path} href={path}>
+                <button className="flex flex-col items-center transition-all duration-200">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center mb-1 shadow-lg" 
+                       style={{backgroundColor: '#1e3a2e'}}>
+                    <Icon size={24} className="text-white" strokeWidth={1.5} />
+                  </div>
+                  <span className="text-xs font-medium text-white" style={{fontFamily: 'Times New Roman, serif'}}>{label}</span>
+                </button>
+              </Link>
+            );
+          }
+          
           return (
             <Link key={path} href={path}>
               <button className={`flex flex-col items-center py-2 px-3 rounded-xl transition-all duration-200 ${
@@ -32,7 +48,7 @@ export default function BottomNavigation() {
                 <div className="w-6 h-6 flex items-center justify-center mb-1">
                   <Icon size={20} className={isActive ? 'text-white' : 'text-white/80'} strokeWidth={1.5} />
                 </div>
-                <span className="text-xs font-medium">{label}</span>
+                <span className="text-xs font-medium" style={{fontFamily: 'Times New Roman, serif'}}>{label}</span>
               </button>
             </Link>
           );
