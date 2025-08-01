@@ -3,10 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { FoodItem } from "@shared/schema";
 import { getExpirationStatus } from "@/lib/date-utils";
 import FoodItemCard from "@/components/ui/food-item-card";
-import { Search } from "lucide-react";
+import { Search, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
-type FilterType = 'all' | 'fresh' | 'expiring' | 'expired';
+type FilterType = 'all' | 'vegetables' | 'fruits' | 'dairy' | 'meat';
 
 export default function Fridge() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -21,26 +21,28 @@ export default function Fridge() {
     
     if (activeFilter === 'all') return matchesSearch;
     
-    const status = getExpirationStatus(new Date(item.expirationDate));
-    
-    switch (activeFilter) {
-      case 'fresh':
-        return matchesSearch && status.status === 'fresh';
-      case 'expiring':
-        return matchesSearch && ['today', 'tomorrow', 'soon'].includes(status.status);
-      case 'expired':
-        return matchesSearch && status.status === 'expired';
-      default:
-        return matchesSearch;
-    }
+    return matchesSearch && item.category === activeFilter;
   });
 
   const filterButtons = [
     { key: 'all' as const, label: 'All' },
-    { key: 'fresh' as const, label: 'Fresh' },
-    { key: 'expiring' as const, label: 'Expiring' },
-    { key: 'expired' as const, label: 'Expired' },
+    { key: 'vegetables' as const, label: 'Vegetables' },
+    { key: 'fruits' as const, label: 'Fruits' },
+    { key: 'dairy' as const, label: 'Dairy' },
+    { key: 'meat' as const, label: 'Meat' },
   ];
+
+  const stats = {
+    totalItems: foodItems.length,
+    freshItems: foodItems.filter(item => {
+      const status = getExpirationStatus(new Date(item.expirationDate));
+      return status.status === 'fresh';
+    }).length,
+    expiringItems: foodItems.filter(item => {
+      const status = getExpirationStatus(new Date(item.expirationDate));
+      return ['today', 'tomorrow', 'soon'].includes(status.status);
+    }).length,
+  };
 
   if (isLoading) {
     return (
@@ -63,108 +65,92 @@ export default function Fridge() {
   }
 
   return (
-    <div className="pb-24 px-6 pt-8" style={{backgroundColor: 'hsl(45, 20%, 97%)'}}>
-      {/* Search and Filters Section */}
-      
+    <div className="pb-24 px-6 pt-8 min-h-screen" style={{backgroundColor: 'hsl(45, 20%, 97%)'}}>
+      {/* Header with title and add button */}
+      <div className="flex items-center justify-between mb-2">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800 mb-1" style={{fontFamily: 'Times New Roman, serif'}}>My Fridge</h1>
+          <p className="text-gray-500" style={{fontFamily: 'Times New Roman, serif'}}>{stats.totalItems} items stored</p>
+        </div>
+        <button 
+          className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg"
+          style={{backgroundColor: '#1e3a2e'}}
+        >
+          <Plus className="text-white" size={24} />
+        </button>
+      </div>
+
       {/* Search Bar */}
-      <div className="relative mb-6">
-        <div className="bg-gray-800 rounded-2xl p-4 flex items-center border border-gray-700">
+      <div className="relative mb-6 mt-8">
+        <div className="bg-gray-100 rounded-full px-4 py-3 flex items-center">
           <Search className="text-gray-400 mr-3" size={20} />
           <input 
             type="text" 
-            placeholder="Search for your query"
+            placeholder="Search your fridge..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="bg-transparent text-white placeholder-gray-400 flex-1 outline-none"
+            className="bg-transparent text-gray-700 placeholder-gray-400 flex-1 outline-none"
+            style={{fontFamily: 'Times New Roman, serif'}}
           />
-          <div className="w-10 h-10 bg-apple-green rounded-xl flex items-center justify-center">
-            <Search className="text-white" size={16} />
-          </div>
         </div>
       </div>
       
       {/* Filter Tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-2 mb-6">
+      <div className="flex gap-2 overflow-x-auto pb-2 mb-8">
         {filterButtons.map(({ key, label }) => (
           <button
             key={key}
             onClick={() => setActiveFilter(key)}
-            className={`px-6 py-3 rounded-2xl text-sm font-medium whitespace-nowrap transition-all duration-200 ${
+            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 ${
               activeFilter === key
-                ? 'bg-apple-green text-white shadow-lg'
-                : 'bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-700'
+                ? 'text-white shadow-lg'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
+            style={{
+              backgroundColor: activeFilter === key ? '#1e3a2e' : '',
+              fontFamily: 'Times New Roman, serif'
+            }}
           >
             {label}
           </button>
         ))}
       </div>
 
-      {/* Latest Recipes Section */}
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold text-white mb-4">Latest Recipes</h3>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-gray-800 rounded-3xl p-4 border border-gray-700">
-            <div className="w-full h-20 bg-gradient-to-br from-orange-400 to-red-500 rounded-2xl mb-3 flex items-center justify-center">
-              <span className="text-white text-2xl">🍔</span>
-            </div>
-            <h4 className="text-white font-medium text-sm mb-1">Special Burger</h4>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-400 text-xs">❤️ 45</span>
-              <span className="text-gray-400 text-xs">⭐ 4.8</span>
-            </div>
-          </div>
-          <div className="bg-gray-800 rounded-3xl p-4 border border-gray-700">
-            <div className="w-full h-20 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl mb-3 flex items-center justify-center">
-              <span className="text-white text-2xl">☕</span>
-            </div>
-            <h4 className="text-white font-medium text-sm mb-1">Filter Coffee</h4>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-400 text-xs">❤️ 32</span>
-              <span className="text-gray-400 text-xs">⭐ 4.6</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Recipe of the Week */}
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold text-white mb-4">Recipe of the week</h3>
-        <div className="bg-gradient-to-br from-pink-400 to-orange-400 rounded-3xl p-6 relative overflow-hidden">
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h4 className="text-white font-semibold text-lg mb-1">Summer Smoothie</h4>
-                <p className="text-white/80 text-sm">Fresh and healthy drink</p>
-              </div>
-              <div className="bg-white/20 rounded-2xl px-3 py-1">
-                <span className="text-white text-sm font-bold">4.9 ⭐</span>
-              </div>
-            </div>
-          </div>
-          <div className="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full"></div>
-          <div className="absolute -bottom-6 -left-6 w-20 h-20 bg-white/10 rounded-full"></div>
-        </div>
-      </div>
-      
-      {/* Food Items Grid */}
+      {/* Content Area */}
       {filteredItems.length === 0 ? (
-        <div className="text-center py-12">
+        <div className="text-center py-16">
           {searchTerm ? (
-            <p className="text-gray-400">No items match your search</p>
+            <p className="text-gray-400" style={{fontFamily: 'Times New Roman, serif'}}>No items match your search</p>
           ) : foodItems.length === 0 ? (
-            <div className="bg-gray-800 rounded-3xl p-8 border border-gray-700 text-center relative overflow-hidden">
-              <div className="relative z-10">
-                <div className="w-20 h-20 bg-gradient-to-br from-apple-green to-emerald-500 rounded-3xl mx-auto mb-4 flex items-center justify-center">
-                  <span className="text-white text-2xl">🥬</span>
-                </div>
-                <p className="text-gray-300 font-medium mb-2">Your fridge is empty</p>
-                <p className="text-sm text-gray-500">Add your first item to get started!</p>
+            <div className="flex flex-col items-center">
+              {/* Green lettuce icon */}
+              <div className="w-24 h-24 mb-6 flex items-center justify-center">
+                <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+                  <circle cx="40" cy="40" r="35" fill="#4ade80"/>
+                  <path d="M25 35 Q30 25, 40 30 Q50 25, 55 35 Q50 45, 40 40 Q30 45, 25 35" fill="#22c55e"/>
+                  <path d="M35 30 Q40 25, 45 30 Q40 35, 35 30" fill="#16a34a"/>
+                  <path d="M30 40 Q35 35, 40 40 Q35 45, 30 40" fill="#16a34a"/>
+                  <path d="M40 40 Q45 35, 50 40 Q45 45, 40 40" fill="#16a34a"/>
+                </svg>
               </div>
-              <div className="absolute -top-6 -right-6 w-24 h-24 bg-white/5 rounded-full"></div>
+              
+              <h2 className="text-xl font-semibold text-gray-800 mb-2" style={{fontFamily: 'Times New Roman, serif'}}>
+                Your fridge is empty
+              </h2>
+              <p className="text-gray-500 mb-8" style={{fontFamily: 'Times New Roman, serif'}}>
+                Add some items to get recipe suggestions
+              </p>
+              
+              <button 
+                className="px-6 py-3 rounded-full text-white font-medium shadow-lg flex items-center"
+                style={{backgroundColor: '#1e3a2e', fontFamily: 'Times New Roman, serif'}}
+              >
+                <Plus className="mr-2" size={18} />
+                Add Your First Item
+              </button>
             </div>
           ) : (
-            <p className="text-gray-400">No items in this category</p>
+            <p className="text-gray-400" style={{fontFamily: 'Times New Roman, serif'}}>No items in this category</p>
           )}
         </div>
       ) : (
