@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { FoodItem } from "@shared/schema";
+import { FoodItem, Recipe } from "@shared/schema";
 import { getExpirationStatus, getCurrentDateTime } from "@/lib/date-utils";
-import { CheckCircle, AlertTriangle, Plus, Clock, MapPin, Search, User } from "lucide-react";
+import { CheckCircle, AlertTriangle, Plus, Clock, MapPin, Search, User, BookOpen, ChefHat } from "lucide-react";
 import { Link } from "wouter";
 import texturedBackground from "@assets/download_1753924929079.jpg";
 import abstractPatternImage from "@assets/download (2)_1754078671579.jpg";
@@ -9,6 +9,10 @@ import abstractPatternImage from "@assets/download (2)_1754078671579.jpg";
 export default function Home() {
   const { data: foodItems = [], isLoading } = useQuery<FoodItem[]>({
     queryKey: ["/api/food-items"],
+  });
+
+  const { data: recipes = [] } = useQuery<Recipe[]>({
+    queryKey: ["/api/recipes"],
   });
 
   const stats = {
@@ -23,8 +27,8 @@ export default function Home() {
     }).length,
   };
 
-  const recentActivity = foodItems
-    .sort((a, b) => new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime())
+  // Get recent recipes instead of food items
+  const recentRecipes = recipes
     .slice(0, 3);
 
   if (isLoading) {
@@ -144,38 +148,36 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Recent Activity */}
+        {/* Past Recipes */}
         <div className="mb-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4" style={{fontFamily: 'Times New Roman, serif'}}>Recent Activity</h2>
-          {recentActivity.length === 0 ? (
-            <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 text-center">
-              <div className="w-16 h-16 bg-gray-100 rounded-full mx-auto mb-3 flex items-center justify-center">
-                <Plus className="text-gray-400" size={24} strokeWidth={1.5} />
+          <h2 className="text-xl font-semibold text-gray-800 mb-4" style={{fontFamily: 'Times New Roman, serif'}}>Past Recipes</h2>
+          {recentRecipes.length === 0 ? (
+            <div className="bg-white border border-gray-200 rounded-xl p-6 text-center shadow-sm">
+              <div className="w-16 h-16 bg-gray-50 rounded-2xl mx-auto mb-4 flex items-center justify-center">
+                <ChefHat className="text-gray-400" size={24} strokeWidth={1.5} />
               </div>
-              <p className="text-gray-600 font-medium mb-1" style={{fontFamily: 'Times New Roman, serif'}}>No items yet</p>
-              <p className="text-gray-500 text-sm" style={{fontFamily: 'Times New Roman, serif'}}>Start by adding your first food item</p>
+              <p className="text-gray-800 font-medium mb-2" style={{fontFamily: 'Times New Roman, serif'}}>Start Creating</p>
+              <p className="text-gray-500 text-sm" style={{fontFamily: 'Times New Roman, serif'}}>Your recipe collection will appear here</p>
             </div>
           ) : (
             <div className="space-y-3">
-              {recentActivity.map((item) => (
-                <div key={item.id} className="bg-white border border-gray-200 rounded-xl p-4">
+              {recentRecipes.map((recipe) => (
+                <div key={recipe.id} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
-                      <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
-                        <span className="text-lg">
-                          {item.category === 'vegetables' ? '🥬' : 
-                           item.category === 'fruits' ? '🍎' :
-                           item.category === 'dairy' ? '🥛' :
-                           item.category === 'meat' ? '🥩' : '🍽️'}
-                        </span>
+                      <div className="w-12 h-12 bg-gray-50 rounded-lg flex items-center justify-center mr-3">
+                        <BookOpen className="text-gray-600" size={20} strokeWidth={1.5} />
                       </div>
                       <div>
-                        <h3 className="font-medium text-gray-800" style={{fontFamily: 'Times New Roman, serif'}}>{item.name}</h3>
-                        <p className="text-gray-600 text-sm" style={{fontFamily: 'Times New Roman, serif'}}>{item.quantity}</p>
+                        <h3 className="font-medium text-gray-800" style={{fontFamily: 'Times New Roman, serif'}}>{recipe.name}</h3>
+                        <div className="flex items-center text-gray-500 text-sm">
+                          <Clock className="mr-1" size={12} />
+                          <span style={{fontFamily: 'Times New Roman, serif'}}>{recipe.cookTime}</span>
+                        </div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm text-gray-500" style={{fontFamily: 'Times New Roman, serif'}}>Added recently</p>
+                      <p className="text-sm text-gray-500" style={{fontFamily: 'Times New Roman, serif'}}>Recently made</p>
                     </div>
                   </div>
                 </div>
