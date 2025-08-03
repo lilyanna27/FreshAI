@@ -31,10 +31,12 @@ export async function generateRecipes(options: GenerateRecipesOptions): Promise<
   const prompt = `Create between 3 and 5 unique recipes for ${num_people} people using these ingredients: ${ingredients}.
 Ensure they adhere to these dietary restrictions: ${dietary}.
 
-Return a JSON object with a "recipes" array where each item has these keys:
+Return only a JSON array where each item has these keys:
 "title" (string), 
-"ingredients" (list of strings), 
-"instructions" (list of step-by-step instructions).`;
+"ingredients" (array of strings), 
+"instructions" (array of strings).
+
+No markdown formatting. Pure JSON only.`;
 
   try {
     const response = await client.chat.completions.create({
@@ -42,26 +44,37 @@ Return a JSON object with a "recipes" array where each item has these keys:
       messages: [
         {
           role: "system",
-          content: "You are a professional chef. Respond only with valid JSON arrays containing recipe objects."
+          content: "You are a professional chef. Always respond with valid JSON only, no markdown formatting."
         },
         { 
           role: "user", 
           content: prompt 
         }
       ],
-      response_format: { type: "json_object" },
       temperature: 0.7,
     });
 
     let content = response.choices[0].message.content?.trim() || "[]";
     
-    // Remove markdown code block markers if present
-    content = content.replace(/^```json\s*\n?/, '').replace(/\n?\s*```$/, '');
-    content = content.replace(/^```\s*\n?/, '').replace(/\n?\s*```$/, '');
+    // Remove any markdown code blocks completely
+    content = content.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+    
+    // Find the JSON array/object in the content
+    const jsonMatch = content.match(/\[[\s\S]*\]|\{[\s\S]*\}/);
+    if (jsonMatch) {
+      content = jsonMatch[0];
+    }
     
     try {
       const result = JSON.parse(content);
-      return result.recipes || result;
+      // Handle both array and object responses
+      if (Array.isArray(result)) {
+        return result;
+      } else if (result.recipes && Array.isArray(result.recipes)) {
+        return result.recipes;
+      } else {
+        return [result]; // Single recipe case
+      }
     } catch (jsonError) {
       console.error("Failed to parse GPT response. Raw output below:");
       console.error(content);
