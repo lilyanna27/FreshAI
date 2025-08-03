@@ -28,53 +28,30 @@ export async function generateRecipes(options: GenerateRecipesOptions): Promise<
    *     List of recipes as dicts with 'title', 'ingredients', 'instructions'.
    */
   
-  const prompt = `Create between 3 and 5 unique recipes for ${num_people} people using these ingredients: ${ingredients}.
+  const prompt = `
+You are a professional chef. Create between 3 and 5 unique recipes for ${num_people} people using these ingredients: ${ingredients}.
 Ensure they adhere to these dietary restrictions: ${dietary}.
 
-Return only a JSON array where each item has these keys:
+Return your answer as a JSON array where each item is an object with these keys:
 "title" (string), 
-"ingredients" (array of strings), 
-"instructions" (array of strings).
+"ingredients" (list of strings), 
+"instructions" (list of step-by-step instructions).
 
-No markdown formatting. Pure JSON only.`;
+Only output valid JSON. Do not include any extra text.
+`;
 
   try {
     const response = await client.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content: "You are a professional chef. Always respond with valid JSON only, no markdown formatting."
-        },
-        { 
-          role: "user", 
-          content: prompt 
-        }
-      ],
+      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+      messages: [{ role: "user", content: prompt }],
       temperature: 0.7,
     });
 
-    let content = response.choices[0].message.content?.trim() || "[]";
-    
-    // Remove any markdown code blocks completely
-    content = content.replace(/```json\s*/g, '').replace(/```\s*/g, '');
-    
-    // Find the JSON array/object in the content
-    const jsonMatch = content.match(/\[[\s\S]*\]|\{[\s\S]*\}/);
-    if (jsonMatch) {
-      content = jsonMatch[0];
-    }
+    const content = response.choices[0].message.content?.trim() || "[]";
     
     try {
-      const result = JSON.parse(content);
-      // Handle both array and object responses
-      if (Array.isArray(result)) {
-        return result;
-      } else if (result.recipes && Array.isArray(result.recipes)) {
-        return result.recipes;
-      } else {
-        return [result]; // Single recipe case
-      }
+      const recipes = JSON.parse(content);
+      return recipes;
     } catch (jsonError) {
       console.error("Failed to parse GPT response. Raw output below:");
       console.error(content);
