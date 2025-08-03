@@ -1,0 +1,217 @@
+main.py
+from fresh import generate_recipes
+def main():
+    # Call the recipe generator with your inputs
+    recipes = generate_recipes(
+        num_people=1,
+        ingredients="tomatoes, basil, pasta",
+        dietary="gluten-free"
+    )
+    # Output results to the console
+    print(f"\nGenerated {len(recipes)} recipes:\n")
+    for i, recipe in enumerate(recipes, 1):
+        print(f"Recipe {i}: {recipe['title']}")
+        print("Ingredients:")
+        for ing in recipe['ingredients']:
+            print(f"- {ing}")
+        print("Instructions:")
+        for step_num, step in enumerate(recipe['instructions'], 1):
+            print(f"  {step_num}. {step}")
+        print("=" * 40)
+if __name__ == "__main__":
+    main()
+fresh.py
+from openai import OpenAI
+import os
+import json
+from dotenv import load_dotenv
+load_dotenv()
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+def generate_recipes(
+    num_people: int,
+    ingredients: str,
+    dietary: str
+) -> list[dict]:
+    """
+    Generate 3–5 recipes using OpenAI.
+    Args:
+        num_people (int): Number of people.
+        ingredients (str): Ingredients to use.
+        dietary (str): Dietary restrictions.
+    Returns:
+        List of recipes as dicts with 'title', 'ingredients', 'instructions'.
+    """
+    prompt = f"""
+You are a professional chef. Create between 3 and 5 unique recipes for {num_people} people using these ingredients: {ingredients}.
+Ensure they adhere to these dietary restrictions: {dietary}.
+Return your answer as a JSON array where each item is an object with these keys:
+"title" (string), 
+"ingredients" (list of strings), 
+"instructions" (list of step-by-step instructions).
+Only output valid JSON. Do not include any extra text.
+"""
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.7,
+    )
+    content = response.choices[0].message.content.strip()
+    try:
+        recipes = json.loads(content)
+    except json.JSONDecodeError:
+        print("Failed to parse GPT response. Raw output below:")
+        print(content)
+        raise
+    return recipes
+AI_Agent/freshai.py
+import openai
+import os
+import json
+from dotenv import load_dotenv
+load_dotenv()
+openai.api_key = os.getenv("OPENAI_API_KEY")
+def generate_recipes(
+    num_people: int,
+    ingredients: str,
+    dietary: str
+) -> list[dict]:
+    """
+    Generate 3–5 recipes using OpenAI.
+    Args:
+        num_people (int): Number of people.
+        ingredients (str): Ingredients to use.
+        dietary (str): Dietary restrictions.
+    Returns:
+        List of recipes as dicts with 'title', 'ingredients', 'instructions'.
+    """
+    prompt = f"""
+You are a professional chef. Create between 3 and 5 unique recipes for {num_people} people using these ingredients: {ingredients}.
+Ensure they adhere to these dietary restrictions: {dietary}.
+Return your answer as a JSON array where each item is an object with these keys:
+"title" (string), 
+"ingredients" (list of strings), 
+"instructions" (list of step-by-step instructions).
+Only output valid JSON. Do not include any extra text.
+"""
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.7,
+    )
+    content = response.choices[0].message.content.strip()
+    try:
+        recipes = json.loads(content)
+    except json.JSONDecodeError:
+        print("Failed to parse GPT response. Raw output below:")
+        print(content)
+        raise
+    return recipes
+if __name__ == "__main__":
+    # Example usage when run directly
+    recipes = generate_recipes(
+        num_people=4,
+        ingredients="chicken, rice, broccoli",
+        dietary="gluten-free"
+    )
+    for i, recipe in enumerate(recipes, 1):
+        print(f"\nRecipe {i}: {recipe['title']}")
+        print("Ingredients:", ", ".join(recipe['ingredients']))
+        print("Instructions:")
+        for step in recipe['instructions']:
+            print("-", step)
+AI_Agent/testfreshai.py
+#!/usr/bin/env python3
+"""
+Test script for fresh.py recipe generator.
+Verifies that the environment, .env, and recipe generation all work.
+"""
+import os
+import sys
+import importlib
+from pathlib import Path
+print("Testing fresh.py Recipe Agent")
+print("=" * 50)
+def test_python_version():
+    """Check Python version >= 3.8"""
+    print("Checking Python version...")
+    version = sys.version_info
+    if version.major == 3 and version.minor >= 8:
+        print(f"PASS: Python {version.major}.{version.minor}.{version.micro}")
+        return True
+    else:
+        print(f"FAIL: Python {version.major}.{version.minor}.{version.micro} (requires >=3.8)")
+        return False
+def test_env_file():
+    """Check if .env file exists and has OPENAI_API_KEY"""
+    print("Checking .env file...")
+    if Path('.env').exists():
+        print(".env file found")
+        from dotenv import load_dotenv
+        load_dotenv()
+        api_key = os.getenv("OPENAI_API_KEY")
+        if api_key and api_key != 'your_openai_api_key_here':
+            print("PASS: OPENAI_API_KEY is set")
+            return True
+        else:
+            print("FAIL: OPENAI_API_KEY not configured correctly")
+            return False
+    else:
+        print("FAIL: .env file not found")
+        return False
+def test_required_packages():
+    """Check if required packages are installed"""
+    print("Checking required packages...")
+    required = ["openai", "dotenv"]
+    all_passed = True
+    for pkg in required:
+        try:
+            importlib.import_module(pkg)
+            print(f"PASS: {pkg} is installed")
+        except ImportError:
+            print(f"FAIL: {pkg} is NOT installed")
+            all_passed = False
+    return all_passed
+def test_fresh_module():
+    """Check if fresh.py can generate recipes"""
+    print("Testing recipe generation from fresh.py...")
+    try:
+        from fresh import generate_recipes
+        recipes = generate_recipes(
+            num_people=2,
+            ingredients="tofu, spinach, mushrooms",
+            dietary="vegan"
+        )
+        if isinstance(recipes, list) and len(recipes) >= 3:
+            print(f"PASS: Generated {len(recipes)} recipes")
+            print(f"First recipe title: {recipes[0].get('title', 'N/A')}")
+            return True
+        else:
+            print("FAIL: Unexpected output from generate_recipes")
+            return False
+    except Exception as e:
+        print(f"FAIL: Error: {e}")
+        return False
+def main():
+    tests = [
+        test_python_version,
+        test_env_file,
+        test_required_packages,
+        test_fresh_module
+    ]
+    results = []
+    for test in tests:
+        result = test()
+        results.append(result)
+        print("-" * 50)
+    passed = sum(results)
+    total = len(results)
+    print("\nTest Summary")
+    print("=" * 50)
+    if passed == total:
+        print(f"All tests passed ({passed}/{total})")
+    else:
+        print(f"{passed}/{total} tests passed")
+        print("Please fix the issues above before proceeding.")
+if __name__ == "__main__":
+    main()
+Your project is a recipe generator that uses OpenAI's API to create recipes based on ingredients, number of people, and dietary restrictions. The main files are main.py (entry point) and fresh.py (OpenAI integration), with additional files in the AI_Agent directory for testing and an alternative implementation.
