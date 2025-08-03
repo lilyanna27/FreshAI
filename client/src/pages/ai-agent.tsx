@@ -18,9 +18,7 @@ interface GeneratedRecipe {
   servings?: number;
 }
 
-interface RecipeGeneration {
-  recipes: GeneratedRecipe[];
-}
+interface RecipeGeneration extends Array<GeneratedRecipe> {}
 
 export default function AIAgent() {
   const [messages, setMessages] = useState<Message[]>([
@@ -50,11 +48,11 @@ export default function AIAgent() {
       return response.json();
     },
     onSuccess: (data: RecipeGeneration) => {
-      setGeneratedRecipes(data.recipes);
+      setGeneratedRecipes(data);
       const recipeMessage: Message = {
         id: Date.now().toString(),
         type: 'ai',
-        content: `I've generated ${data.recipes.length} delicious recipes for you! Check them out below.`,
+        content: `I've generated ${data.length} delicious recipes for you! Check them out below.`,
         timestamp: new Date()
       };
       setMessages(prev => [...prev, recipeMessage]);
@@ -132,7 +130,7 @@ export default function AIAgent() {
 
       // Extract dietary restrictions
       const dietaryMatch = input.match(/(?:gluten.free|vegetarian|vegan|dairy.free|keto|paleo)/i);
-      const dietary = dietaryMatch ? dietaryMatch[0] : undefined;
+      const dietary = dietaryMatch ? dietaryMatch[0] : "none";
 
       return { num_people, ingredients, dietary };
     } catch (error) {

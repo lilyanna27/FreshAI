@@ -144,10 +144,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const recipes = await generateRecipes({
         num_people: parseInt(num_people),
         ingredients,
-        dietary
+        dietary: dietary || "none"
       });
 
-      res.json({ recipes });
+      res.json(recipes);
     } catch (error) {
       console.error("Recipe generation error:", error);
       res.status(500).json({ error: "Failed to generate recipes. Please try again." });
