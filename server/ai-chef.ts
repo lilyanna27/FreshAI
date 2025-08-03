@@ -37,7 +37,7 @@ Return your answer as a JSON array where each item is an object with these keys:
 "ingredients" (list of strings), 
 "instructions" (list of step-by-step instructions).
 
-Only output valid JSON. Do not include any extra text.
+Only output valid JSON. Do not include any extra text, explanations, or markdown formatting.
 `;
 
   try {
@@ -47,7 +47,14 @@ Only output valid JSON. Do not include any extra text.
       temperature: 0.7,
     });
 
-    const content = response.choices[0].message.content?.trim() || "[]";
+    let content = response.choices[0].message.content?.trim() || "[]";
+    
+    // Remove markdown code block markers if present
+    if (content.startsWith('```json')) {
+      content = content.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+    } else if (content.startsWith('```')) {
+      content = content.replace(/^```\s*/, '').replace(/\s*```$/, '');
+    }
     
     try {
       const recipes = JSON.parse(content);
