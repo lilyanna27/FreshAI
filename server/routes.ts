@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertFoodItemSchema, insertRecipeSchema } from "@shared/schema";
 import { z } from "zod";
+import { generateRecipes } from "./ai-chef";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Food Items Routes
@@ -128,6 +129,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete recipe" });
+    }
+  });
+
+  // AI Recipe Generation Route
+  app.post("/api/generate-recipes", async (req, res) => {
+    try {
+      const { num_people, ingredients, dietary } = req.body;
+      
+      if (!num_people || !ingredients) {
+        return res.status(400).json({ error: "Number of people and ingredients are required" });
+      }
+
+      const recipes = await generateRecipes({
+        num_people: parseInt(num_people),
+        ingredients,
+        dietary
+      });
+
+      res.json({ recipes });
+    } catch (error) {
+      console.error("Recipe generation error:", error);
+      res.status(500).json({ error: "Failed to generate recipes. Please try again." });
     }
   });
 
