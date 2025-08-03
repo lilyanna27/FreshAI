@@ -28,37 +28,40 @@ export async function generateRecipes(options: GenerateRecipesOptions): Promise<
    *     List of recipes as dicts with 'title', 'ingredients', 'instructions'.
    */
   
-  const prompt = `
-You are a professional chef. Create between 3 and 5 unique recipes for ${num_people} people using these ingredients: ${ingredients}.
+  const prompt = `Create between 3 and 5 unique recipes for ${num_people} people using these ingredients: ${ingredients}.
 Ensure they adhere to these dietary restrictions: ${dietary}.
 
-Return your answer as a JSON array where each item is an object with these keys:
+Return a JSON object with a "recipes" array where each item has these keys:
 "title" (string), 
 "ingredients" (list of strings), 
-"instructions" (list of step-by-step instructions).
-
-Only output valid JSON. Do not include any extra text, explanations, or markdown formatting.
-`;
+"instructions" (list of step-by-step instructions).`;
 
   try {
     const response = await client.chat.completions.create({
       model: "gpt-4o",
-      messages: [{ role: "user", content: prompt }],
+      messages: [
+        {
+          role: "system",
+          content: "You are a professional chef. Respond only with valid JSON arrays containing recipe objects."
+        },
+        { 
+          role: "user", 
+          content: prompt 
+        }
+      ],
+      response_format: { type: "json_object" },
       temperature: 0.7,
     });
 
     let content = response.choices[0].message.content?.trim() || "[]";
     
     // Remove markdown code block markers if present
-    if (content.startsWith('```json')) {
-      content = content.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-    } else if (content.startsWith('```')) {
-      content = content.replace(/^```\s*/, '').replace(/\s*```$/, '');
-    }
+    content = content.replace(/^```json\s*\n?/, '').replace(/\n?\s*```$/, '');
+    content = content.replace(/^```\s*\n?/, '').replace(/\n?\s*```$/, '');
     
     try {
-      const recipes = JSON.parse(content);
-      return recipes;
+      const result = JSON.parse(content);
+      return result.recipes || result;
     } catch (jsonError) {
       console.error("Failed to parse GPT response. Raw output below:");
       console.error(content);
