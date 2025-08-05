@@ -1,45 +1,86 @@
-import { useState } from "react";
-import { Camera, Upload, FileText, Check, X } from "lucide-react";
+import { useState, useRef } from "react";
+import { Camera, Upload, FileText, Check, X, Loader2, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { receiptScanner, type ScanResult } from "../services/ocr/receiptScanner";
+import type { FoodItem } from "../types/food";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function ReceiptScan() {
   const [scanState, setScanState] = useState<'idle' | 'scanning' | 'processing' | 'results'>('idle');
-  const [scannedItems, setScannedItems] = useState<any[]>([]);
+  const [scannedItems, setScannedItems] = useState<FoodItem[]>([]);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const queryClient = useQueryClient();
 
-  const mockScannedItems = [
-    { name: "Organic Bananas", quantity: "6 pieces", category: "fruits", confidence: 0.95 },
-    { name: "Whole Milk", quantity: "1 gallon", category: "dairy", confidence: 0.92 },
-    { name: "Roma Tomatoes", quantity: "2 lbs", category: "vegetables", confidence: 0.88 },
-    { name: "Ground Beef", quantity: "1 lb", category: "meat", confidence: 0.91 },
-    { name: "Spinach", quantity: "5 oz bag", category: "vegetables", confidence: 0.87 }
-  ];
+  // OCR scanning mutation
+  const scanReceiptMutation = useMutation({
+    mutationFn: async (file: File): Promise<ScanResult> => {
+      await receiptScanner.initialize();
+      return receiptScanner.scanReceipt(file);
+    },
+    onSuccess: (result) => {
+      setScannedItems(result.items);
+      setScanState('results');
+      toast.success(`Found ${result.items.length} food items in your receipt!`);
+    },
+    onError: (error) => {
+      console.error('OCR scan failed:', error);
+      toast.error('Failed to scan receipt. Please try again.');
+      setScanState('idle');
+    }
+  });
+
+  // Save items to database mutation
+  const saveItemsMutation = useMutation({
+    mutationFn: async (items: FoodItem[]) => {
+      const promises = items.map(item => 
+        fetch('/api/food-items', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: item.name,
+            quantity: item.quantity,
+            expirationDate: item.expirationDate.toISOString(),
+            category: item.category
+          })
+        })
+      );
+      await Promise.all(promises);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/food-items'] });
+      toast.success('All items added to your fridge!');
+      setScanState('idle');
+      setScannedItems([]);
+    },
+    onError: () => {
+      toast.error('Failed to save items. Please try again.');
+    }
+  });
 
   const handleCameraCapture = () => {
-    setScanState('scanning');
-    // Simulate scanning process
-    setTimeout(() => {
-      setScanState('processing');
-      setTimeout(() => {
-        setScannedItems(mockScannedItems);
-        setScanState('results');
-      }, 2000);
-    }, 1000);
+    fileInputRef.current?.click();
   };
 
   const handleFileUpload = () => {
-    setScanState('processing');
-    // Simulate processing uploaded file
-    setTimeout(() => {
-      setScannedItems(mockScannedItems);
-      setScanState('results');
-    }, 2000);
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      setScanState('processing');
+      scanReceiptMutation.mutate(file);
+    }
   };
 
   const handleConfirmItems = () => {
-    // Here you would integrate with your actual receipt scanning API
-    console.log('Items to add:', scannedItems);
-    setScanState('idle');
-    setScannedItems([]);
+    if (scannedItems.length > 0) {
+      saveItemsMutation.mutate(scannedItems);
+    }
   };
 
   const handleRetry = () => {
@@ -59,17 +100,15 @@ export default function ReceiptScan() {
         
         <div className="p-4">
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-white mb-6">Scanning Receipt</h1>
-          <div className="bg-gray-800 rounded-3xl p-8 border border-gray-700 relative overflow-hidden">
+            <h1 className="text-2xl font-bold text-gray-800 mb-6" style={{fontFamily: 'Times New Roman, serif'}}>Processing Receipt</h1>
+          <div className="bg-white rounded-3xl p-8 border border-gray-200 relative overflow-hidden">
             <div className="relative z-10">
-              <div className="w-32 h-32 bg-gradient-to-br from-apple-green to-emerald-500 rounded-3xl mx-auto mb-6 flex items-center justify-center animate-pulse">
-                <Camera className="text-white" size={48} />
+              <div className="w-32 h-32 bg-gradient-to-br from-orange-400 to-red-500 rounded-3xl mx-auto mb-6 flex items-center justify-center animate-pulse">
+                <Loader2 className="text-white animate-spin" size={48} />
               </div>
-              <h3 className="text-white font-semibold mb-2">Hold your receipt steady</h3>
-              <p className="text-gray-400 text-sm">Make sure all text is clearly visible</p>
+              <h3 className="text-gray-800 font-semibold mb-2" style={{fontFamily: 'Times New Roman, serif'}}>Scanning your receipt...</h3>
+              <p className="text-gray-600 text-sm" style={{fontFamily: 'Times New Roman, serif'}}>Using AI to extract food items</p>
             </div>
-            <div className="absolute -top-8 -right-8 w-32 h-32 bg-white/5 rounded-full"></div>
-            <div className="absolute -bottom-6 -left-6 w-24 h-24 bg-white/5 rounded-full"></div>
           </div>
           </div>
         </div>
@@ -122,35 +161,39 @@ export default function ReceiptScan() {
         
         <div className="p-4">
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-white mb-1">Items Found</h1>
-            <p className="text-gray-400 text-sm">Review and confirm the items to add to your fridge</p>
+            <h1 className="text-2xl font-bold text-gray-800 mb-1" style={{fontFamily: 'Times New Roman, serif'}}>Items Found ({scannedItems.length})</h1>
+            <p className="text-gray-600 text-sm" style={{fontFamily: 'Times New Roman, serif'}}>Review and confirm the items to add to your fridge</p>
           </div>
 
         <div className="space-y-3 mb-6">
           {scannedItems.map((item, index) => (
-            <div key={index} className="bg-gray-800 rounded-2xl p-4 border border-gray-700">
+            <div key={index} className="bg-white rounded-2xl p-4 border border-gray-200">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
-                  <div className="w-12 h-12 bg-gradient-to-br from-apple-green to-emerald-500 rounded-2xl flex items-center justify-center mr-3">
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center mr-3" style={{backgroundColor: '#1e3a2e'}}>
                     <span className="text-white text-lg">
-                      {item.category === 'fruits' ? '🍎' : 
-                       item.category === 'vegetables' ? '🥬' :
-                       item.category === 'dairy' ? '🥛' :
-                       item.category === 'meat' ? '🥩' : '🛒'}
+                      {item.category === 'Fruit' ? '🍎' : 
+                       item.category === 'Vegetable' ? '🥬' :
+                       item.category === 'Dairy' ? '🥛' :
+                       item.category === 'Protein' ? '🥩' : 
+                       item.category === 'Grains' ? '🌾' : '🛒'}
                     </span>
                   </div>
                   <div>
-                    <h4 className="text-white font-medium">{item.name}</h4>
-                    <p className="text-gray-400 text-sm">{item.quantity}</p>
+                    <h4 className="text-gray-800 font-medium" style={{fontFamily: 'Times New Roman, serif'}}>{item.name}</h4>
+                    <p className="text-gray-600 text-sm" style={{fontFamily: 'Times New Roman, serif'}}>{item.quantity}</p>
+                    <p className="text-gray-500 text-xs" style={{fontFamily: 'Times New Roman, serif'}}>Expires: {item.expirationDate.toLocaleDateString()}</p>
                   </div>
                 </div>
-                <div className="flex items-center">
-                  <div className={`px-2 py-1 rounded-full text-xs ${
-                    item.confidence > 0.9 ? 'bg-emerald-500/20 text-emerald-400' :
-                    item.confidence > 0.8 ? 'bg-yellow-500/20 text-yellow-400' :
-                    'bg-orange-500/20 text-orange-400'
-                  }`}>
-                    {Math.round(item.confidence * 100)}%
+                <div className="flex items-center space-x-2">
+                  {item.freshness === 'fresh' && (
+                    <CheckCircle2 className="text-green-500" size={16} />
+                  )}
+                  {item.freshness === 'warning' && (
+                    <AlertTriangle className="text-yellow-500" size={16} />
+                  )}
+                  <div className="px-2 py-1 rounded-full text-xs bg-blue-50 text-blue-600 border border-blue-200" style={{fontFamily: 'Times New Roman, serif'}}>
+                    {Math.round((item.confidence || 0.8) * 100)}%
                   </div>
                 </div>
               </div>
@@ -161,18 +204,24 @@ export default function ReceiptScan() {
         <div className="grid grid-cols-2 gap-4">
           <Button
             onClick={handleRetry}
-            variant="outline"
-            className="py-4 px-6 bg-gray-700 text-gray-300 border-gray-600 rounded-2xl font-medium hover:bg-gray-600 transition-all"
+            className="py-4 px-6 bg-gray-200 text-gray-700 rounded-2xl font-medium hover:bg-gray-300 transition-all"
+            style={{fontFamily: 'Times New Roman, serif'}}
           >
             <X className="mr-2" size={16} />
             Retry Scan
           </Button>
           <Button
             onClick={handleConfirmItems}
-            className="py-4 px-6 bg-gradient-to-r from-apple-green to-emerald-500 text-white rounded-2xl font-medium hover:shadow-lg transition-all duration-300"
+            disabled={saveItemsMutation.isPending}
+            className="py-4 px-6 text-white rounded-2xl font-medium hover:shadow-lg transition-all duration-300"
+            style={{backgroundColor: '#1e3a2e', fontFamily: 'Times New Roman, serif'}}
           >
-            <Check className="mr-2" size={16} />
-            Add Items
+            {saveItemsMutation.isPending ? (
+              <Loader2 className="mr-2 animate-spin" size={16} />
+            ) : (
+              <Check className="mr-2" size={16} />
+            )}
+            {saveItemsMutation.isPending ? 'Adding...' : `Add ${scannedItems.length} Items`}
           </Button>
         </div>
         </div>
@@ -182,80 +231,81 @@ export default function ReceiptScan() {
 
   return (
     <div className="pb-24" style={{backgroundColor: 'hsl(45, 20%, 97%)'}}>
-      {/* Header */}
-      <div className="px-6 py-4" style={{backgroundColor: '#1e3a2e'}}>
-        <div className="text-center">
-          <h1 className="text-white text-xl font-bold" style={{fontFamily: 'Times New Roman, serif'}}>FreshAI</h1>
-        </div>
-      </div>
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileChange}
+        className="hidden"
+        capture="environment"
+      />
 
       <div className="p-4">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-white mb-1">Scan Receipt</h1>
-          <p className="text-gray-400 text-sm">Quickly add items from your grocery receipt</p>
+          <h1 className="text-2xl font-bold text-gray-800 mb-1" style={{fontFamily: 'Times New Roman, serif'}}>Scan Receipt</h1>
+          <p className="text-gray-600 text-sm" style={{fontFamily: 'Times New Roman, serif'}}>Quickly add items from your grocery receipt</p>
         </div>
 
       {/* Scan Options */}
       <div className="space-y-4 mb-8">
         <div 
           onClick={handleCameraCapture}
-          className="bg-gray-800 rounded-3xl p-6 border border-gray-700 cursor-pointer hover:bg-gray-750 transition-all duration-300 relative overflow-hidden"
+          className="bg-white rounded-3xl p-6 border border-gray-200 cursor-pointer hover:shadow-lg transition-all duration-300 relative overflow-hidden"
         >
           <div className="relative z-10 flex items-center">
-            <div className="w-16 h-16 bg-gradient-to-br from-apple-green to-emerald-500 rounded-2xl flex items-center justify-center mr-4">
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mr-4" style={{backgroundColor: '#1e3a2e'}}>
               <Camera className="text-white" size={24} />
             </div>
             <div>
-              <h3 className="text-white font-semibold mb-1">Take Photo</h3>
-              <p className="text-gray-400 text-sm">Use your camera to scan a receipt</p>
+              <h3 className="text-gray-800 font-semibold mb-1" style={{fontFamily: 'Times New Roman, serif'}}>Take Photo</h3>
+              <p className="text-gray-600 text-sm" style={{fontFamily: 'Times New Roman, serif'}}>Use your camera to scan a receipt</p>
             </div>
           </div>
-          <div className="absolute -top-4 -right-4 w-20 h-20 bg-white/5 rounded-full"></div>
         </div>
 
         <div 
           onClick={handleFileUpload}
-          className="bg-gray-800 rounded-3xl p-6 border border-gray-700 cursor-pointer hover:bg-gray-750 transition-all duration-300 relative overflow-hidden"
+          className="bg-white rounded-3xl p-6 border border-gray-200 cursor-pointer hover:shadow-lg transition-all duration-300 relative overflow-hidden"
         >
           <div className="relative z-10 flex items-center">
-            <div className="w-16 h-16 bg-gradient-to-br from-orange-400 to-red-500 rounded-2xl flex items-center justify-center mr-4">
+            <div className="w-16 h-16 bg-orange-500 rounded-2xl flex items-center justify-center mr-4">
               <Upload className="text-white" size={24} />
             </div>
             <div>
-              <h3 className="text-white font-semibold mb-1">Upload Image</h3>
-              <p className="text-gray-400 text-sm">Choose a photo from your gallery</p>
+              <h3 className="text-gray-800 font-semibold mb-1" style={{fontFamily: 'Times New Roman, serif'}}>Upload Image</h3>
+              <p className="text-gray-600 text-sm" style={{fontFamily: 'Times New Roman, serif'}}>Choose a photo from your gallery</p>
             </div>
           </div>
-          <div className="absolute -top-4 -right-4 w-20 h-20 bg-white/5 rounded-full"></div>
         </div>
       </div>
 
       {/* How it works */}
-      <div className="bg-gray-800 rounded-3xl p-6 border border-gray-700">
-        <h3 className="text-white font-semibold mb-4">How it works</h3>
+      <div className="bg-white rounded-3xl p-6 border border-gray-200">
+        <h3 className="text-gray-800 font-semibold mb-4" style={{fontFamily: 'Times New Roman, serif'}}>How it works</h3>
         <div className="space-y-3">
           <div className="flex items-start">
-            <div className="w-6 h-6 bg-apple-green rounded-full flex items-center justify-center mr-3 mt-0.5">
+            <div className="w-6 h-6 rounded-full flex items-center justify-center mr-3 mt-0.5" style={{backgroundColor: '#1e3a2e'}}>
               <span className="text-white text-xs font-bold">1</span>
             </div>
             <div>
-              <p className="text-gray-300 text-sm">Scan or upload your grocery receipt</p>
+              <p className="text-gray-600 text-sm" style={{fontFamily: 'Times New Roman, serif'}}>Scan or upload your grocery receipt</p>
             </div>
           </div>
           <div className="flex items-start">
-            <div className="w-6 h-6 bg-apple-green rounded-full flex items-center justify-center mr-3 mt-0.5">
+            <div className="w-6 h-6 rounded-full flex items-center justify-center mr-3 mt-0.5" style={{backgroundColor: '#1e3a2e'}}>
               <span className="text-white text-xs font-bold">2</span>
             </div>
             <div>
-              <p className="text-gray-300 text-sm">AI extracts food items automatically</p>
+              <p className="text-gray-600 text-sm" style={{fontFamily: 'Times New Roman, serif'}}>AI extracts food items automatically</p>
             </div>
           </div>
           <div className="flex items-start">
-            <div className="w-6 h-6 bg-apple-green rounded-full flex items-center justify-center mr-3 mt-0.5">
+            <div className="w-6 h-6 rounded-full flex items-center justify-center mr-3 mt-0.5" style={{backgroundColor: '#1e3a2e'}}>
               <span className="text-white text-xs font-bold">3</span>
             </div>
             <div>
-              <p className="text-gray-300 text-sm">Review and add items to your fridge</p>
+              <p className="text-gray-600 text-sm" style={{fontFamily: 'Times New Roman, serif'}}>Review and add items to your fridge</p>
             </div>
           </div>
         </div>

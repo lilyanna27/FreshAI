@@ -1,0 +1,1182 @@
+Here's all the code for the receipt scanning feature:
+
+## Dependencies Required
+- `tesseract.js` version ^6.0.1 (main OCR engine)
+- `react` version ^18.3.1
+- `lucide-react` (for icons)
+- `sonner` (for toast notifications)
+
+## Core Types
+
+```typescript
+// src/types/food.ts
+export interface FoodItem {
+  id: string;
+  name: string;
+  brand?: string;
+  quantity: string;
+  purchaseDate: Date;
+  expirationDate: Date;
+  freshness: 'fresh' | 'warning' | 'expired';
+  category: string;
+  confidence?: number; // OCR confidence score
+}
+
+export interface Receipt {
+  id: string;
+  storeName?: string;
+  date: Date;
+  items: FoodItem[];
+  originalText?: string;
+  imageUrl?: string;
+}
+
+export interface FoodDatabase {
+  [key: string]: {
+    shelfLife: number; // days
+    category: string;
+    variations: string[];
+  };
+}
+```
+
+## Food Database
+
+```typescript
+// src/data/foodDatabase.ts
+import { FoodDatabase } from '../types/food';
+
+export const foodDatabase: FoodDatabase = {
+  // Fruits
+  apple: { shelfLife: 7, category: 'Fruit', variations: ['apples', 'apple', 'gala apple', 'red apple', 'green apple', 'honeycrisp'] },
+  banana: { shelfLife: 5, category: 'Fruit', variations: ['bananas', 'banana', 'organic banana'] },
+  orange: { shelfLife: 7, category: 'Fruit', variations: ['oranges', 'orange', 'naval orange', 'blood orange'] },
+  grape: { shelfLife: 5, category: 'Fruit', variations: ['grapes', 'grape', 'red grapes', 'green grapes'] },
+  strawberry: { shelfLife: 3, category: 'Fruit', variations: ['strawberries', 'strawberry', 'fresh strawberries'] },
+  blueberry: { shelfLife: 5, category: 'Fruit', variations: ['blueberries', 'blueberry', 'fresh blueberries'] },
+  raspberry: { shelfLife: 2, category: 'Fruit', variations: ['raspberries', 'raspberry', 'fresh raspberries'] },
+  lemon: { shelfLife: 14, category: 'Fruit', variations: ['lemons', 'lemon', 'fresh lemon'] },
+  lime: { shelfLife: 14, category: 'Fruit', variations: ['limes', 'lime', 'fresh lime'] },
+  avocado: { shelfLife: 3, category: 'Fruit', variations: ['avocados', 'avocado', 'hass avocado'] },
+  watermelon: { shelfLife: 7, category: 'Fruit', variations: ['watermelon', 'watermelons', 'fresh watermelon'] },
+  cantaloupe: { shelfLife: 5, category: 'Fruit', variations: ['cantaloupe', 'cantaloupes', 'fresh cantaloupe'] },
+
+  // Vegetables
+  tomato: { shelfLife: 5, category: 'Vegetable', variations: ['tomatoes', 'tomato', 'fresh tomatoes', 'roma tomato'] },
+  potato: { shelfLife: 14, category: 'Vegetable', variations: ['potatoes', 'potato', 'russet potato', 'red potato'] },
+  onion: { shelfLife: 21, category: 'Vegetable', variations: ['onions', 'onion', 'yellow onion', 'white onion', 'red onion'] },
+  carrot: { shelfLife: 21, category: 'Vegetable', variations: ['carrots', 'carrot', 'baby carrots', 'fresh carrots'] },
+  lettuce: { shelfLife: 5, category: 'Vegetable', variations: ['lettuce', 'romaine lettuce', 'iceberg lettuce'] },
+  spinach: { shelfLife: 5, category: 'Vegetable', variations: ['spinach', 'fresh spinach', 'baby spinach'] },
+  broccoli: { shelfLife: 5, category: 'Vegetable', variations: ['broccoli', 'fresh broccoli', 'broccoli crowns'] },
+  cucumber: { shelfLife: 7, category: 'Vegetable', variations: ['cucumber', 'cucumbers', 'fresh cucumber'] },
+  bell_pepper: { shelfLife: 7, category: 'Vegetable', variations: ['bell pepper', 'red pepper', 'green pepper', 'yellow pepper', 'peppers'] },
+
+  // Proteins
+  chicken: { shelfLife: 2, category: 'Protein', variations: ['chicken', 'chicken breast', 'chicken thigh', 'whole chicken'] },
+  beef: { shelfLife: 3, category: 'Protein', variations: ['beef', 'ground beef', 'beef steak', 'chuck roast'] },
+  pork: { shelfLife: 3, category: 'Protein', variations: ['pork', 'pork chops', 'pork tenderloin', 'ground pork'] },
+  salmon: { shelfLife: 2, category: 'Protein', variations: ['salmon', 'salmon fillet', 'fresh salmon', 'atlantic salmon'] },
+  eggs: { shelfLife: 21, category: 'Protein', variations: ['eggs', 'egg', 'dozen eggs', 'large eggs'] },
+
+  // Dairy
+  milk: { shelfLife: 7, category: 'Dairy', variations: ['milk', 'whole milk', '2% milk', 'skim milk', 'almond milk'] },
+  cheese: { shelfLife: 14, category: 'Dairy', variations: ['cheese', 'cheddar cheese', 'mozzarella', 'swiss cheese'] },
+  yogurt: { shelfLife: 10, category: 'Dairy', variations: ['yogurt', 'greek yogurt', 'vanilla yogurt', 'strawberry yogurt'] },
+  butter: { shelfLife: 30, category: 'Dairy', variations: ['butter', 'unsalted butter', 'salted butter'] },
+
+  // Grains & Pantry
+  bread: { shelfLife: 5, category: 'Grains', variations: ['bread', 'white bread', 'wheat bread', 'whole grain bread'] },
+  rice: { shelfLife: 365, category: 'Grains', variations: ['rice', 'white rice', 'brown rice', 'jasmine rice'] },
+  pasta: { shelfLife: 365, category: 'Grains', variations: ['pasta', 'spaghetti', 'penne', 'macaroni'] },
+  cereal: { shelfLife: 90, category: 'Grains', variations: ['cereal', 'cheerios', 'corn flakes', 'granola'] }
+};
+
+export function findFoodItem(itemName: string): { shelfLife: number; category: string } | null {
+  const normalizedName = itemName.toLowerCase().trim();
+
+  // Direct match
+  if (foodDatabase[normalizedName]) {
+    return {
+      shelfLife: foodDatabase[normalizedName].shelfLife,
+      category: foodDatabase[normalizedName].category
+    };
+  }
+
+  // Check variations
+  for (const [key, value] of Object.entries(foodDatabase)) {
+    if (value.variations.some(variation =>
+      normalizedName.includes(variation.toLowerCase()) ||
+      variation.toLowerCase().includes(normalizedName)
+    )) {
+      return {
+        shelfLife: value.shelfLife,
+        category: value.category
+      };
+    }
+  }
+
+  // Default for unknown items that made it through filtering
+  return { shelfLife: 7, category: 'Other' };
+}
+```
+
+## OCR Error Correction
+
+```typescript
+// src/services/ocr/ocrCorrection.ts
+export class OCRCorrection {
+
+  // Common OCR errors and their corrections
+  private static corrections: Record = {
+    // Common letter substitutions
+    'watrmelon': 'watermelon',
+    'watennelon': 'watermelon',
+    'waterrnekm': 'watermelon',
+    'elon': 'melon',
+    'banna': 'banana',
+    'bananna': 'banana',
+    'bannana': 'banana',
+    'banan': 'banana',
+    'appl': 'apple',
+    'aple': 'apple',
+    'organe': 'orange',
+    'orang': 'orange',
+    'orangs': 'orange',
+    'tomatoe': 'tomato',
+    'tormato': 'tomato',
+    'potatos': 'potato',
+    'potatoe': 'potato',
+    'onions': 'onion',
+    'carrots': 'carrot',
+    'chickin': 'chicken',
+    'chiken': 'chicken',
+    'chickn': 'chicken',
+    'beaf': 'beef',
+    'hamm': 'ham',
+    'bakon': 'bacon',
+    'egss': 'eggs',
+    'egges': 'eggs',
+    'milkk': 'milk',
+    'chees': 'cheese',
+    'cheeze': 'cheese',
+    'buttr': 'butter',
+    'butterr': 'butter',
+    'bred': 'bread',
+    'breadd': 'bread',
+    'riee': 'rice',
+    'riec': 'rice',
+    'cereall': 'cereal',
+    'cerael': 'cereal',
+    'yoghurt': 'yogurt',
+    'yougurt': 'yogurt',
+
+    // Common OCR character confusions
+    'rn': 'm',
+    'ln': 'h',
+    'cl': 'd',
+    'ii': 'll',
+    '1l': 'll',
+    'l1': 'll',
+    '0': 'o',
+    '5': 's',
+    '6': 'g',
+    '8': 'b'
+  };
+
+  static correctItemName(itemName: string): string {
+    let corrected = itemName.toLowerCase().trim();
+
+    // Apply direct corrections
+    if (this.corrections[corrected]) {
+      return this.corrections[corrected];
+    }
+
+    // Apply character-level corrections
+    let result = corrected;
+    for (const [wrong, correct] of Object.entries(this.corrections)) {
+      if (wrong.length <= 2 && correct.length <= 2) { // Character substitutions
+        result = result.replace(new RegExp(wrong, 'g'), correct);
+      }
+    }
+
+    // Fix common patterns
+    result = this.fixCommonPatterns(result);
+
+    return result;
+  }
+
+  private static fixCommonPatterns(text: string): string {
+    let result = text;
+
+    // Fix doubled letters that should be single
+    result = result.replace(/(.)\1{2,}/g, '$1$1'); // Keep max 2 of same letter
+
+    // Fix common word endings
+    result = result.replace(/rn/g, 'm'); // 'rn' often misread as 'm'
+    result = result.replace(/ln/g, 'h'); // 'ln' often misread as 'h'
+
+    // Fix spacing issues
+    result = result.replace(/\s+/g, ' '); // Multiple spaces to single
+    result = result.trim();
+
+    return result;
+  }
+
+  static isLikelyMisread(itemName: string): boolean {
+    const suspicious = [
+      /^[a-z]{1,2}$/i, // Too short
+      /^re$/i, // Common OCR fragment
+      /^[a-z]{1,3}\s+[a-z]{1,3}$/i, // Two very short words
+      /[a-z]{5,}[0-9]+[a-z]*/i, // Letters mixed with numbers
+      /^[^aeiou]{3,}/i, // Too many consonants
+      /[aeiou]{4,}/i, // Too many vowels together
+    ];
+
+    return suspicious.some(pattern => pattern.test(itemName));
+  }
+}
+```
+
+## Receipt Filters
+
+```typescript
+// src/services/ocr/receiptFilters.ts
+export class ReceiptFilters {
+
+  static hasPrice(line: string): boolean {
+    // Much more flexible price detection to catch more items
+    return /\$?\d+[\.\,]\d{1,2}/.test(line) || // Standard price format
+           /\d+[\.\,]\d{1,2}\s*\$/.test(line) || // Price with $ at end
+           /\d+\.\d{2}/.test(line) || // Just decimal number
+           /\$\s*\d+/.test(line) || // $ followed by digits
+           /\b\d{1,3}\.\d{2}\b/.test(line) || // Isolated price pattern
+           /\d+\.\d{1,2}/.test(line) || // More flexible decimal
+           /\$\d+/.test(line) || // Simple $number
+           /\d+\s+\d{2}/.test(line) || // Price with space (OCR issue)
+           /\b\d+\s*\.\s*\d{2}\b/.test(line) || // Space in decimal
+           /\b\d+\s+\d{1,2}\b/.test(line) || // Numbers that might be prices
+           /[A-Z]\s+\d+\.\d{2}/.test(line) || // Flag followed by price
+           /[A-Z]\s+\$?\d+/.test(line) || // Flag followed by amount
+           /\bF\b/.test(line) || // Kroger F flag (food indicator)
+           /\bN\b/.test(line) || // Walmart N flag
+           /\bT\b/.test(line) || // Target T flag
+           /\bA\b/.test(line) || // Safeway A flag
+           /\d+\s*lb\s*\d/.test(line); // Weight with numbers
+  }
+
+  static isNonFoodLine(line: string): boolean {
+    const skipPatterns = [
+      // Payment methods and card info
+      /\b(visa|mastercard|discover|amex|american express|credit|debit|card|cash|check|gift card|ebt|snap)\b/i,
+      /\b(chip read|contactless|mobile pay|apple pay|google pay|samsung pay)\b/i,
+      /\b(payment|tender|change due|cash back)\b/i,
+
+      // Receipt totals and taxes
+      /\b(total|subtotal|tax|sales tax|deposit|bottle deposit|bag fee|environmental fee)\b/i,
+      /\b(balance|amount due|amount paid|remaining balance)\b/i,
+
+      // Store operations and metadata
+      /\b(store|location|address|phone|tel|email|website|hours)\b/i,
+      /\b(receipt|transaction|ref|reference|order|invoice)\b[\s#:]/i,
+      /\b(cashier|associate|clerk|server|attendant|manager)\b/i,
+      /\b(register|lane|terminal|pos)\b/i,
+
+      // Dates, times, and numbers only
+      /^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}/,
+      /^\d{1,2}:\d{2}(:\d{2})?\s*(am|pm)?/i,
+      /^[\d\s\-#*=.]+$/,
+      /^\d{3,}\s*\d{3,}/,
+
+      // Customer service and policies
+      /\b(thank you|welcome|have a|visit us|return policy|satisfaction|guarantee)\b/i,
+      /\b(customer|member|rewards|points|loyalty|savings)\b/i,
+      /\b(survey|feedback|rate us|tell us)\b/i,
+
+      // Promotions and discounts
+      /\b(coupon|discount|sale|special|promotion|deal|offer|save)\b/i,
+      /\b(raincheck|price match|ad match)\b/i,
+
+      // Non-food household items
+      /\b(toilet paper|tissue|paper towel|napkin|plate|cup|utensil)\b/i,
+      /\b(soap|shampoo|conditioner|toothpaste|toothbrush|deodorant|lotion)\b/i,
+      /\b(detergent|bleach|cleaner|disinfectant|spray|wipes)\b/i,
+      /\b(battery|charger|cable|phone|electronic|device)\b/i,
+      /\b(medicine|vitamin|supplement|bandage|first aid)\b/i,
+      /\b(magazine|book|newspaper|card|gift)\b/i,
+      /\b(clothing|shirt|pants|socks|underwear|shoes)\b/i,
+      /\b(tool|hardware|automotive|oil|filter)\b/i,
+
+      // OCR artifacts and gibberish
+      /^[a-z]{1,3}\s+[a-z]{1,3}\s+[a-z]{1,3}$/i,
+      /^.{0,2}$/,
+      /^[a-z]{1,2}\s*\d+$/i,
+      /^[A-Z]{2,}\s+[a-z]{1,3}\s+[A-Z]{2,}/,
+      /[A-Z]{4,}[a-z]{1,2}[A-Z]{4,}/,
+
+      // Employee and system codes
+      /^(emp|employee|id|code|clerk|operator)\s*\d+/i,
+      /^(lhec|wessel|dr|ald|alani|cosmic|plus customer|bal ance|purchase|ale|srg)/i,
+      /^[\d\s]+lb$/i,
+
+      // Specific patterns from logs
+      /fresh\s*for\s*everyone/i,
+      /your cashier was/i,
+      /tell us how we are doing/i,
+      /fuel points/i,
+    ];
+
+    return skipPatterns.some(pattern => pattern.test(line));
+  }
+
+  static isValidItemName(name: string): boolean {
+    // Must be at least 4 characters for better filtering
+    if (name.length < 4) return false;
+
+    // Must contain at least one letter
+    if (!/[a-zA-Z]/.test(name)) return false;
+
+    // Cannot be only numbers and symbols
+    if (/^[\d\s\-\*\=\.]+$/.test(name)) return false;
+
+    // Cannot be too short after cleaning
+    if (name.trim().length < 4) return false;
+
+    // Must contain at least one vowel
+    if (!/[aeiou]/i.test(name)) return false;
+
+    // Reject OCR garbage patterns
+    const rejectPatterns = [
+      /^[a-z]{1,4}$/i, // Very short letter combinations
+      /^(re|al|ed|er|an|le|te|se|el|ar|wr|ol|en|es|tion|ing|sc|ob|ic|af|bf|pl|ce|lp|ih|ax|rest|style|torpc|enployel)$/i, // OCR fragments
+      /^[\d\s]*$/,     // Only numbers and spaces
+      /^[\.\/\-\*\+\=\&\%\$\#\@\!\?\,\;\:]+$/, // Only symbols
+      /^[a-z]\s+[a-z]$/i, // Single letters with space
+      /^[a-z]{1,2}\s+[a-z]{1,2}$/i, // Short letter combinations
+      /employee|discount|senior|wessel|rest style|enployel|torpc|ob d/i, // Store operations
+      /^[a-z]\s+[A-Z]/, // Mixed case OCR errors
+      /bpddbbiannnatiIl|torpc|fuego|fresh for everyone/i, // Specific OCR garbage
+      /^\d+\s*[a-z]{1,2}$/i, // Numbers with short letters
+      /^[a-z]{1,2}\s+\d+/i, // Short letters with numbers
+      /^[a-z]{1,3}\s+[a-z]{1,3}\s+[a-z]{1,3}$/i, // Multiple short words
+    ];
+
+    return !rejectPatterns.some(pattern => pattern.test(name));
+  }
+
+  static isLikelyFoodItem(itemName: string): boolean {
+    const foodKeywords = [
+      // Specific fruits
+      'apple', 'banana', 'orange', 'grape', 'berry', 'strawberry', 'blueberry', 'raspberry',
+      'lemon', 'lime', 'avocado', 'peach', 'pear', 'plum', 'cherry', 'watermelon', 'melon',
+      'pineapple', 'mango', 'kiwi', 'coconut', 'papaya', 'cantaloupe',
+
+      // Specific vegetables
+      'tomato', 'potato', 'onion', 'carrot', 'lettuce', 'spinach', 'broccoli', 'corn',
+      'bean', 'peas', 'cucumber', 'celery', 'pepper', 'jalapeno', 'garlic',
+      'mushroom', 'squash', 'zucchini', 'cabbage', 'cauliflower', 'asparagus',
+
+      // Specific proteins
+      'chicken', 'beef', 'pork', 'turkey', 'ham', 'bacon', 'sausage', 'fish', 'salmon',
+      'tuna', 'shrimp', 'crab', 'lobster', 'egg', 'eggs',
+
+      // Specific dairy
+      'milk', 'cheese', 'yogurt', 'butter', 'cream',
+
+      // Specific grains/carbs
+      'bread', 'rice', 'pasta', 'cereal', 'oats', 'flour', 'tortilla',
+
+      // Specific prepared foods
+      'soup', 'sauce', 'dressing', 'mayo', 'mustard', 'ketchup', 'salsa',
+      'juice', 'soda', 'water', 'tea', 'coffee', 'wine', 'beer',
+      'crackers', 'chips', 'nuts', 'seeds', 'oil', 'vinegar',
+      'pizza', 'sandwich', 'tostito'
+    ];
+
+    const nonFoodKeywords = [
+      'employee', 'discount', 'senior', 'wessel', 'style', 'rest', 'torpc',
+      'enployel', 'soap', 'shampoo', 'detergent', 'cleaner', 'paper', 'tissue',
+      'towel', 'napkin', 'battery', 'charger', 'medicine', 'vitamin', 'card',
+      'magazine', 'foil', 'wrap', 'tool', 'hardware', 'automotive', 'electronic',
+      'phone', 'cable', 'fuego', 'akis'
+    ];
+
+    const lowerItem = itemName.toLowerCase();
+
+    // Must be at least 4 characters for food consideration
+    if (itemName.length < 4) return false;
+
+    // Reject if contains non-food keywords
+    if (nonFoodKeywords.some(keyword => lowerItem.includes(keyword))) {
+      return false;
+    }
+
+    // Must contain at least one vowel (real words have vowels)
+    if (!/[aeiou]/i.test(itemName)) return false;
+
+    // Accept only if contains specific food keywords
+    return foodKeywords.some(keyword => lowerItem.includes(keyword));
+  }
+}
+```
+
+## Receipt Parsers
+
+```typescript
+// src/services/ocr/receiptParsers.ts
+import { OCRCorrection } from './ocrCorrection';
+
+export interface ParsedReceiptLine {
+  itemName: string;
+  quantity: string;
+  price: string;
+  weight?: string;
+  isVerifiedFood: boolean;
+}
+
+export class ReceiptParsers {
+
+  static parseKrogerLine(line: string): ParsedReceiptLine | null {
+    const originalLine = line.trim();
+
+    // Look for standard Kroger format with F flag
+    let match = originalLine.match(/^(.+?)\s+F\s+(\d+\.?\d{0,2})$/);
+    if (match) {
+      const [, itemPart, price] = match;
+      return {
+        itemName: this.cleanItemName(itemPart),
+        quantity: '1',
+        price: price.includes('.') ? price : price + '.00',
+        isVerifiedFood: true
+      };
+    }
+
+    // Look for multi-line Kroger format where F flag might be separate
+    match = originalLine.match(/^(.+?)\s+(\d+\.?\d{0,2})\s+F$/);
+    if (match) {
+      const [, itemPart, price] = match;
+      return {
+        itemName: this.cleanItemName(itemPart),
+        quantity: '1',
+        price: price.includes('.') ? price : price + '.00',
+        isVerifiedFood: true
+      };
+    }
+
+    // Look for lines with F flag but no clear price
+    if (/\bF\b/.test(originalLine)) {
+      const cleanedLine = originalLine.replace(/\bF\b/, '').trim();
+      const priceMatch = cleanedLine.match(/(\d+\.?\d{0,2})/);
+      let price = '0.00';
+      let itemName = cleanedLine;
+
+      if (priceMatch) {
+        price = priceMatch[1].includes('.') ? priceMatch[1] : priceMatch[1] + '.00';
+        itemName = cleanedLine.replace(/\d+\.?\d{0,2}/, '').trim();
+      }
+
+      itemName = this.cleanItemName(itemName);
+      if (itemName.length >= 3) {
+        return {
+          itemName,
+          quantity: '1',
+          price,
+          isVerifiedFood: true
+        };
+      }
+    }
+
+    // Look for weight-based items (common at Kroger)
+    match = originalLine.match(/^(.+?)\s+(\d+\.?\d*)\s*lb\s+@\s+\$?(\d+\.?\d{0,2})\s+(\d+\.?\d{0,2})\s*F?$/i);
+    if (match) {
+      const [, itemPart, weight, unitPrice, totalPrice] = match;
+      return {
+        itemName: this.cleanItemName(itemPart),
+        quantity: weight + ' lb',
+        price: totalPrice.includes('.') ? totalPrice : totalPrice + '.00',
+        weight: weight + ' lb',
+        isVerifiedFood: true
+      };
+    }
+
+    return null;
+  }
+
+  static parseWalmartLine(line: string): ParsedReceiptLine | null {
+    const originalLine = line.trim();
+
+    // Walmart uses N for non-taxable (usually food)
+    const match = originalLine.match(/^(.+?)\s+(\d+\.?\d{0,2})\s+N$/);
+    if (match) {
+      const [, itemPart, price] = match;
+      return {
+        itemName: this.cleanItemName(itemPart),
+        quantity: '1',
+        price: price.includes('.') ? price : price + '.00',
+        isVerifiedFood: true
+      };
+    }
+
+    return null;
+  }
+
+  static parseTargetLine(line: string): ParsedReceiptLine | null {
+    const originalLine = line.trim();
+
+    // Target uses T for food items
+    const match = originalLine.match(/^(.+?)\s+(\d+\.?\d{0,2})\s+T$/);
+    if (match) {
+      const [, itemPart, price] = match;
+      return {
+        itemName: this.cleanItemName(itemPart),
+        quantity: '1',
+        price: price.includes('.') ? price : price + '.00',
+        isVerifiedFood: true
+      };
+    }
+
+    return null;
+  }
+
+  static parseWeightBasedLine(line: string): ParsedReceiptLine | null {
+    const originalLine = line.trim();
+
+    // Pattern: ITEM_NAME WEIGHT lb @ $UNIT_PRICE TOTAL_PRICE
+    let match = originalLine.match(/^(.+?)\s+(\d+\.?\d*)\s*lb\s+@\s+\$?(\d+\.?\d{0,2})\s+(\d+\.?\d{0,2})$/i);
+    if (match) {
+      const [, itemPart, weight, unitPrice, totalPrice] = match;
+      return {
+        itemName: this.cleanItemName(itemPart),
+        quantity: weight + ' lb',
+        price: totalPrice.includes('.') ? totalPrice : totalPrice + '.00',
+        weight: weight + ' lb',
+        isVerifiedFood: true
+      };
+    }
+
+    // Simpler weight pattern: ITEM_NAME WEIGHT lb PRICE
+    match = originalLine.match(/^(.+?)\s+(\d+\.?\d*)\s*lb\s+(\d+\.?\d{0,2})$/i);
+    if (match) {
+      const [, itemPart, weight, price] = match;
+      return {
+        itemName: this.cleanItemName(itemPart),
+        quantity: weight + ' lb',
+        price: price.includes('.') ? price : price + '.00',
+        weight: weight + ' lb',
+        isVerifiedFood: true
+      };
+    }
+
+    return null;
+  }
+
+  static parsePLULine(line: string): ParsedReceiptLine | null {
+    const originalLine = line.trim();
+
+    // PLU codes are typically 4-5 digits for produce
+    const match = originalLine.match(/^(\d{4,5})\s+(.+?)\s+(\d+\.?\d{0,2})$/);
+    if (match) {
+      const [, pluCode, itemPart, price] = match;
+      return {
+        itemName: this.cleanItemName(itemPart),
+        quantity: '1',
+        price: price.includes('.') ? price : price + '.00',
+        isVerifiedFood: true
+      };
+    }
+
+    return null;
+  }
+
+  static parseGenericLine(line: string): ParsedReceiptLine | null {
+    const originalLine = line.trim();
+
+    // Pattern: QTY @ PRICE ITEM_NAME TOTAL
+    let match = originalLine.match(/^(\d+)\s+@\s+(\d+\.?\d{0,2})\s+(.+?)\s+(\d+\.?\d{0,2})$/);
+    if (match) {
+      const [, qty, unitPrice, itemPart, totalPrice] = match;
+      return {
+        itemName: this.cleanItemName(itemPart),
+        quantity: qty,
+        price: totalPrice.includes('.') ? totalPrice : totalPrice + '.00',
+        isVerifiedFood: false
+      };
+    }
+
+    // Pattern: ITEM_NAME QTY @ PRICE TOTAL
+    match = originalLine.match(/^(.+?)\s+(\d+)\s+@\s+(\d+\.?\d{0,2})\s+(\d+\.?\d{0,2})$/);
+    if (match) {
+      const [, itemPart, qty, unitPrice, totalPrice] = match;
+      return {
+        itemName: this.cleanItemName(itemPart),
+        quantity: qty,
+        price: totalPrice.includes('.') ? totalPrice : totalPrice + '.00',
+        isVerifiedFood: false
+      };
+    }
+
+    // Simple pattern: ITEM_NAME PRICE
+    match = originalLine.match(/^(.+?)\s+(\d+\.?\d{0,2})$/);
+    if (match) {
+      const [, itemPart, price] = match;
+      const cleanedName = this.cleanItemName(itemPart);
+      if (cleanedName.length >= 3) {
+        return {
+          itemName: cleanedName,
+          quantity: '1',
+          price: price.includes('.') ? price : price + '.00',
+          isVerifiedFood: false
+        };
+      }
+    }
+
+    // Very flexible pattern: Look for any price-like number
+    const priceMatch = originalLine.match(/(\d+\.?\d{0,2})/);
+    if (priceMatch && parseFloat(priceMatch[1]) > 0) {
+      const itemPart = originalLine.replace(priceMatch[1], '').trim();
+      const cleanedName = this.cleanItemName(itemPart);
+      if (cleanedName.length >= 3) {
+        return {
+          itemName: cleanedName,
+          quantity: '1',
+          price: priceMatch[1].includes('.') ? priceMatch[1] : priceMatch[1] + '.00',
+          isVerifiedFood: false
+        };
+      }
+    }
+
+    return null;
+  }
+
+  private static cleanItemName(name: string): string {
+    return name
+      // Remove prices and quantities first
+      .replace(/\$?\d+\.?\d{0,2}/g, '')
+      .replace(/\b\d+\s*@\s*\d+\.?\d{0,2}/g, '')
+      .replace(/\b\d+\.?\d*\s*lb/gi, '')
+      .replace(/\b\d+\s*(ea|each|ct|count)\b/gi, '')
+
+      // Remove store names and brands
+      .replace(/\b(kroger|walmart|target|safeway|aldi|great value|gv|organic|fresh|frozen)\b/gi, '')
+
+      // Remove packaging terms
+      .replace(/\b(bag|box|bottle|can|jar|pkg|package|ct|count|lb|lbs|oz|gallon|quart|pint)\b/gi, '')
+
+      // Remove codes and flags
+      .replace(/\b[A-Z]\s*$/g, '') // Single letter flags at end
+      .replace(/\b\d{2,}\b/g, '') // Numeric codes
+
+      // Clean up special characters and spacing
+      .replace(/[^\w\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+
+      // Apply OCR corrections
+      .split(' ')
+      .map(word => OCRCorrection.correctItemName(word))
+      .join(' ');
+  }
+}
+```
+
+## Smart Parser
+
+```typescript
+// src/services/ocr/smartParser.ts
+import { ParsedReceiptLine } from './receiptParsers';
+
+export class SmartParser {
+
+  static parseAnyLine(line: string): ParsedReceiptLine | null {
+    // Smart parser that tries to extract meaningful food items while filtering OCR noise
+    const originalLine = line.trim();
+
+    // Skip obviously bad lines
+    if (originalLine.length < 5) return null;
+    if (/^[\d\s\-\*\=\.]+$/.test(originalLine)) return null;
+
+    // Skip lines that are clearly OCR garbage or store operations
+    if (/employee|discount|senior|wessel|enployel|bpddbbiannnatiIl|rest style|torpc|ob d/i.test(originalLine)) return null;
+
+    let itemName = '';
+    let price = '0.00';
+    let quantity = '1';
+    let isVerifiedFood = false;
+
+    // Try to extract any price-like pattern
+    const priceMatches = originalLine.match(/(\d+\.?\d{0,2})/g);
+    if (priceMatches && priceMatches.length > 0) {
+      // Use the last number as price (usually at end of line)
+      const lastMatch = priceMatches[priceMatches.length - 1];
+      if (parseFloat(lastMatch) > 0 && parseFloat(lastMatch) < 100) {
+        price = lastMatch.includes('.') ? lastMatch : lastMatch + '.00';
+      }
+    }
+
+    // Extract item name by removing price and common patterns
+    itemName = originalLine
+      .replace(/\$?\d+\.?\d{0,2}/g, '') // Remove all numbers that look like prices
+      .replace(/\b[A-Z]\s*$/g, '') // Remove single letters at end (flags)
+      .replace(/\b\d{2,4}\s*$/g, '') // Remove codes at end
+      .replace(/^\d+\s+/, '') // Remove leading numbers
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    // Look for food indicators
+    const foodIndicators = [
+      'F', // Kroger food flag
+      'N', // Walmart non-taxable
+      'T', // Target flag
+      'A', // Safeway food flag
+    ];
+
+    // Check if line has food flag
+    if (foodIndicators.some(flag => originalLine.includes(` ${flag} `) || originalLine.endsWith(` ${flag}`))) {
+      isVerifiedFood = true;
+    }
+
+    // Look for weight indicators (usually food)
+    if (/\d+\.?\d*\s*lb/i.test(originalLine)) {
+      isVerifiedFood = true;
+      const weightMatch = originalLine.match(/(\d+\.?\d*)\s*lb/i);
+      if (weightMatch) {
+        quantity = weightMatch[1] + ' lb';
+        itemName = itemName.replace(/\d+\.?\d*\s*lb/i, '').trim();
+      }
+    }
+
+    // Look for PLU codes (4-5 digits, usually produce)
+    if (/^\d{4,5}/.test(originalLine)) {
+      isVerifiedFood = true;
+    }
+
+    // Clean up the item name
+    itemName = this.cleanSmartName(itemName);
+
+    if (itemName.length < 4) return null;
+
+    return {
+      itemName,
+      quantity,
+      price,
+      isVerifiedFood
+    };
+  }
+
+  private static cleanSmartName(name: string): string {
+    return name
+      .replace(/\b(KRO|KROGER|WALMART|WM|TARGET|TGT|SAFEWAY|SWY|ALDI)\b/gi, '') // Remove store names
+      .replace(/\b(ORGANIC|FRESH|FROZEN|CANNED|NATURAL|PREMIUM|SELECT|GREAT VALUE|GV|PC|SS)\b/gi, '') // Remove adjectives
+      .replace(/\b(EACH|EA|PKG|PACKAGE|BAG|BOX|BOTTLE|CAN|JAR|CT|COUNT|LB|LBS|OZ)\b/gi, '') // Remove packaging
+      .replace(/\b\d{2,}\b/g, '') // Remove codes
+      .replace(/[^\w\s]/g, ' ') // Remove special characters
+      .replace(/\s+/g, ' ') // Normalize whitespace
+      .trim();
+  }
+}
+```
+
+## Main OCR Service
+
+```typescript
+// src/services/ocrService.ts
+import Tesseract from 'tesseract.js';
+import { FoodItem } from '../types/food';
+import { findFoodItem } from '../data/foodDatabase';
+import { ReceiptParsers, ParsedReceiptLine } from './ocr/receiptParsers';
+import { ReceiptFilters } from './ocr/receiptFilters';
+import { OCRCorrection } from './ocr/ocrCorrection';
+import { SmartParser } from './ocr/smartParser';
+
+class OCRService {
+  private worker: Tesseract.Worker | null = null;
+
+  async initialize() {
+    if (!this.worker) {
+      this.worker = await Tesseract.createWorker('eng');
+    }
+  }
+
+  async processReceipt(imageFile: File): Promise<{ items: FoodItem[], rawText: string }> {
+    await this.initialize();
+
+    if (!this.worker) {
+      throw new Error('OCR worker not initialized');
+    }
+
+    const { data: { text } } = await this.worker.recognize(imageFile);
+    const items = this.parseReceiptText(text);
+
+    return { items, rawText: text };
+  }
+
+  private parseReceiptText(text: string): FoodItem[] {
+    const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+    const foodItems: FoodItem[] = [];
+
+    for (const line of lines) {
+      const parsedItem = this.parseReceiptLine(line);
+      if (parsedItem) {
+        // Create FoodItem with proper dates and freshness calculation
+        const purchaseDate = new Date();
+        const foodInfo = findFoodItem(parsedItem.itemName);
+
+        if (!foodInfo) continue; // Skip if not found in database
+
+        const expirationDate = new Date();
+        expirationDate.setDate(purchaseDate.getDate() + foodInfo.shelfLife);
+
+        // Calculate freshness
+        const now = new Date();
+        const daysUntilExpiration = Math.ceil((expirationDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+        let freshness: 'fresh' | 'warning' | 'expired';
+        if (daysUntilExpiration < 0) {
+          freshness = 'expired';
+        } else if (daysUntilExpiration <= 2) {
+          freshness = 'warning';
+        } else {
+          freshness = 'fresh';
+        }
+
+        const foodItem: FoodItem = {
+          id: Math.random().toString(36).substr(2, 9),
+          name: parsedItem.itemName,
+          quantity: parsedItem.quantity,
+          purchaseDate,
+          expirationDate,
+          freshness,
+          category: foodInfo.category
+        };
+
+        foodItems.push(foodItem);
+      }
+    }
+
+    return foodItems;
+  }
+
+  private parseReceiptLine(line: string): ParsedReceiptLine | null {
+    const originalLine = line.trim();
+
+    // Skip obviously non-food lines first
+    if (ReceiptFilters.isNonFoodLine(originalLine)) {
+      return null;
+    }
+
+    // Must have some indication of being an item (price or food flag)
+    if (!ReceiptFilters.hasPrice(originalLine)) {
+      return null;
+    }
+
+    // Try store-specific parsers first
+    let parsed = ReceiptParsers.parseKrogerLine(originalLine) ||
+                 ReceiptParsers.parseWalmartLine(originalLine) ||
+                 ReceiptParsers.parseTargetLine(originalLine) ||
+                 ReceiptParsers.parseWeightBasedLine(originalLine) ||
+                 ReceiptParsers.parsePLULine(originalLine) ||
+                 ReceiptParsers.parseGenericLine(originalLine);
+
+    // If no specific parser worked, try the smart parser
+    if (!parsed) {
+      parsed = SmartParser.parseAnyLine(originalLine);
+    }
+
+    if (!parsed) return null;
+
+    // Validate the item name
+    if (!ReceiptFilters.isValidItemName(parsed.itemName)) {
+      return null;
+    }
+
+    // For items that aren't verified as food by receipt flags,
+    // check if they're likely food items or exist in our database
+    if (!parsed.isVerifiedFood) {
+      const foodInfo = findFoodItem(parsed.itemName);
+      const isLikelyFood = ReceiptFilters.isLikelyFoodItem(parsed.itemName);
+
+      // Only accept if it's either in our database OR likely food
+      if (!foodInfo && !isLikelyFood) {
+        return null;
+      }
+    }
+
+    return parsed;
+  }
+
+  async cleanup() {
+    if (this.worker) {
+      await this.worker.terminate();
+      this.worker = null;
+    }
+  }
+}
+
+export const ocrService = new OCRService();
+```
+
+## UI Components
+
+```typescript
+// src/components/scanner/ReceiptScanner.tsx
+import React, { useState } from 'react';
+import { Camera, Upload, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { Button } from '../ui/button';
+import { Card } from '../ui/card';
+import { Progress } from '../ui/progress';
+import { CameraCapture } from '../camera/CameraCapture';
+import { ocrService } from '../../services/ocrService';
+import { FoodItem } from '../../types/food';
+import { toast } from 'sonner';
+
+interface ReceiptScannerProps {
+  onItemsScanned: (items: FoodItem[]) => void;
+}
+
+type ScanStep = 'method' | 'camera' | 'processing' | 'success' | 'error';
+
+export function ReceiptScanner({ onItemsScanned }: ReceiptScannerProps) {
+  const [step, setStep] = useState('method');
+  const [progress, setProgress] = useState(0);
+  const [scannedItems, setScannedItems] = useState([]);
+  const [error, setError] = useState('');
+
+  const handleCameraCapture = (imageFile: File) => {
+    processImage(imageFile);
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      processImage(file);
+    }
+  };
+
+  const processImage = async (imageFile: File) => {
+    setStep('processing');
+    setProgress(10);
+    setError('');
+
+    try {
+      setProgress(30);
+
+      const { items, rawText } = await ocrService.processReceipt(imageFile);
+
+      setProgress(90);
+
+      if (items.length === 0) {
+        setError('No food items found in receipt. Please try again with a clearer image.');
+        setStep('error');
+        return;
+      }
+
+      setScannedItems(items);
+      setStep('success');
+      setProgress(100);
+
+      // Call the callback to add items to the fridge
+      onItemsScanned(items);
+
+      toast.success(`Successfully scanned ${items.length} food items!`);
+
+    } catch (err) {
+      console.error('OCR processing failed:', err);
+      setError('Failed to process receipt. Please try again.');
+      setStep('error');
+    }
+  };
+
+  const resetScanner = () => {
+    setStep('method');
+    setProgress(0);
+    setScannedItems([]);
+    setError('');
+  };
+
+  const renderStepContent = () => {
+    switch (step) {
+      case 'method':
+        return (
+
+            How would you like to scan your receipt?
+
+               setStep('camera')}
+                className="h-20 flex flex-col gap-2"
+              >
+
+                Take Photo
+
+                    Upload Image
+
+        );
+
+      case 'camera':
+        return (
+
+             setStep('method')} className="w-full">
+              Back to Options
+
+        );
+
+      case 'processing':
+        return (
+
+            Processing Receipt...
+            Reading and analyzing your receipt
+
+        );
+
+      case 'success':
+        return (
+
+            Receipt Scanned Successfully!
+
+              Found {scannedItems.length} food item{scannedItems.length !== 1 ? 's' : ''}
+
+              {scannedItems.slice(0, 5).map((item, index) => (
+                • {item.name}
+              ))}
+              {scannedItems.length > 5 && (
+                ... and {scannedItems.length - 5} more items
+              )}
+
+              Scan Another Receipt
+
+        );
+
+      case 'error':
+        return (
+
+            Scanning Failed
+            {error}
+
+              Try Again
+
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+
+      {renderStepContent()}
+
+  );
+}
+```
+
+```typescript
+// src/components/camera/CameraCapture.tsx
+import React, { useRef, useState, useCallback } from 'react';
+import { Camera, RotateCw, Check, X } from 'lucide-react';
+import { Button } from '../ui/button';
+
+interface CameraCaptureProps {
+  onCapture: (file: File) => void;
+}
+
+export function CameraCapture({ onCapture }: CameraCaptureProps) {
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const [stream, setStream] = useState(null);
+  const [isActive, setIsActive] = useState(false);
+  const [capturedImage, setCapturedImage] = useState(null);
+
+  const startCamera = async () => {
+    try {
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' } // Use back camera if available
+      });
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream;
+        setStream(mediaStream);
+        setIsActive(true);
+      }
+    } catch (error) {
+      console.error('Error accessing camera:', error);
+    }
+  };
+
+  const stopCamera = () => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      setStream(null);
+      setIsActive(false);
+    }
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      const context = canvas.getContext('2d');
+
+      if (context) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0);
+
+        const imageDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        setCapturedImage(imageDataUrl);
+        stopCamera();
+      }
+    }
+  };
+
+  const confirmCapture = () => {
+    if (capturedImage && canvasRef.current) {
+      canvasRef.current.toBlob((blob) => {
+        if (blob) {
+          const file = new File([blob], 'receipt.jpg', { type: 'image/jpeg' });
+          onCapture(file);
+        }
+      }, 'image/jpeg', 0.8);
+    }
+  };
+
+  const retakePhoto = () => {
+    setCapturedImage(null);
+    startCamera();
+  };
+
+  if (capturedImage) {
+    return (
+
+            Retake
+
+            Use Photo
+
+    );
+  }
+
+  return (
+
+        {isActive ? (
+
+        ) : (
+
+              Camera preview will appear here
+
+        )}
+
+        {isActive ? (
+          <>
+
+              Cancel
+
+              Capture
+
+        ) : (
+
+            Start Camera
+
+        )}
+
+  );
+}
+```
+
+This is the complete receipt scanning system that handles OCR processing, text extraction, filtering, and food item recognition across multiple receipt formats.
