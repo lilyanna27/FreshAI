@@ -89,7 +89,7 @@ export class ReceiptScanner {
       itemName = OCRCorrection.correctItemName(itemName);
 
       // Skip if still looks like misread text
-      if (OCRCorrection.isLikelyMisread(itemName)) {
+      if (OCRCorrection.isLikelyMisread(itemName) || this.isGibberishLine(itemName)) {
         continue;
       }
 
@@ -130,9 +130,13 @@ export class ReceiptScanner {
       items.push(foodItem);
     }
 
-    // If no valid food items found, likely gibberish
-    if (items.length === 0 && lines.length > 5) {
-      throw new Error('No food items found in receipt. Please ensure the image is clear and contains grocery items.');
+    // If no valid food items found, likely gibberish or not a grocery receipt
+    if (items.length === 0) {
+      if (lines.length > 10) {
+        throw new Error('No food items found in receipt. Please ensure the image is clear and contains grocery items.');
+      } else {
+        throw new Error('Unable to read receipt clearly. Please try a clearer image or different angle.');
+      }
     }
 
     return items;
@@ -145,12 +149,14 @@ export class ReceiptScanner {
 
     // Count problematic patterns that indicate poor OCR
     const gibberishPatterns = [
-      /[|\\\/]{3,}/g,  // Multiple slashes/pipes like |||
-      /[;:]{3,}/g,      // Multiple colons/semicolons  
+      /[|\\\/]{2,}/g,   // Multiple slashes/pipes like || or ///
+      /[;:]{2,}/g,      // Multiple colons/semicolons  
       /\s[a-z]\s/g,     // Single letters surrounded by spaces
-      /[A-Z]{6,}/g,     // Too many consecutive capitals
-      /\s{5,}/g,        // Excessive whitespace
-      /[^\w\s$.,()-]{3,}/g // Multiple special chars together
+      /[A-Z]{4,}/g,     // Too many consecutive capitals (lowered from 6)
+      /\s{3,}/g,        // Excessive whitespace (lowered from 5)
+      /[^\w\s$.,()-]{2,}/g, // Multiple special chars together (lowered from 3)
+      /[[\]{}]{1,}/g,   // Square/curly brackets (common OCR errors)
+      /[><!@#%&*+=]{2,}/g // Multiple symbols together
     ];
 
     let gibberishCount = 0;
@@ -164,12 +170,12 @@ export class ReceiptScanner {
     // Calculate ratio of gibberish characters
     const gibberishRatio = gibberishCount / totalChars;
     
-    // Check for recognizable words
+    // Check for recognizable words - be more strict
     const words = text.toLowerCase().split(/\s+/).filter(w => w.length >= 2);
-    const commonReceiptWords = ['total', 'tax', 'subtotal', 'save', 'price', 'qty', 'each', 'item', 'food', 'store', 'market', 'grocery'];
+    const commonReceiptWords = ['total', 'tax', 'subtotal', 'save', 'price', 'qty', 'each', 'item', 'food', 'store', 'market', 'grocery', 'banana', 'apple', 'milk', 'bread'];
     const recognizableWords = words.filter(word => 
       commonReceiptWords.includes(word) || 
-      /^[a-z]{3,}$/.test(word) // Valid English-looking words
+      (/^[a-z]{4,}$/.test(word) && !word.match(/[aeiouy]{4,}/)) // Valid English-looking words (4+ chars, not all vowels)
     );
     
     const wordRatio = recognizableWords.length / Math.max(words.length, 1);
@@ -180,11 +186,46 @@ export class ReceiptScanner {
       totalChars,
       recognizableWords: recognizableWords.length,
       totalWords: words.length,
-      isGibberish: gibberishRatio > 0.3 || wordRatio < 0.1
+      isGibberish: gibberishRatio > 0.15 || wordRatio < 0.2 // Made more strict
     });
 
     // Mark as gibberish if too many problematic patterns or too few recognizable words
-    return gibberishRatio > 0.3 || wordRatio < 0.1;
+    return gibberishRatio > 0.15 || wordRatio < 0.2; // Stricter thresholds
+  }
+
+  private isGibberishLine(line: string): boolean {
+    // Check individual lines for gibberish patterns
+    if (line.length < 3) return true;
+    
+    // Common gibberish patterns in individual lines
+    const linePatterns = [
+      /[|\\\/;:]{1,}/,     // Any pipes, slashes, colons, semicolons
+      /\s[a-z]\s/,         // Single letters with spaces
+      /[[\]{}]/,           // Brackets
+      /[><!@#%&*+=]{1,}/,  // Symbol characters
+      /^[A-Z\s]{5,}$/,     // All caps with spaces
+      /\s{2,}/             // Multiple spaces
+    ];
+    
+    // Count how many patterns match
+    let patternMatches = 0;
+    for (const pattern of linePatterns) {
+      if (pattern.test(line)) {
+        patternMatches++;
+      }
+    }
+    
+    // If line has 2+ gibberish patterns, it's likely gibberish
+    if (patternMatches >= 2) return true;
+    
+    // Check for lack of vowels (common in OCR errors)
+    const vowelCount = (line.match(/[aeiouAEIOU]/g) || []).length;
+    const consonantCount = (line.match(/[bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ]/g) || []).length;
+    
+    // If too few vowels relative to consonants, likely gibberish
+    if (consonantCount > 3 && vowelCount / consonantCount < 0.2) return true;
+    
+    return false;
   }
 
   async terminate(): Promise<void> {
