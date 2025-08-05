@@ -1,4 +1,5 @@
 import { createWorker } from 'tesseract.js';
+import type * as Tesseract from 'tesseract.js';
 import { OCRCorrection } from './ocrCorrection';
 import { ReceiptFilters } from './receiptFilters';
 import { findFoodItem } from '../../data/foodDatabase';
@@ -18,15 +19,18 @@ export class ReceiptScanner {
     if (this.isInitialized) return;
 
     try {
+      console.log('Creating OCR worker...');
       this.worker = await createWorker('eng');
+      console.log('OCR worker created, setting parameters...');
       await this.worker.setParameters({
         tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 .,!?@#$%&*()[]{}|\\:;"\'-_+=/<>',
-        tessedit_pageseg_mode: 6, // Uniform block of text
+        tessedit_pageseg_mode: '6' as any, // Uniform block of text
       });
+      console.log('OCR worker initialized successfully');
       this.isInitialized = true;
     } catch (error) {
       console.error('Failed to initialize OCR worker:', error);
-      throw new Error('Failed to initialize receipt scanner');
+      throw new Error(`Failed to initialize receipt scanner: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -36,8 +40,13 @@ export class ReceiptScanner {
     }
 
     try {
+      console.log('Starting OCR recognition on file:', imageFile.name);
       const { data: { text, confidence } } = await this.worker.recognize(imageFile);
+      console.log('OCR text extracted:', text.substring(0, 200) + '...');
+      console.log('OCR confidence:', confidence);
+      
       const items = this.processReceiptText(text);
+      console.log('Processed items:', items);
       
       return {
         items,
@@ -46,7 +55,7 @@ export class ReceiptScanner {
       };
     } catch (error) {
       console.error('OCR scanning failed:', error);
-      throw new Error('Failed to scan receipt');
+      throw new Error(`Failed to scan receipt: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 

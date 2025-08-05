@@ -17,17 +17,32 @@ export default function ReceiptScan() {
   // OCR scanning mutation
   const scanReceiptMutation = useMutation({
     mutationFn: async (file: File): Promise<ScanResult> => {
-      await receiptScanner.initialize();
-      return receiptScanner.scanReceipt(file);
+      console.log('Starting OCR scan...');
+      try {
+        await receiptScanner.initialize();
+        console.log('OCR initialized, processing file...');
+        const result = await receiptScanner.scanReceipt(file);
+        console.log('OCR result:', result);
+        return result;
+      } catch (error) {
+        console.error('OCR processing error:', error);
+        throw error;
+      }
     },
     onSuccess: (result) => {
-      setScannedItems(result.items);
-      setScanState('results');
-      toast.success(`Found ${result.items.length} food items in your receipt!`);
+      console.log('Scan successful, found items:', result.items);
+      if (result.items.length === 0) {
+        toast.error('No food items found in the receipt. Try a clearer image.');
+        setScanState('idle');
+      } else {
+        setScannedItems(result.items);
+        setScanState('results');
+        toast.success(`Found ${result.items.length} food items in your receipt!`);
+      }
     },
     onError: (error) => {
       console.error('OCR scan failed:', error);
-      toast.error('Failed to scan receipt. Please try again.');
+      toast.error(`Failed to scan receipt: ${error.message}`);
       setScanState('idle');
     }
   });
@@ -71,8 +86,23 @@ export default function ReceiptScan() {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      console.log('File selected:', file.name, file.type, file.size);
       setSelectedFile(file);
       setScanState('processing');
+      
+      // Add basic validation
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please select an image file');
+        setScanState('idle');
+        return;
+      }
+      
+      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+        toast.error('Image file too large. Please select a smaller image.');
+        setScanState('idle');
+        return;
+      }
+      
       scanReceiptMutation.mutate(file);
     }
   };
@@ -86,6 +116,36 @@ export default function ReceiptScan() {
   const handleRetry = () => {
     setScanState('idle');
     setScannedItems([]);
+  };
+
+  // Test function with sample items for debugging
+  const handleTestScan = () => {
+    const mockItems: FoodItem[] = [
+      {
+        id: '1',
+        name: 'Organic Bananas',
+        quantity: '6 pieces',
+        purchaseDate: new Date(),
+        expirationDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+        freshness: 'fresh' as const,
+        category: 'Fruit',
+        confidence: 0.95
+      },
+      {
+        id: '2',
+        name: 'Whole Milk',
+        quantity: '1 gallon',
+        purchaseDate: new Date(),
+        expirationDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        freshness: 'fresh' as const,
+        category: 'Dairy',
+        confidence: 0.92
+      }
+    ];
+    
+    setScannedItems(mockItems);
+    setScanState('results');
+    toast.success(`Test scan complete! Found ${mockItems.length} items.`);
   };
 
   if (scanState === 'scanning') {
@@ -281,7 +341,7 @@ export default function ReceiptScan() {
       </div>
 
       {/* How it works */}
-      <div className="bg-white rounded-3xl p-6 border border-gray-200">
+      <div className="bg-white rounded-3xl p-6 border border-gray-200 mb-4">
         <h3 className="text-gray-800 font-semibold mb-4" style={{fontFamily: 'Times New Roman, serif'}}>How it works</h3>
         <div className="space-y-3">
           <div className="flex items-start">
@@ -309,6 +369,19 @@ export default function ReceiptScan() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Test button for debugging */}
+      <div className="bg-yellow-50 rounded-3xl p-4 border border-yellow-200">
+        <h4 className="text-gray-800 font-medium mb-2" style={{fontFamily: 'Times New Roman, serif'}}>Test Mode</h4>
+        <p className="text-gray-600 text-sm mb-3" style={{fontFamily: 'Times New Roman, serif'}}>Click below to test the scanning results with sample items</p>
+        <button
+          onClick={handleTestScan}
+          className="w-full py-3 px-4 bg-yellow-500 text-white rounded-2xl font-medium hover:bg-yellow-600 transition-all"
+          style={{fontFamily: 'Times New Roman, serif'}}
+        >
+          Test Scan Feature
+        </button>
       </div>
       </div>
     </div>
