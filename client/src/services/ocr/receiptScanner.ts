@@ -60,6 +60,11 @@ export class ReceiptScanner {
   }
 
   private processReceiptText(text: string): FoodItem[] {
+    // First check if the text looks like valid receipt content
+    if (this.isGibberish(text)) {
+      throw new Error('Unable to read receipt clearly. Please try a clearer image or different angle.');
+    }
+
     const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
     const items: FoodItem[] = [];
     
@@ -125,7 +130,61 @@ export class ReceiptScanner {
       items.push(foodItem);
     }
 
+    // If no valid food items found, likely gibberish
+    if (items.length === 0 && lines.length > 5) {
+      throw new Error('No food items found in receipt. Please ensure the image is clear and contains grocery items.');
+    }
+
     return items;
+  }
+
+  private isGibberish(text: string): boolean {
+    // Check for signs of poor OCR quality
+    const totalChars = text.length;
+    if (totalChars < 10) return true;
+
+    // Count problematic patterns that indicate poor OCR
+    const gibberishPatterns = [
+      /[|\\\/]{3,}/g,  // Multiple slashes/pipes like |||
+      /[;:]{3,}/g,      // Multiple colons/semicolons  
+      /\s[a-z]\s/g,     // Single letters surrounded by spaces
+      /[A-Z]{6,}/g,     // Too many consecutive capitals
+      /\s{5,}/g,        // Excessive whitespace
+      /[^\w\s$.,()-]{3,}/g // Multiple special chars together
+    ];
+
+    let gibberishCount = 0;
+    for (const pattern of gibberishPatterns) {
+      const matches = text.match(pattern);
+      if (matches) {
+        gibberishCount += matches.join('').length;
+      }
+    }
+
+    // Calculate ratio of gibberish characters
+    const gibberishRatio = gibberishCount / totalChars;
+    
+    // Check for recognizable words
+    const words = text.toLowerCase().split(/\s+/).filter(w => w.length >= 2);
+    const commonReceiptWords = ['total', 'tax', 'subtotal', 'save', 'price', 'qty', 'each', 'item', 'food', 'store', 'market', 'grocery'];
+    const recognizableWords = words.filter(word => 
+      commonReceiptWords.includes(word) || 
+      /^[a-z]{3,}$/.test(word) // Valid English-looking words
+    );
+    
+    const wordRatio = recognizableWords.length / Math.max(words.length, 1);
+    
+    console.log('Gibberish analysis:', {
+      gibberishRatio: gibberishRatio.toFixed(3),
+      wordRatio: wordRatio.toFixed(3),
+      totalChars,
+      recognizableWords: recognizableWords.length,
+      totalWords: words.length,
+      isGibberish: gibberishRatio > 0.3 || wordRatio < 0.1
+    });
+
+    // Mark as gibberish if too many problematic patterns or too few recognizable words
+    return gibberishRatio > 0.3 || wordRatio < 0.1;
   }
 
   async terminate(): Promise<void> {

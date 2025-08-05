@@ -42,7 +42,19 @@ export default function ReceiptScan() {
     },
     onError: (error) => {
       console.error('OCR scan failed:', error);
-      toast.error(`Failed to scan receipt: ${error.message}`);
+      const errorMessage = error.message || 'Unknown error occurred';
+      
+      // Show specific error messages for different types of failures
+      if (errorMessage.includes('Unable to read receipt clearly')) {
+        toast.error('📷 Image unclear - Try a clearer photo or different angle');
+      } else if (errorMessage.includes('No food items found')) {
+        toast.error('🛒 No groceries detected - Make sure the receipt contains food items');
+      } else if (errorMessage.includes('Failed to initialize')) {
+        toast.error('⚠️ Scanner initialization failed - Please try again');
+      } else {
+        toast.error(`❌ Scan failed: ${errorMessage}`);
+      }
+      
       setScanState('idle');
     }
   });
