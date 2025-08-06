@@ -66,18 +66,17 @@ export default function Fridge() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.quantity) {
+    if (!formData.name || !formData.quantity || !formData.category) {
       toast({
         title: "Missing Information",
-        description: "Please fill in at least the name and quantity",
+        description: "Please fill in the name, quantity, and category",
         variant: "destructive",
       });
       return;
     }
 
-    // Auto-detect food item info if not provided
-    const foodInfo = findFoodItem(formData.name);
-    const category = formData.category || foodInfo?.category || "Other";
+    // Use selected category (now required)
+    const category = formData.category;
     
     // Calculate expiration date if not provided
     let expirationDate: Date;
@@ -100,17 +99,24 @@ export default function Fridge() {
     addFoodItemMutation.mutate(submitData);
   };
 
-  // Handle name change with auto-detection
+  // Handle name change with auto-suggestion
   const handleNameChange = (name: string) => {
     setFormData(prev => ({ ...prev, name }));
     
-    // Auto-fill category and suggested expiration if food is found in database
+    // Auto-suggest category and expiration if food is found in database
     const foodInfo = findFoodItem(name);
-    if (foodInfo && !formData.category) {
+    if (foodInfo && !formData.category && !formData.expirationDate) {
       setFormData(prev => ({ 
         ...prev, 
         name,
         category: foodInfo.category,
+        expirationDate: addDays(new Date(), foodInfo.shelfLife).toISOString().split('T')[0]
+      }));
+    } else if (foodInfo && !formData.expirationDate) {
+      // Only auto-fill expiration if category is already selected
+      setFormData(prev => ({ 
+        ...prev, 
+        name,
         expirationDate: addDays(new Date(), foodInfo.shelfLife).toISOString().split('T')[0]
       }));
     }
@@ -316,24 +322,28 @@ export default function Fridge() {
 
               <div>
                 <Label htmlFor="category" className="text-sm font-medium text-gray-700" style={{fontFamily: 'Times New Roman, serif'}}>
-                  Category
+                  Category *
                 </Label>
                 <Select
                   value={formData.category}
                   onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
+                  required
                 >
                   <SelectTrigger className="mt-1" style={{fontFamily: 'Times New Roman, serif'}}>
-                    <SelectValue placeholder="Auto-detected or select manually" />
+                    <SelectValue placeholder="Choose food category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Fruit">Fruit</SelectItem>
-                    <SelectItem value="Vegetable">Vegetable</SelectItem>
-                    <SelectItem value="Protein">Protein</SelectItem>
-                    <SelectItem value="Dairy">Dairy</SelectItem>
-                    <SelectItem value="Grains">Grains</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
+                    <SelectItem value="Fruit">🍎 Fruit</SelectItem>
+                    <SelectItem value="Vegetable">🥕 Vegetable</SelectItem>
+                    <SelectItem value="Protein">🍖 Protein</SelectItem>
+                    <SelectItem value="Dairy">🥛 Dairy</SelectItem>
+                    <SelectItem value="Grains">🌾 Grains</SelectItem>
+                    <SelectItem value="Other">📦 Other</SelectItem>
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-gray-500 mt-1" style={{fontFamily: 'Times New Roman, serif'}}>
+                  Select the category where this item will be organized in your fridge
+                </p>
               </div>
 
               <div>
