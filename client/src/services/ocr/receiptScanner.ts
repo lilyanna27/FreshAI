@@ -148,11 +148,17 @@ export class ReceiptFilters {
       /RECEIPT|TRANSACTION/i,
       /CASHIER|CLERK|OPERATOR/i,
       /REGISTER|LANE/i,
+      /STREET|AVENUE|ROAD|BLVD|BOULEVARD/i,
+      /VA\s+\d{5}|VIRGINIA/i,
+      /CHARLOTTESVILLE|BAND\s+STREET/i,
+      /DAILY|OPEN|HOURS/i,
       
       // Date and time patterns
       /^\d{1,2}\/\d{1,2}\/\d{2,4}/,
       /^\d{1,2}:\d{2}/,
       /^(MON|TUE|WED|THU|FRI|SAT|SUN)/i,
+      /\d{4}\s+(BAND|STREET)/i,
+      /PM\s+DAILY/i,
       
       // Customer service and promotions
       /CUSTOMER\s+SERVICE/i,
@@ -178,6 +184,7 @@ export class ReceiptFilters {
       /^ea\s+s\s+es/i,      // Specific gibberish pattern
       /^vee\s+saved/i,      // Another gibberish pattern
       /^[a-z]\s+[a-z]\s+[a-z]/i, // Single letters with spaces
+      /diy|band|street|fo|lrarlotfesville|gri|ofen|ial|cochiang|jrean|cerrot/i, // Recent gibberish
       
       // Receipt footer patterns
       /VISIT\s+US|FOLLOW\s+US/i,
@@ -301,7 +308,7 @@ export class SmartParser {
     if (specialCharCount > originalLine.length * 0.4) return null;
     
     // Skip lines that are clearly OCR garbage or store operations
-    if (/employee|discount|senior|wessel|enployel|bpddbbiannnatiIl|torpc|saved|pub|ben|poy|ere|rg|eba|aten|aal|ene|hase|saat|stn|bias|ett|laid|selhad|alr|rest\s+style/i.test(originalLine)) return null;
+    if (/employee|discount|senior|wessel|enployel|bpddbbiannnatiIl|torpc|saved|pub|ben|poy|ere|rg|eba|aten|aal|ene|hase|saat|stn|bias|ett|laid|selhad|alr|rest\s+style|diy|band|street|fo|lrarlotfesville|gri|ofen|ial|cochiang|jrean|cerrot|daily|hours|virginia|va\s+\d/i.test(originalLine)) return null;
     
     // Skip lines that look like OCR garbage (too many single letters)
     const words = originalLine.split(/\s+/);
@@ -469,10 +476,12 @@ export class ReceiptScanner {
       // Apply OCR corrections
       const correctedName = OCRCorrection.correctItemName(parsed.itemName);
       
-      // Get food data and calculate freshness
+      // Get food data and calculate freshness - STRICT VALIDATION
       const foodData = findFoodItem(correctedName);
-      if (!foodData && !parsed.isVerifiedFood) {
-        // If not verified as food and not in database, skip
+      
+      // REQUIRE food to be in our database - no exceptions for unclear OCR
+      if (!foodData) {
+        console.log(`Skipping item not in food database: "${correctedName}"`);
         continue;
       }
       
@@ -509,13 +518,9 @@ export class ReceiptScanner {
       items.push(foodItem);
     }
 
-    // If no valid food items found, likely gibberish or not a grocery receipt
+    // Always require at least one valid food item from our database
     if (items.length === 0) {
-      if (lines.length > 10) {
-        throw new Error('No food items found in receipt. Please ensure the image is clear and contains grocery items.');
-      } else {
-        throw new Error('Unable to read receipt clearly. Please try a clearer image or different angle.');
-      }
+      throw new Error('No recognizable food items found in receipt. Please ensure the image shows a grocery receipt with clear food item names.');
     }
 
     return items;
