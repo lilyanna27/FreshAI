@@ -70,15 +70,26 @@ export default function ReceiptScan() {
             name: item.name,
             quantity: item.quantity,
             expirationDate: item.expirationDate.toISOString(),
-            category: item.category
+            category: item.category,
+            isFromReceipt: true
           })
         })
       );
       await Promise.all(promises);
     },
-    onSuccess: () => {
+    onSuccess: (_, items) => {
       queryClient.invalidateQueries({ queryKey: ['/api/food-items'] });
-      toast.success('All items added to your fridge!');
+      const itemsByCategory = items.reduce((acc, item) => {
+        const category = item.category || 'Other';
+        acc[category] = (acc[category] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+      
+      const categoryText = Object.entries(itemsByCategory)
+        .map(([category, count]) => `${count} ${category.toLowerCase()} item${count > 1 ? 's' : ''}`)
+        .join(', ');
+      
+      toast.success(`Added ${items.length} items to your fridge by category: ${categoryText}`);
       setScanState('idle');
       setScannedItems([]);
     },

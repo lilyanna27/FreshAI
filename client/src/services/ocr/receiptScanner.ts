@@ -485,6 +485,18 @@ export class ReceiptScanner {
         continue;
       }
       
+      // Additional strict validation - ensure it's a real food word
+      const realFoodWords = ['apple', 'banana', 'orange', 'milk', 'bread', 'cheese', 'chicken', 'beef', 'potato', 
+        'carrot', 'tomato', 'onion', 'lettuce', 'spinach', 'broccoli', 'egg', 'butter', 'yogurt', 'rice', 'pasta',
+        'fish', 'salmon', 'tuna', 'ham', 'bacon', 'corn', 'peas', 'beans', 'cucumber', 'pepper', 'mushroom',
+        'lemon', 'lime', 'strawberry', 'blueberry', 'grape', 'melon', 'peach', 'pear', 'cherry', 'avocado'];
+      
+      const hasRealFoodWord = realFoodWords.some(word => correctedName.toLowerCase().includes(word));
+      if (!hasRealFoodWord) {
+        console.log(`Skipping item without recognizable food words: "${correctedName}"`);
+        continue;
+      }
+      
       const shelfLife = foodData?.shelfLife || 7; // Default 7 days
       const category = foodData?.category || 'Other';
       

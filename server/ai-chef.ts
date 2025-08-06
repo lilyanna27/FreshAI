@@ -7,6 +7,7 @@ export interface GenerateRecipesOptions {
   num_people: number;
   ingredients: string;
   dietary?: string;
+  fridgeIngredients?: string[]; // Available ingredients from fridge
 }
 
 export interface Recipe {
@@ -18,10 +19,22 @@ export interface Recipe {
 }
 
 export async function generateRecipes(options: GenerateRecipesOptions): Promise<Recipe[]> {
-  const { num_people, ingredients, dietary } = options;
+  const { num_people, ingredients, dietary, fridgeIngredients } = options;
   
   const dietaryInfo = dietary ? ` with ${dietary} dietary restrictions` : '';
-  const prompt = `Create 3 delicious and practical recipes for ${num_people} ${num_people === 1 ? 'person' : 'people'} using these ingredients: ${ingredients}${dietaryInfo}.
+  
+  let ingredientContext = '';
+  if (fridgeIngredients && fridgeIngredients.length > 0) {
+    ingredientContext = `Available ingredients in their fridge: ${fridgeIngredients.join(', ')}. `;
+    if (ingredients) {
+      ingredientContext += `Additional requested ingredients: ${ingredients}. `;
+    }
+    ingredientContext += `Prioritize using ingredients from their fridge when possible.`;
+  } else {
+    ingredientContext = `Using these ingredients: ${ingredients}.`;
+  }
+  
+  const prompt = `Create 3 delicious and practical recipes for ${num_people} ${num_people === 1 ? 'person' : 'people'}. ${ingredientContext}${dietaryInfo}.
 
 For each recipe, provide:
 1. A creative and appetizing title

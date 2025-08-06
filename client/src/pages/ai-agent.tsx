@@ -36,10 +36,27 @@ export default function AIAgent() {
   const [generatedRecipes, setGeneratedRecipes] = useState<GeneratedRecipe[]>([]);
 
   const recipeGenerationMutation = useMutation({
-    mutationFn: async (data: { num_people: number; ingredients: string; dietary?: string }): Promise<RecipeGeneration> => {
+    mutationFn: async (data: { num_people: number; ingredients: string; dietary?: string; useFridgeIngredients?: boolean }): Promise<RecipeGeneration> => {
+      // Get fridge ingredients if requested
+      let fridgeIngredients: string[] = [];
+      if (data.useFridgeIngredients) {
+        try {
+          const fridgeResponse = await fetch('/api/food-items');
+          if (fridgeResponse.ok) {
+            const fridgeItems = await fridgeResponse.json();
+            fridgeIngredients = fridgeItems.map((item: any) => item.name);
+          }
+        } catch (error) {
+          console.error('Failed to fetch fridge ingredients:', error);
+        }
+      }
+      
       const response = await fetch('/api/generate-recipes', {
         method: 'POST',
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          fridgeIngredients: fridgeIngredients.length > 0 ? fridgeIngredients : undefined
+        }),
         headers: { 'Content-Type': 'application/json' }
       });
       
@@ -91,7 +108,15 @@ export default function AIAgent() {
     if (isRecipeGenerationRequest(currentInput)) {
       const recipeParams = parseRecipeRequest(currentInput);
       if (recipeParams) {
-        recipeGenerationMutation.mutate(recipeParams);
+        // Check if they want to use fridge ingredients
+        const useFridge = currentInput.toLowerCase().includes('fridge') || 
+                         currentInput.toLowerCase().includes('what i have') ||
+                         currentInput.toLowerCase().includes('available ingredients');
+        
+        recipeGenerationMutation.mutate({
+          ...recipeParams,
+          useFridgeIngredients: useFridge
+        });
         return;
       }
     }
@@ -144,7 +169,9 @@ export default function AIAgent() {
     const input = userInput.toLowerCase();
     
     if (input.includes('recipe') || input.includes('cook')) {
-      return "I'd be happy to help with recipes! Based on your current ingredients, I can suggest some great meal ideas. What type of cuisine are you in the mood for?";
+      return "I'd be happy to help with recipes! Try saying 'Generate recipes with my fridge ingredients' to use what you have, or 'Create recipe with chicken and rice for 2 people' for specific ingredients.";
+    } else if (input.includes('fridge') || input.includes('what i have')) {
+      return "I can create recipes using ingredients in your fridge! Just say 'Generate recipes with my fridge ingredients' and I'll make delicious suggestions based on what you currently have.";
     } else if (input.includes('storage') || input.includes('store')) {
       return "Great question about food storage! Proper storage can significantly extend the life of your ingredients. What specific items would you like storage tips for?";
     } else if (input.includes('expir') || input.includes('fresh')) {
@@ -152,7 +179,7 @@ export default function AIAgent() {
     } else if (input.includes('meal plan')) {
       return "Meal planning is a great way to reduce waste and save time! I can create a personalized meal plan based on your ingredients and dietary preferences. What are your goals?";
     } else {
-      return "That's an interesting question! I'm here to help with all your kitchen and food-related needs. Feel free to ask about recipes, storage tips, meal planning, or anything food-related!";
+      return "That's an interesting question! I'm here to help with all your kitchen and food-related needs. Try 'Generate recipes with my fridge ingredients' to use what you have, or ask about storage tips, meal planning, or anything food-related!";
     }
   };
 
@@ -304,10 +331,10 @@ export default function AIAgent() {
         <div className="p-4 pb-24" style={{backgroundColor: 'hsl(45, 20%, 97%)'}}>
           <div className="flex space-x-2 overflow-x-auto">
             {[
+              "Generate recipes with my fridge ingredients",
               "Generate recipe with chicken, rice, broccoli",
               "Storage tips",
-              "Meal planning help",
-              "Generate recipe with pasta for 2 people gluten-free"
+              "Meal planning help"
             ].map((suggestion) => (
               <button
                 key={suggestion}

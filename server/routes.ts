@@ -135,16 +135,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // AI Recipe Generation Route
   app.post("/api/generate-recipes", async (req, res) => {
     try {
-      const { num_people, ingredients, dietary } = req.body;
+      const { num_people, ingredients, dietary, fridgeIngredients } = req.body;
       
-      if (!num_people || !ingredients) {
-        return res.status(400).json({ error: "Number of people and ingredients are required" });
+      if (!num_people || (!ingredients && !fridgeIngredients)) {
+        return res.status(400).json({ error: "Number of people and either ingredients or fridgeIngredients are required" });
       }
 
       const recipes = await generateRecipes({
         num_people: parseInt(num_people),
-        ingredients,
-        dietary
+        ingredients: ingredients || '',
+        dietary,
+        fridgeIngredients
       });
 
       res.json({ recipes });
