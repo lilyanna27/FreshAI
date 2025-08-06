@@ -72,3 +72,16 @@ export const getCurrentDateTime = (): string => {
   const now = new Date();
   return format(now, 'EEEE, MMMM dd');
 };
+
+// Determine if food should be categorized as "expired" (3 days or less) or "fresh"
+export const getFreshnessCategoryStatus = (expirationDate: Date): 'expired' | 'fresh' => {
+  const now = new Date();
+  const daysDiff = differenceInDays(expirationDate, now);
+  
+  // Items expiring in 3 days or less (including expired items) go to "expired" category
+  if (daysDiff <= 3) {
+    return 'expired';
+  }
+  
+  return 'fresh';
+};

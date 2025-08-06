@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { FoodItem, insertFoodItemSchema } from "@shared/schema";
-import { getExpirationStatus } from "@/lib/date-utils";
+import { getExpirationStatus, getFreshnessCategoryStatus } from "@/lib/date-utils";
 import FoodItemCard from "@/components/ui/food-item-card";
 import { Search, Plus, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { addDays } from "date-fns";
 
-type FilterType = 'all' | 'Vegetable' | 'Fruit' | 'Dairy' | 'Protein' | 'Grains';
+type FilterType = 'all' | 'Vegetable' | 'Fruit' | 'Dairy' | 'Protein' | 'Grains' | 'fresh' | 'expired';
 
 export default function Fridge() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -131,11 +131,20 @@ export default function Fridge() {
     
     if (activeFilter === 'all') return matchesSearch;
     
+    // Handle freshness-based filtering
+    if (activeFilter === 'fresh' || activeFilter === 'expired') {
+      const freshnessCategory = getFreshnessCategoryStatus(new Date(item.expirationDate));
+      return matchesSearch && freshnessCategory === activeFilter;
+    }
+    
+    // Handle regular category filtering
     return matchesSearch && item.category === activeFilter;
   });
 
   const filterButtons = [
     { key: 'all' as const, label: 'All' },
+    { key: 'fresh' as const, label: 'Fresh' },
+    { key: 'expired' as const, label: 'Expiring' },
     { key: 'Vegetable' as const, label: 'Vegetables' },
     { key: 'Fruit' as const, label: 'Fruits' },
     { key: 'Dairy' as const, label: 'Dairy' },
@@ -146,12 +155,10 @@ export default function Fridge() {
   const stats = {
     totalItems: foodItems.length,
     freshItems: foodItems.filter(item => {
-      const status = getExpirationStatus(new Date(item.expirationDate));
-      return status.status === 'fresh';
+      return getFreshnessCategoryStatus(new Date(item.expirationDate)) === 'fresh';
     }).length,
     expiringItems: foodItems.filter(item => {
-      const status = getExpirationStatus(new Date(item.expirationDate));
-      return ['today', 'tomorrow', 'soon'].includes(status.status);
+      return getFreshnessCategoryStatus(new Date(item.expirationDate)) === 'expired';
     }).length,
   };
 
