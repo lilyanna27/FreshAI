@@ -17,6 +17,8 @@ interface GeneratedRecipe {
   instructions: string[];
   cookTime?: string;
   servings?: number;
+  missing_ingredients?: string[];
+  source?: string;
 }
 
 interface RecipeGeneration {
@@ -304,7 +306,7 @@ export default function AIAgent() {
                       <ChefHat className="text-white" size={20} />
                     </div>
                     <div>
-                      <h3 className="font-bold text-gray-800" style={{fontFamily: 'Times New Roman, serif'}}>{recipe.title}</h3>
+                      <h3 className="font-bold text-gray-800 mb-1" style={{fontFamily: 'Times New Roman, serif'}}>{recipe.title}</h3>
                       <div className="flex items-center space-x-4 text-sm text-gray-600">
                         {recipe.cookTime && (
                           <div className="flex items-center space-x-1">
@@ -317,6 +319,11 @@ export default function AIAgent() {
                             <Users size={14} />
                             <span>{recipe.servings} servings</span>
                           </div>
+                        )}
+                        {recipe.source && (
+                          <span className="text-xs px-2 py-1 rounded-full bg-blue-500/20 text-blue-500" style={{fontFamily: 'Times New Roman, serif'}}>
+                            Enhanced with online recipes
+                          </span>
                         )}
                       </div>
                     </div>
@@ -346,6 +353,25 @@ export default function AIAgent() {
                       ))}
                     </ul>
                   </div>
+
+                  {recipe.missing_ingredients && recipe.missing_ingredients.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-red-600 mb-2" style={{fontFamily: 'Times New Roman, serif'}}>
+                        Missing Ingredients:
+                      </h4>
+                      <ul className="space-y-1">
+                        {recipe.missing_ingredients.map((ingredient, i) => (
+                          <li key={i} className="text-sm text-red-600 flex items-start">
+                            <span className="text-red-500 mr-2">⚠</span>
+                            {ingredient}
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="text-xs text-gray-500 mt-2" style={{fontFamily: 'Times New Roman, serif'}}>
+                        These ingredients are needed but not in your current fridge inventory
+                      </p>
+                    </div>
+                  )}
 
                   <div>
                     <h4 className="font-semibold text-gray-700 mb-2" style={{fontFamily: 'Times New Roman, serif'}}>Instructions:</h4>

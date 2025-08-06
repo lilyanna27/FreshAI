@@ -24,6 +24,8 @@ export const recipes = pgTable("recipes", {
   imageUrl: text("image_url"),
   ingredients: text("ingredients").array().notNull(),
   instructions: text("instructions").array().notNull(),
+  missingIngredients: text("missing_ingredients").array(),
+  source: text("source"),
   dietaryTags: text("dietary_tags").array(), // gluten-free, vegan, etc.
   cuisineType: text("cuisine_type"), // Italian, Asian, etc.
   difficulty: text("difficulty"), // Easy, Medium, Hard
