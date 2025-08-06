@@ -12,9 +12,10 @@ export default function FoodItemCard({ item, onClick }: FoodItemCardProps) {
   return (
     <div 
       onClick={onClick}
-      className={`bg-gray-800 rounded-3xl p-5 border border-gray-700 relative cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-105 ${
+      className={`rounded-3xl p-5 border relative cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-105 ${
         expirationInfo.status === 'expired' ? 'opacity-75' : ''
       }`}
+      style={{backgroundColor: '#1e3a2e', borderColor: '#2d4a3e'}}
     >
       <div className={`absolute top-3 right-3 w-3 h-3 rounded-full ${expirationInfo.dotColor}`}></div>
       
@@ -25,8 +26,10 @@ export default function FoodItemCard({ item, onClick }: FoodItemCardProps) {
           className="w-full h-28 object-cover rounded-2xl mb-4"
         />
       ) : (
-        <div className="w-full h-28 bg-gradient-to-br from-gray-700 to-gray-600 rounded-2xl mb-4 flex items-center justify-center relative overflow-hidden">
-          <span className="text-4xl opacity-50">🍎</span>
+        <div className="w-full h-28 rounded-2xl mb-4 flex items-center justify-center relative overflow-hidden" style={{backgroundColor: '#2d4a3e'}}>
+          <div className="text-2xl font-bold text-white opacity-30" style={{fontFamily: 'Times New Roman, serif'}}>
+            {item.name.charAt(0).toUpperCase()}
+          </div>
           <div className="absolute -top-4 -right-4 w-12 h-12 bg-white/5 rounded-full"></div>
         </div>
       )}

@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { addDays } from "date-fns";
 
-type FilterType = 'all' | 'vegetables' | 'fruits' | 'dairy' | 'meat';
+type FilterType = 'all' | 'Vegetable' | 'Fruit' | 'Dairy' | 'Protein' | 'Grains';
 
 export default function Fridge() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -82,10 +82,14 @@ export default function Fridge() {
     let expirationDate: Date;
     if (formData.expirationDate) {
       expirationDate = new Date(formData.expirationDate);
-    } else if (foodInfo) {
-      expirationDate = addDays(new Date(), foodInfo.shelfLife);
     } else {
-      expirationDate = addDays(new Date(), 7); // Default 7 days
+      // Auto-detect food item info for expiration calculation
+      const foodInfo = findFoodItem(formData.name);
+      if (foodInfo) {
+        expirationDate = addDays(new Date(), foodInfo.shelfLife);
+      } else {
+        expirationDate = addDays(new Date(), 7); // Default 7 days
+      }
     }
 
     const submitData = {
@@ -132,10 +136,11 @@ export default function Fridge() {
 
   const filterButtons = [
     { key: 'all' as const, label: 'All' },
-    { key: 'vegetables' as const, label: 'Vegetables' },
-    { key: 'fruits' as const, label: 'Fruits' },
-    { key: 'dairy' as const, label: 'Dairy' },
-    { key: 'meat' as const, label: 'Meat' },
+    { key: 'Vegetable' as const, label: 'Vegetables' },
+    { key: 'Fruit' as const, label: 'Fruits' },
+    { key: 'Dairy' as const, label: 'Dairy' },
+    { key: 'Protein' as const, label: 'Protein' },
+    { key: 'Grains' as const, label: 'Grains' },
   ];
 
   const stats = {
@@ -333,12 +338,12 @@ export default function Fridge() {
                     <SelectValue placeholder="Choose food category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Fruit">🍎 Fruit</SelectItem>
-                    <SelectItem value="Vegetable">🥕 Vegetable</SelectItem>
-                    <SelectItem value="Protein">🍖 Protein</SelectItem>
-                    <SelectItem value="Dairy">🥛 Dairy</SelectItem>
-                    <SelectItem value="Grains">🌾 Grains</SelectItem>
-                    <SelectItem value="Other">📦 Other</SelectItem>
+                    <SelectItem value="Fruit">Fruit</SelectItem>
+                    <SelectItem value="Vegetable">Vegetable</SelectItem>
+                    <SelectItem value="Protein">Protein</SelectItem>
+                    <SelectItem value="Dairy">Dairy</SelectItem>
+                    <SelectItem value="Grains">Grains</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-gray-500 mt-1" style={{fontFamily: 'Times New Roman, serif'}}>
