@@ -86,17 +86,12 @@ export default function Recipes() {
                     <h4 className="font-semibold text-white mb-2" style={{fontFamily: 'Times New Roman, serif'}}>
                       Ingredients ({recipe.ingredients.length})
                     </h4>
-                    <div className="grid grid-cols-1 gap-1">
-                      {recipe.ingredients.slice(0, 3).map((ingredient, i) => (
+                    <div className="space-y-1">
+                      {recipe.ingredients.map((ingredient, i) => (
                         <p key={i} className="text-sm text-white/80" style={{fontFamily: 'Times New Roman, serif'}}>
                           • {ingredient}
                         </p>
                       ))}
-                      {recipe.ingredients.length > 3 && (
-                        <p className="text-sm text-white/60" style={{fontFamily: 'Times New Roman, serif'}}>
-                          ... and {recipe.ingredients.length - 3} more
-                        </p>
-                      )}
                     </div>
                   </div>
 
@@ -105,12 +100,14 @@ export default function Recipes() {
                       <h4 className="font-semibold text-white mb-2" style={{fontFamily: 'Times New Roman, serif'}}>
                         Instructions ({recipe.instructions.length} steps)
                       </h4>
-                      <p className="text-sm text-white/80" style={{fontFamily: 'Times New Roman, serif'}}>
-                        1. {recipe.instructions[0]}
-                        {recipe.instructions.length > 1 && (
-                          <span className="text-white/60"> ... and {recipe.instructions.length - 1} more steps</span>
-                        )}
-                      </p>
+                      <div className="space-y-2">
+                        {recipe.instructions.map((instruction, i) => (
+                          <p key={i} className="text-sm text-white/80 flex" style={{fontFamily: 'Times New Roman, serif'}}>
+                            <span className="font-medium text-orange-400 mr-2 min-w-[1.5rem]">{i + 1}.</span>
+                            <span>{instruction}</span>
+                          </p>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
