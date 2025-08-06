@@ -1,20 +1,120 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { FoodItem } from "@shared/schema";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { FoodItem, insertFoodItemSchema } from "@shared/schema";
 import { getExpirationStatus } from "@/lib/date-utils";
 import FoodItemCard from "@/components/ui/food-item-card";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { findFoodItem } from "@/data/foodDatabase";
+import { useToast } from "@/hooks/use-toast";
+import { z } from "zod";
+import { addDays } from "date-fns";
 
 type FilterType = 'all' | 'vegetables' | 'fruits' | 'dairy' | 'meat';
 
 export default function Fridge() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    quantity: "",
+    category: "",
+    expirationDate: ""
+  });
+
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: foodItems = [], isLoading } = useQuery<FoodItem[]>({
     queryKey: ["/api/food-items"],
   });
+
+  // Add food item mutation
+  const addFoodItemMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof insertFoodItemSchema>) => {
+      const response = await fetch('/api/food-items', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if (!response.ok) throw new Error('Failed to add food item');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/food-items"] });
+      setShowAddModal(false);
+      setFormData({ name: "", quantity: "", category: "", expirationDate: "" });
+      toast({
+        title: "Success!",
+        description: "Food item added to your fridge",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to add food item",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Handle form submission
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.name || !formData.quantity) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in at least the name and quantity",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Auto-detect food item info if not provided
+    const foodInfo = findFoodItem(formData.name);
+    const category = formData.category || foodInfo?.category || "Other";
+    
+    // Calculate expiration date if not provided
+    let expirationDate: Date;
+    if (formData.expirationDate) {
+      expirationDate = new Date(formData.expirationDate);
+    } else if (foodInfo) {
+      expirationDate = addDays(new Date(), foodInfo.shelfLife);
+    } else {
+      expirationDate = addDays(new Date(), 7); // Default 7 days
+    }
+
+    const submitData = {
+      name: formData.name,
+      quantity: formData.quantity,
+      category,
+      expirationDate,
+      isFromReceipt: false
+    };
+
+    addFoodItemMutation.mutate(submitData);
+  };
+
+  // Handle name change with auto-detection
+  const handleNameChange = (name: string) => {
+    setFormData(prev => ({ ...prev, name }));
+    
+    // Auto-fill category and suggested expiration if food is found in database
+    const foodInfo = findFoodItem(name);
+    if (foodInfo && !formData.category) {
+      setFormData(prev => ({ 
+        ...prev, 
+        name,
+        category: foodInfo.category,
+        expirationDate: addDays(new Date(), foodInfo.shelfLife).toISOString().split('T')[0]
+      }));
+    }
+  };
 
   const filteredItems = foodItems.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -76,6 +176,7 @@ export default function Fridge() {
         <button 
           className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg"
           style={{backgroundColor: '#1e3a2e'}}
+          onClick={() => setShowAddModal(true)}
         >
           <Plus className="text-white" size={24} />
         </button>
@@ -145,6 +246,7 @@ export default function Fridge() {
               <button 
                 className="px-6 py-3 rounded-full text-white font-medium shadow-lg flex items-center"
                 style={{backgroundColor: '#1e3a2e', fontFamily: 'Times New Roman, serif'}}
+                onClick={() => setShowAddModal(true)}
               >
                 <Plus className="mr-2" size={18} />
                 Add Your First Item
@@ -162,6 +264,118 @@ export default function Fridge() {
         </div>
       )}
       </div>
+
+      {/* Add Item Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-800" style={{fontFamily: 'Times New Roman, serif'}}>
+                Add Food Item
+              </h2>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-full"
+              >
+                <X size={20} className="text-gray-500" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <Label htmlFor="name" className="text-sm font-medium text-gray-700" style={{fontFamily: 'Times New Roman, serif'}}>
+                  Food Name *
+                </Label>
+                <Input
+                  id="name"
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => handleNameChange(e.target.value)}
+                  placeholder="e.g., Bananas, Chicken Breast, Milk"
+                  className="mt-1"
+                  style={{fontFamily: 'Times New Roman, serif'}}
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="quantity" className="text-sm font-medium text-gray-700" style={{fontFamily: 'Times New Roman, serif'}}>
+                  Quantity *
+                </Label>
+                <Input
+                  id="quantity"
+                  type="text"
+                  value={formData.quantity}
+                  onChange={(e) => setFormData(prev => ({ ...prev, quantity: e.target.value }))}
+                  placeholder="e.g., 2 pieces, 1 lb, 500ml"
+                  className="mt-1"
+                  style={{fontFamily: 'Times New Roman, serif'}}
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="category" className="text-sm font-medium text-gray-700" style={{fontFamily: 'Times New Roman, serif'}}>
+                  Category
+                </Label>
+                <Select
+                  value={formData.category}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
+                >
+                  <SelectTrigger className="mt-1" style={{fontFamily: 'Times New Roman, serif'}}>
+                    <SelectValue placeholder="Auto-detected or select manually" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Fruit">Fruit</SelectItem>
+                    <SelectItem value="Vegetable">Vegetable</SelectItem>
+                    <SelectItem value="Protein">Protein</SelectItem>
+                    <SelectItem value="Dairy">Dairy</SelectItem>
+                    <SelectItem value="Grains">Grains</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="expirationDate" className="text-sm font-medium text-gray-700" style={{fontFamily: 'Times New Roman, serif'}}>
+                  Expiration Date
+                </Label>
+                <Input
+                  id="expirationDate"
+                  type="date"
+                  value={formData.expirationDate}
+                  onChange={(e) => setFormData(prev => ({ ...prev, expirationDate: e.target.value }))}
+                  className="mt-1"
+                  style={{fontFamily: 'Times New Roman, serif'}}
+                />
+                <p className="text-xs text-gray-500 mt-1" style={{fontFamily: 'Times New Roman, serif'}}>
+                  Leave blank for auto-calculation based on food type
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowAddModal(false)}
+                  className="flex-1"
+                  style={{fontFamily: 'Times New Roman, serif'}}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={addFoodItemMutation.isPending}
+                  className="flex-1 text-white"
+                  style={{backgroundColor: '#1e3a2e', fontFamily: 'Times New Roman, serif'}}
+                >
+                  {addFoodItemMutation.isPending ? 'Adding...' : 'Add Item'}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
