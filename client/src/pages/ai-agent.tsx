@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Bot, Send, User, Sparkles, ChefHat, Clock, Users } from "lucide-react";
-import { useMutation } from "@tanstack/react-query";
+import { Bot, Send, User, Sparkles, ChefHat, Clock, Users, Bookmark, BookmarkCheck } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 interface Message {
   id: string;
@@ -34,6 +35,53 @@ export default function AIAgent() {
   const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [generatedRecipes, setGeneratedRecipes] = useState<GeneratedRecipe[]>([]);
+  const [savedRecipes, setSavedRecipes] = useState<Set<string>>(new Set());
+  
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Save recipe mutation
+  const saveRecipeMutation = useMutation({
+    mutationFn: async (recipe: GeneratedRecipe) => {
+      const response = await fetch('/api/recipes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: recipe.title,
+          description: `AI-generated recipe with ${recipe.ingredients.length} ingredients`,
+          cookTime: recipe.cookTime || '30 mins',
+          ingredients: recipe.ingredients,
+          instructions: recipe.instructions,
+          servings: recipe.servings || 4,
+          isAiGenerated: true,
+          isSaved: true,
+          difficulty: 'Medium',
+          cuisineType: 'General'
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to save recipe');
+      }
+      
+      return response.json();
+    },
+    onSuccess: (_, recipe) => {
+      setSavedRecipes(prev => new Set([...Array.from(prev), recipe.title]));
+      queryClient.invalidateQueries({ queryKey: ["/api/recipes"] });
+      toast({
+        title: "Recipe Saved!",
+        description: `"${recipe.title}" has been added to your recipes`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to save recipe",
+        variant: "destructive",
+      });
+    }
+  });
 
   const recipeGenerationMutation = useMutation({
     mutationFn: async (data: { num_people: number; ingredients: string; dietary?: string; useFridgeIngredients?: boolean }): Promise<RecipeGeneration> => {
@@ -71,7 +119,7 @@ export default function AIAgent() {
       const recipeMessage: Message = {
         id: Date.now().toString(),
         type: 'ai',
-        content: `I've generated ${data.recipes.length} delicious recipes for you! Check them out below.`,
+        content: `I've generated ${data.recipes.length} delicious recipes for you! Check them out below. You can save any recipe to your collection by clicking the bookmark icon.`,
         timestamp: new Date()
       };
       setMessages(prev => [...prev, recipeMessage]);
@@ -250,27 +298,40 @@ export default function AIAgent() {
           <div className="space-y-4 mt-4">
             {generatedRecipes.map((recipe, index) => (
               <div key={index} className="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm">
-                <div className="flex items-center space-x-3 mb-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center">
-                    <ChefHat className="text-white" size={20} />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-gray-800" style={{fontFamily: 'Times New Roman, serif'}}>{recipe.title}</h3>
-                    <div className="flex items-center space-x-4 text-sm text-gray-600">
-                      {recipe.cookTime && (
-                        <div className="flex items-center space-x-1">
-                          <Clock size={14} />
-                          <span>{recipe.cookTime}</span>
-                        </div>
-                      )}
-                      {recipe.servings && (
-                        <div className="flex items-center space-x-1">
-                          <Users size={14} />
-                          <span>{recipe.servings} servings</span>
-                        </div>
-                      )}
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center">
+                      <ChefHat className="text-white" size={20} />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-gray-800" style={{fontFamily: 'Times New Roman, serif'}}>{recipe.title}</h3>
+                      <div className="flex items-center space-x-4 text-sm text-gray-600">
+                        {recipe.cookTime && (
+                          <div className="flex items-center space-x-1">
+                            <Clock size={14} />
+                            <span>{recipe.cookTime}</span>
+                          </div>
+                        )}
+                        {recipe.servings && (
+                          <div className="flex items-center space-x-1">
+                            <Users size={14} />
+                            <span>{recipe.servings} servings</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
+                  <button
+                    onClick={() => saveRecipeMutation.mutate(recipe)}
+                    disabled={savedRecipes.has(recipe.title) || saveRecipeMutation.isPending}
+                    className="p-2 rounded-full hover:bg-gray-100 transition-colors disabled:opacity-50"
+                  >
+                    {savedRecipes.has(recipe.title) ? (
+                      <BookmarkCheck className="text-green-600" size={20} />
+                    ) : (
+                      <Bookmark className="text-gray-600" size={20} />
+                    )}
+                  </button>
                 </div>
 
                 <div className="space-y-3">

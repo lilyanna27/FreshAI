@@ -7,7 +7,7 @@ const navigationItems = [
   { path: "/fridge", icon: Refrigerator, label: "Fridge", emoji: "🥬" },
   { path: "/receipt-scan", icon: ScanLine, label: "Scan", emoji: "📷", isCenter: true },
   { path: "/ai-agent", icon: Bot, label: "AI Chat", emoji: "🤖" },
-  { path: "/profile", icon: User, label: "Profile", emoji: "👤" },
+  { path: "/recipes", icon: ChefHat, label: "Recipes", emoji: "👩‍🍳" },
 ];
 
 export default function BottomNavigation() {
