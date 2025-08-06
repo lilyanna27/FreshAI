@@ -71,6 +71,8 @@ export const notifications = pgTable("notifications", {
 export const insertFoodItemSchema = createInsertSchema(foodItems).omit({
   id: true,
   addedAt: true,
+}).extend({
+  expirationDate: z.union([z.date(), z.string().transform(str => new Date(str))]),
 });
 
 export const insertRecipeSchema = createInsertSchema(recipes).omit({

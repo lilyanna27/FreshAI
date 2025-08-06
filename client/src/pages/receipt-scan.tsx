@@ -69,7 +69,7 @@ export default function ReceiptScan() {
           body: JSON.stringify({
             name: item.name,
             quantity: item.quantity,
-            expirationDate: item.expirationDate.toISOString(),
+            expirationDate: item.expirationDate, // Send as Date object, not string
             category: item.category,
             isFromReceipt: true
           })
