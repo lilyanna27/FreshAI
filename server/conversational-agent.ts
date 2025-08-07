@@ -164,6 +164,7 @@ export class ConversationalAgent {
     
     let recipes: any[] = [];
     let suggestions: string[] = [];
+    let missingIngredients: string[] = [];
     
     // Handle recipe requests with enhanced context
     if (isRecipeRequest) {
@@ -183,7 +184,6 @@ export class ConversationalAgent {
       
       // Apply dietary substitutions and check for missing ingredients
       const enhancedIngredients = [...availableIngredients];
-      const missingIngredients: string[] = [];
       
       // Check which ingredients are missing from fridge
       const recipeIngredients = ['pasta', 'olive oil', 'garlic', 'tomatoes', 'cheese'];
