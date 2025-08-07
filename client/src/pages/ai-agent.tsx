@@ -13,6 +13,7 @@ interface ReasoningStep {
 
 interface UserPreferences {
   dislikes: string[];
+  likes: string[];
   cuisines: string[];
   dietary: string[];
 }
@@ -46,7 +47,7 @@ export default function AIAgent() {
     {
       id: '1',
       type: 'ai',
-      content: "Hello! I'm your enhanced AI kitchen assistant with advanced reasoning capabilities. I can analyze your ingredients, learn your preferences, create personalized recipes, and provide intelligent cooking advice. I'll show you my thought process so you can see how I make decisions. Try asking me to generate recipes with your fridge ingredients or ask any cooking question!",
+      content: "Hello! I'm your advanced AI kitchen assistant with permanent memory! I learn and remember your food preferences, dietary restrictions, and favorite cuisines forever. Tell me things like 'I love pasta' or 'I don't like mushrooms' and I'll personalize all future recipes. I show my reasoning process and apply intelligent substitutions for your dietary needs. Let's start cooking together!",
       timestamp: new Date()
     }
   ]);
@@ -344,6 +345,12 @@ export default function AIAgent() {
                   <div className="mt-3 pt-3 border-t border-green-600/30">
                     <div className="text-xs text-green-300 mb-2">🧠 What I've Learned About You:</div>
                     <div className="grid grid-cols-1 gap-2">
+                      {message.userPreferences.likes && message.userPreferences.likes.length > 0 && (
+                        <div className="text-xs">
+                          <span className="text-green-300">❤️ Loves:</span>
+                          <span className="text-green-200 ml-2">{message.userPreferences.likes.join(', ')}</span>
+                        </div>
+                      )}
                       {message.userPreferences.dislikes.length > 0 && (
                         <div className="text-xs">
                           <span className="text-red-300">❌ Dislikes:</span>
