@@ -31,6 +31,10 @@ interface Message {
     semantic_memories_found: number;
     procedural_guidance_applied: number;
   };
+  conversationStats?: {
+    message_count: number;
+    conversation_type: string;
+  };
 }
 
 interface GeneratedRecipe {
@@ -52,7 +56,7 @@ export default function AIAgent() {
     {
       id: '1',
       type: 'ai',
-      content: "Hello! I'm your enhanced AI kitchen assistant with semantic, episodic, and procedural memory! I remember your food preferences (semantic), past conversations (episodic), and apply proven interaction rules (procedural). Tell me things like 'I love pasta' or 'I don't like mushrooms' and I'll personalize all future recipes using my complete memory system. I show my reasoning process and provide contextually-aware responses. Let's start cooking together!",
+      content: "Hello! I'm Fresh AI, your conversational kitchen assistant powered by LangChain! I maintain persistent conversation history and build context over our entire chat. I have semantic memory (your preferences), episodic memory (our conversations), and procedural memory (proven interaction patterns). Each message builds on our previous discussion, making me increasingly personalized and helpful. Tell me about your food preferences and let's have a natural cooking conversation!",
       timestamp: new Date()
     }
   ]);
@@ -61,6 +65,7 @@ export default function AIAgent() {
   const [generatedRecipes, setGeneratedRecipes] = useState<GeneratedRecipe[]>([]);
   const [savedRecipes, setSavedRecipes] = useState<Set<string>>(new Set());
   const [showReasoning, setShowReasoning] = useState<{ [key: string]: boolean }>({});
+  const [conversationStats, setConversationStats] = useState<{ message_count: number; conversation_type: string } | null>(null);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -202,7 +207,8 @@ export default function AIAgent() {
         reasoning: aiData.thought_process || [],
         suggestions: aiData.suggestions || [],
         userPreferences: aiData.user_preferences,
-        enhancedContext: aiData.enhanced_context
+        enhancedContext: aiData.enhanced_context,
+        conversationStats: aiData.conversation_stats
       };
 
       setMessages(prev => [...prev, aiResponse]);
@@ -210,6 +216,11 @@ export default function AIAgent() {
       // If recipes were generated, update the recipes state
       if (aiData.recipes && aiData.recipes.length > 0) {
         setGeneratedRecipes(aiData.recipes);
+      }
+
+      // Update conversation stats
+      if (aiData.conversation_stats) {
+        setConversationStats(aiData.conversation_stats);
       }
       
     } catch (error) {
@@ -275,8 +286,59 @@ export default function AIAgent() {
     }
   };
 
+  // Clear conversation function
+  const clearConversation = async () => {
+    try {
+      await fetch('/api/ai-chat/clear', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: 'user-1' })
+      });
+      
+      setMessages([{
+        id: '1',
+        type: 'ai',
+        content: "Hello! I'm Fresh AI, your conversational kitchen assistant powered by LangChain! I maintain persistent conversation history and build context over our entire chat. I have semantic memory (your preferences), episodic memory (our conversations), and procedural memory (proven interaction patterns). Each message builds on our previous discussion, making me increasingly personalized and helpful. Tell me about your food preferences and let's have a natural cooking conversation!",
+        timestamp: new Date()
+      }]);
+      
+      setConversationStats(null);
+      setGeneratedRecipes([]);
+      
+      toast({
+        title: "Conversation Reset",
+        description: "Started a fresh conversation with clean message history",
+      });
+    } catch (error) {
+      console.error('Clear conversation error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to clear conversation",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen" style={{backgroundColor: 'hsl(45, 20%, 97%)'}}>
+      {/* Conversation Header with Stats */}
+      <div className="bg-[#1e3a2e] text-white p-3 flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <h1 className="font-bold" style={{fontFamily: 'Times New Roman, serif'}}>Fresh AI - Conversational Assistant</h1>
+          {conversationStats && (
+            <div className="text-xs bg-green-800/50 px-3 py-1 rounded-full">
+              🔗 {conversationStats.conversation_type} • {conversationStats.message_count} messages
+            </div>
+          )}
+        </div>
+        <button
+          onClick={clearConversation}
+          className="text-xs bg-red-600/80 hover:bg-red-600 px-3 py-1 rounded-full transition-colors"
+        >
+          🔄 Fresh Start
+        </button>
+      </div>
+
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message) => (
@@ -396,6 +458,18 @@ export default function AIAgent() {
                         <div className="text-orange-300 font-semibold">Procedural</div>
                         <div className="text-green-200">{message.enhancedContext.procedural_guidance_applied} rules</div>
                       </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Conversation Context */}
+                {message.type === 'ai' && message.conversationStats && (
+                  <div className="mt-3 pt-3 border-t border-green-600/30">
+                    <div className="text-xs text-blue-300 mb-2">💬 Conversation Context:</div>
+                    <div className="bg-blue-900/30 rounded p-2 text-xs">
+                      <div className="text-blue-300 font-semibold">LangChain Flow</div>
+                      <div className="text-green-200">Message #{message.conversationStats.message_count} in persistent conversation</div>
+                      <div className="text-green-200">Type: {message.conversationStats.conversation_type}</div>
                     </div>
                   </div>
                 )}

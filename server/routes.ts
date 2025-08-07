@@ -5,6 +5,7 @@ import { insertFoodItemSchema, insertRecipeSchema } from "@shared/schema";
 import { z } from "zod";
 import { generateRecipes } from "./ai-chef";
 import { enhancedMemorySystem, getSubstitutions } from "./enhanced-memory-fallback.js";
+import { conversationalAgent } from "./conversational-agent.js";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Food Items Routes
@@ -140,7 +141,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return cuisineTypes.find(cuisine => lowerQuery.includes(cuisine)) || null;
   };
 
-  // Enhanced AI Chat Route
+  // Enhanced Conversational AI Chat Route with LangChain
   app.post("/api/ai-chat", async (req, res) => {
     try {
       const { query, userId = 'default' } = req.body;
@@ -149,213 +150,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Query is required" });
       }
 
-      // Get enhanced conversation context with semantic, episodic, and procedural memory
-      const conversationContext = await enhancedMemorySystem.getConversationContext(userId, query);
-      const { userProfile, relevantEpisodes, proceduralGuidance, semanticContext } = conversationContext;
+      // Use the conversational agent with message history and system prompts
+      const result = await conversationalAgent.processConversation(userId, query);
       
-      // Extract and save new preferences
-      const learningResult = await enhancedMemorySystem.extractAndSavePreferences(userId, query);
-      const requestedCuisine = detectCuisineRequest(query);
+      const response = {
+        thought_process: result.reasoning,
+        final_answer: result.message,
+        suggestions: result.suggestions,
+        recipes: result.recipes || [],
+        user_preferences: result.userPreferences,
+        enhanced_context: result.enhancedContext,
+        conversation_stats: {
+          message_count: result.conversationLength,
+          conversation_type: 'persistent_langchain'
+        }
+      };
       
-      // Combine all new learnings
-      const allNewLearnings = [
-        ...learningResult.newDislikes.map(item => `dislike: ${item}`),
-        ...learningResult.newLikes.map(item => `like: ${item}`),
-        ...learningResult.newCuisines.map(item => `cuisine: ${item}`),
-        ...learningResult.newDietary.map(item => `dietary: ${item}`)
-      ];
-      
-      const lowerQuery = query.toLowerCase();
-      const isRecipeRequest = lowerQuery.includes('recipe') || 
-                             lowerQuery.includes('cook') || 
-                             lowerQuery.includes('make') || 
-                             lowerQuery.includes('generate') ||
-                             lowerQuery.includes('create') ||
-                             requestedCuisine !== null;
-
-      let thoughtProcess = [
-        {
-          step: "Enhanced Memory Analysis",
-          reasoning: `Analyzing your request: "${query}" using semantic, episodic, and procedural memory. ${allNewLearnings.length > 0 ? `Learned: ${allNewLearnings.join(', ')}. ` : 'Using stored knowledge about your preferences. '}${requestedCuisine ? `Detected ${requestedCuisine} cuisine request. ` : ''}Found ${relevantEpisodes.length} relevant past conversations and ${semanticContext.length} semantic memories.`,
-          action: isRecipeRequest ? "Applying procedural memory rules for recipe generation" : "Processing general cooking question with context",
-          result: `${isRecipeRequest ? 'Preparing to generate personalized recipes' : 'Ready to provide cooking advice'}. Memory: ${userProfile.dislikes.length} dislikes, ${userProfile.likes.length} likes, ${userProfile.dietary.length} dietary restrictions, ${userProfile.cuisines.length} preferred cuisines. Procedural guidance: ${proceduralGuidance.recommendations.join(', ')}.`
-        }
-      ];
-
-      if (isRecipeRequest) {
-        // Get fridge ingredients for context
-        const fridgeItems = await storage.getFoodItems();
-        let fridgeIngredients = fridgeItems.map(item => item.name);
-        
-        // Apply intelligent filtering and substitutions
-        const originalCount = fridgeIngredients.length;
-        
-        // Filter out disliked ingredients
-        fridgeIngredients = fridgeIngredients.filter(ingredient => 
-          !userProfile.dislikes.some(disliked => 
-            ingredient.toLowerCase().includes(disliked.toLowerCase())
-          )
-        );
-        
-        // Apply dietary substitutions
-        const enhancedIngredients = [...fridgeIngredients];
-        fridgeIngredients.forEach(ingredient => {
-          const substitutes = getSubstitutions(userProfile.dietary, ingredient);
-          if (substitutes.length > 0) {
-            enhancedIngredients.push(`${ingredient} (or substitute: ${substitutes.slice(0, 2).join(', ')})`);
-          }
-        });
-        
-        const filteredCount = originalCount - fridgeIngredients.length;
-        
-        thoughtProcess.push({
-          step: "Procedural Memory-Guided Ingredient Analysis",
-          reasoning: `Found ${originalCount} ingredients in your fridge. ${filteredCount > 0 ? `Filtered out ${filteredCount} items you don't like. ` : ''}${userProfile.dietary.length > 0 ? `Applied ${userProfile.dietary.join(', ')} substitutions. ` : ''}${requestedCuisine ? `Focusing on ${requestedCuisine} cuisine compatibility. ` : ''}Applying procedural memory rules: ${proceduralGuidance.recommendations.slice(0, 2).join(', ')}.`,
-          action: "Analyzing available ingredients using procedural memory rules for recipe compatibility while respecting learned preferences",
-          result: `Available: ${fridgeIngredients.slice(0, 3).join(', ')}${fridgeIngredients.length > 3 ? '...' : ''}${userProfile.dislikes.length > 0 ? ` (avoiding: ${userProfile.dislikes.slice(0, 3).join(', ')})` : ''}${userProfile.dietary.length > 0 ? ` (${userProfile.dietary.join(', ')} adaptations applied)` : ''}`
-        });
-
-        // Extract recipe parameters from query
-        const peopleMatch = query.match(/(\d+)\s*(people|person|servings?)/i);
-        const num_people = peopleMatch ? parseInt(peopleMatch[1]) : 2;
-
-        thoughtProcess.push({
-          step: "Episodic Memory-Enhanced Recipe Strategy",
-          reasoning: `Creating ${requestedCuisine || 'diverse'} recipes for ${num_people} people using your preferences, available ingredients, and ${relevantEpisodes.length} relevant past conversations. ${proceduralGuidance.shouldPersonalizeByHistory ? 'Personalizing based on recipe history. ' : ''}${proceduralGuidance.shouldConfirmDietary ? 'Confirming dietary preferences. ' : ''}${proceduralGuidance.shouldOfferAlternatives ? 'Preparing alternatives. ' : ''}`,
-          action: `Generating episodic memory-informed recipes ${requestedCuisine ? `in ${requestedCuisine} style ` : ''}while applying all procedural memory rules`,
-          result: `Ready to create contextually-aware ${requestedCuisine || 'personalized'} recipes based on your complete interaction history`
-        });
-
-        // Enhanced recipe generation with persistent memory
-        let ingredients = enhancedIngredients.length > 0 ? enhancedIngredients.join(', ') : 'general ingredients';
-        if (requestedCuisine) {
-          ingredients += `, focusing on ${requestedCuisine} cuisine`;
-        }
-        if (userProfile.dislikes.length > 0) {
-          ingredients += `, avoiding: ${userProfile.dislikes.join(', ')}`;
-        }
-        if (userProfile.likes.length > 0) {
-          ingredients += `, preferring: ${userProfile.likes.join(', ')}`;
-        }
-        
-        const recipes = await generateRecipes({
-          num_people,
-          ingredients,
-          dietary: userProfile.dietary.join(', ') || undefined,
-          fridgeIngredients: enhancedIngredients
-        });
-
-        let finalAnswer = `I've analyzed your ${originalCount} fridge ingredients and generated ${recipes.length} ${requestedCuisine || 'personalized'} recipes for you!`;
-        if (filteredCount > 0) {
-          finalAnswer += ` I've excluded ${filteredCount} ingredients you don't like.`;
-        }
-        if (userProfile.dietary.length > 0) {
-          finalAnswer += ` I've applied ${userProfile.dietary.join(' & ')} adaptations.`;
-        }
-        if (allNewLearnings.length > 0) {
-          finalAnswer += ` I've learned new preferences and will remember them permanently.`;
-        }
-        finalAnswer += ` Each recipe respects your taste preferences and dietary needs. Click the bookmark to save favorites!`;
-        
-        const suggestions = [
-          "Save your favorite recipes to your collection",
-          "Tell me 'I love [ingredient]' or 'I don't like [ingredient]' to teach me more",
-          requestedCuisine ? `Ask for more ${requestedCuisine} recipes` : "Try requesting a specific cuisine type",
-          userProfile.dietary.length > 0 ? "Ask about ingredient substitutions for your diet" : "Tell me about any dietary restrictions"
-        ];
-        
-        // Save this conversation episode to episodic memory
-        await enhancedMemorySystem.saveEpisode(userId, {
-          user: query,
-          assistant: finalAnswer,
-          timestamp: new Date().toISOString(),
-          context: {
-            requestedCuisine,
-            num_people,
-            fridgeIngredientsCount: originalCount,
-            recipesGenerated: recipes.length,
-            proceduralGuidance: proceduralGuidance.recommendations
-          }
-        });
-
-        // Save any important takeaways
-        if (allNewLearnings.length > 0) {
-          await enhancedMemorySystem.saveTakeaway(userId, `User expressed new preferences: ${allNewLearnings.join(', ')}`);
-        }
-
-        const response = {
-          thought_process: thoughtProcess,
-          final_answer: finalAnswer,
-          suggestions,
-          recipes: recipes,
-          user_preferences: {
-            dislikes: userProfile.dislikes,
-            likes: userProfile.likes,
-            cuisines: userProfile.cuisines,
-            dietary: userProfile.dietary
-          },
-          enhanced_context: {
-            episodic_memories_found: relevantEpisodes.length,
-            semantic_memories_found: semanticContext.length,
-            procedural_guidance_applied: proceduralGuidance.recommendations.length
-          }
-        };
-        
-        res.json(response);
-      } else {
-        // Handle general cooking questions
-        let finalAnswer = "";
-        let suggestions = [];
-
-        if (lowerQuery.includes('storage') || lowerQuery.includes('store')) {
-          finalAnswer = "Proper food storage is crucial for freshness! Here are some key tips: Keep fruits and vegetables separate, store herbs in water like flowers, and use the crisper drawers for vegetables. Most leftovers stay fresh for 3-4 days in the refrigerator.";
-          suggestions = ["Ask about storage for specific foods", "Get tips on extending food freshness", "Learn about freezer storage techniques"];
-        } else if (lowerQuery.includes('expir') || lowerQuery.includes('fresh')) {
-          finalAnswer = "Managing expiration dates helps reduce waste! Use the 'first in, first out' principle - use older items first. Check your fridge regularly and prioritize ingredients expiring soon in your meal planning.";
-          suggestions = ["Generate recipes with expiring ingredients", "Learn food safety guidelines", "Get tips on meal planning"];
-        } else if (lowerQuery.includes('tip') || lowerQuery.includes('advice')) {
-          finalAnswer = "I'd love to share cooking tips! For better flavors, always taste as you cook and season gradually. Prep ingredients before you start cooking (mise en place). Let meat rest after cooking for juicier results.";
-          suggestions = ["Ask about specific cooking techniques", "Get ingredient-specific tips", "Learn about kitchen organization"];
-        } else {
-          finalAnswer = `I understand you're asking about: "${query}". As your AI kitchen assistant, I can help with recipes, cooking tips, food storage advice, meal planning, and more. What specific aspect of cooking would you like help with?`;
-          suggestions = ["Generate recipes with your fridge ingredients", "Ask for cooking tips", "Get food storage advice"];
-        }
-
-        // Save this general conversation episode to episodic memory
-        await enhancedMemorySystem.saveEpisode(userId, {
-          user: query,
-          assistant: finalAnswer,
-          timestamp: new Date().toISOString(),
-          context: {
-            queryType: 'general',
-            topicDetected: lowerQuery.includes('storage') ? 'storage' : lowerQuery.includes('expir') ? 'expiration' : 'general',
-            proceduralGuidance: proceduralGuidance.recommendations
-          }
-        });
-
-        const response = {
-          thought_process: thoughtProcess,
-          final_answer: finalAnswer,
-          suggestions: suggestions,
-          recipes: [],
-          user_preferences: {
-            dislikes: userProfile.dislikes,
-            likes: userProfile.likes,
-            cuisines: userProfile.cuisines,
-            dietary: userProfile.dietary
-          },
-          enhanced_context: {
-            episodic_memories_found: relevantEpisodes.length,
-            semantic_memories_found: semanticContext.length,
-            procedural_guidance_applied: proceduralGuidance.recommendations.length
-          }
-        };
-        
-        res.json(response);
-      }
+      res.json(response);
     } catch (error) {
       console.error("AI chat error:", error);
       res.status(500).json({ error: "Failed to process AI query" });
+    }
+  });
+
+  // New endpoint to clear conversation history (fresh start)
+  app.post("/api/ai-chat/clear", async (req, res) => {
+    try {
+      const { userId = 'default' } = req.body;
+      conversationalAgent.clearConversation(userId);
+      res.json({ status: 'success', message: 'Conversation history cleared' });
+    } catch (error) {
+      console.error("Clear conversation error:", error);
+      res.status(500).json({ error: "Failed to clear conversation" });
+    }
+  });
+
+  // New endpoint to get conversation statistics
+  app.get("/api/ai-chat/stats/:userId", async (req, res) => {
+    try {
+      const userId = req.params.userId || 'default';
+      const stats = conversationalAgent.getConversationStats(userId);
+      res.json(stats);
+    } catch (error) {
+      console.error("Get stats error:", error);
+      res.status(500).json({ error: "Failed to get conversation stats" });
     }
   });
 

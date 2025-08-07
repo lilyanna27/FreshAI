@@ -1,0 +1,265 @@
+import { ChatOpenAI } from '@langchain/openai';
+import { HumanMessage, SystemMessage, AIMessage } from '@langchain/core/messages';
+import { enhancedMemorySystem } from './enhanced-memory-fallback.js';
+import { generateRecipes } from './ai-chef.js';
+import { storage } from './storage.js';
+import { getSubstitutions } from './enhanced-memory-fallback.js';
+
+// Initialize the Language Model
+const llm = new ChatOpenAI({
+  temperature: 0.7,
+  modelName: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+  openAIApiKey: process.env.OPENAI_API_KEY,
+});
+
+// In-memory storage for conversation sessions
+const conversationSessions = new Map<string, any[]>();
+
+// Define comprehensive system prompt for the AI kitchen assistant
+const getSystemPrompt = (userProfile: any, contextInfo: any) => {
+  return new SystemMessage(`You are an advanced AI kitchen assistant with enhanced memory capabilities. Your name is Fresh AI, and you help users manage their food inventory, create recipes, and provide cooking guidance.
+
+**Your Capabilities:**
+- Semantic Memory: You remember user preferences, dislikes, dietary restrictions, and favorite cuisines permanently
+- Episodic Memory: You recall past conversations and recipe interactions  
+- Procedural Memory: You apply proven interaction rules for better assistance
+
+**Current User Profile:**
+- Dislikes: ${userProfile.dislikes.join(', ') || 'None learned yet'}
+- Likes: ${userProfile.likes.join(', ') || 'None learned yet'}  
+- Cuisines: ${userProfile.cuisines.join(', ') || 'None learned yet'}
+- Dietary Restrictions: ${userProfile.dietary.join(', ') || 'None learned yet'}
+
+**Context Information:**
+- Available fridge ingredients: ${contextInfo.fridgeIngredients || 'Will check when needed'}
+- Past conversations found: ${contextInfo.episodicMemories || 0}
+- Semantic memories available: ${contextInfo.semanticMemories || 0}
+
+**Your Personality & Behavior:**
+- Be friendly, conversational, and helpful
+- Remember what users tell you about their preferences
+- Reference past conversations naturally
+- Offer personalized recipe suggestions based on their tastes
+- Ask clarifying questions when needed
+- Be enthusiastic about food and cooking
+- Maintain conversation flow and context across messages
+
+**Key Instructions:**
+- Always personalize responses based on stored memories
+- When suggesting recipes, avoid ingredients the user dislikes
+- Apply dietary restrictions automatically
+- Reference past recipe requests and feedback
+- Learn from every interaction and update preferences
+- Show your reasoning process when helpful
+- Offer alternatives when users reject suggestions
+- Maintain a warm, culinary-focused tone
+
+Remember: You're not just answering individual questions - you're having an ongoing conversation with someone who trusts you to remember their preferences and provide increasingly personalized assistance.`);
+};
+
+interface ConversationalResponse {
+  message: string;
+  reasoning: any[];
+  userPreferences: any;
+  recipes?: any[];
+  suggestions: string[];
+  enhancedContext: any;
+  conversationLength: number;
+}
+
+export class ConversationalAgent {
+  
+  async processConversation(userId: string, userMessage: string): Promise<ConversationalResponse> {
+    // Get or create conversation session
+    if (!conversationSessions.has(userId)) {
+      conversationSessions.set(userId, []);
+    }
+    
+    const messages = conversationSessions.get(userId)!;
+    
+    // Get enhanced conversation context
+    const conversationContext = await enhancedMemorySystem.getConversationContext(userId, userMessage);
+    const { userProfile, relevantEpisodes, proceduralGuidance, semanticContext } = conversationContext;
+    
+    // Extract and save new preferences
+    const learningResult = await enhancedMemorySystem.extractAndSavePreferences(userId, userMessage);
+    
+    // Get fridge ingredients for context
+    const fridgeItems = await storage.getFoodItems();
+    const fridgeIngredients = fridgeItems.map(item => item.name);
+    
+    // Create context info for system prompt
+    const contextInfo = {
+      fridgeIngredients: fridgeIngredients.slice(0, 10).join(', '),
+      episodicMemories: relevantEpisodes.length,
+      semanticMemories: semanticContext.length
+    };
+    
+    // Initialize conversation with system prompt if this is the first message
+    if (messages.length === 0) {
+      const systemPrompt = getSystemPrompt(userProfile, contextInfo);
+      messages.push(systemPrompt);
+    } else {
+      // Update system prompt with latest user profile
+      const updatedSystemPrompt = getSystemPrompt(userProfile, contextInfo);
+      messages[0] = updatedSystemPrompt;
+    }
+    
+    // Add user message to conversation
+    const humanMessage = new HumanMessage(userMessage);
+    messages.push(humanMessage);
+    
+    // Detect if this is a recipe request
+    const lowerMessage = userMessage.toLowerCase();
+    const isRecipeRequest = lowerMessage.includes('recipe') || 
+                           lowerMessage.includes('cook') || 
+                           lowerMessage.includes('make') || 
+                           lowerMessage.includes('generate') ||
+                           lowerMessage.includes('create') ||
+                           lowerMessage.includes('italian') ||
+                           lowerMessage.includes('mexican') ||
+                           lowerMessage.includes('asian');
+    
+    // Build reasoning steps
+    const allNewLearnings = [
+      ...learningResult.newDislikes.map(item => `dislike: ${item}`),
+      ...learningResult.newLikes.map(item => `like: ${item}`),
+      ...learningResult.newCuisines.map(item => `cuisine: ${item}`),
+      ...learningResult.newDietary.map(item => `dietary: ${item}`)
+    ];
+    
+    const reasoning = [
+      {
+        step: "Conversational Context Analysis",
+        reasoning: `Processing your message in the context of our ongoing conversation. ${allNewLearnings.length > 0 ? `Learning: ${allNewLearnings.join(', ')}. ` : ''}Found ${relevantEpisodes.length} relevant past conversations and ${semanticContext.length} stored preferences. This is message ${messages.length - 1} in our conversation.`,
+        action: isRecipeRequest ? "Preparing personalized recipe generation" : "Providing contextual cooking assistance",
+        result: `Ready to respond with full awareness of your preferences and our conversation history. Procedural guidance: ${proceduralGuidance.recommendations.slice(0, 2).join(', ')}.`
+      }
+    ];
+    
+    let recipes: any[] = [];
+    let suggestions: string[] = [];
+    
+    // Handle recipe requests with enhanced context
+    if (isRecipeRequest) {
+      reasoning.push({
+        step: "Recipe Generation with Memory",
+        reasoning: `Generating recipes using your known preferences and available ingredients. Avoiding: ${userProfile.dislikes.join(', ') || 'none'}. Applying ${userProfile.dietary.join(', ') || 'no'} dietary restrictions.`,
+        action: "Creating personalized recipes based on conversation context",
+        result: "Recipes tailored to your tastes and our discussion"
+      });
+      
+      // Filter ingredients based on preferences
+      let availableIngredients = fridgeIngredients.filter(ingredient => 
+        !userProfile.dislikes.some(disliked => 
+          ingredient.toLowerCase().includes(disliked.toLowerCase())
+        )
+      );
+      
+      // Apply dietary substitutions
+      const enhancedIngredients = [...availableIngredients];
+      availableIngredients.forEach(ingredient => {
+        const substitutes = getSubstitutions(userProfile.dietary, ingredient);
+        if (substitutes.length > 0) {
+          enhancedIngredients.push(`${ingredient} (or substitute: ${substitutes.slice(0, 2).join(', ')})`);
+        }
+      });
+      
+      // Extract parameters from message
+      const peopleMatch = userMessage.match(/(\d+)\s*(people|person|servings?)/i);
+      const num_people = peopleMatch ? parseInt(peopleMatch[1]) : 2;
+      
+      // Generate recipes
+      let ingredients = enhancedIngredients.length > 0 ? enhancedIngredients.join(', ') : 'general ingredients';
+      if (userProfile.dislikes.length > 0) {
+        ingredients += `, avoiding: ${userProfile.dislikes.join(', ')}`;
+      }
+      
+      try {
+        recipes = await generateRecipes({
+          num_people,
+          ingredients,
+          dietary: userProfile.dietary.join(', ') || undefined,
+          fridgeIngredients: enhancedIngredients
+        });
+      } catch (error) {
+        console.error('Recipe generation failed:', error);
+      }
+      
+      suggestions = [
+        "Save recipes you like to build your collection",
+        "Tell me your feedback to improve future suggestions", 
+        "Ask for variations or alternative recipes",
+        "Share more preferences to enhance personalization"
+      ];
+    } else {
+      suggestions = [
+        "Ask me to generate recipes with your ingredients",
+        "Tell me your food preferences to improve recommendations",
+        "Get cooking tips and food storage advice",
+        "Explore recipes from different cuisines"
+      ];
+    }
+    
+    // Get AI response using full conversation context
+    const response = await llm.invoke(messages);
+    
+    // Add AI response to conversation
+    const aiMessage = new AIMessage(response.content);
+    messages.push(aiMessage);
+    
+    // Save conversation episode to memory
+    await enhancedMemorySystem.saveEpisode(userId, {
+      user: userMessage,
+      assistant: response.content,
+      timestamp: new Date().toISOString(),
+      context: {
+        conversationLength: messages.length,
+        recipesGenerated: recipes.length,
+        proceduralGuidance: proceduralGuidance.recommendations,
+        learningsCount: allNewLearnings.length
+      }
+    });
+    
+    // Save important takeaways
+    if (allNewLearnings.length > 0) {
+      await enhancedMemorySystem.saveTakeaway(userId, `User expressed new preferences: ${allNewLearnings.join(', ')}`);
+    }
+    
+    return {
+      message: response.content,
+      reasoning,
+      userPreferences: userProfile,
+      recipes,
+      suggestions,
+      enhancedContext: {
+        episodic_memories_found: relevantEpisodes.length,
+        semantic_memories_found: semanticContext.length,
+        procedural_guidance_applied: proceduralGuidance.recommendations.length
+      },
+      conversationLength: messages.length - 1 // Subtract 1 for system message
+    };
+  }
+  
+  // Method to get conversation history for a user
+  getConversationHistory(userId: string): any[] {
+    return conversationSessions.get(userId) || [];
+  }
+  
+  // Method to clear conversation for a user (fresh start)
+  clearConversation(userId: string): void {
+    conversationSessions.delete(userId);
+  }
+  
+  // Method to get conversation statistics
+  getConversationStats(userId: string): { messageCount: number; hasSystemPrompt: boolean } {
+    const messages = conversationSessions.get(userId) || [];
+    return {
+      messageCount: Math.max(0, messages.length - 1), // Subtract system message
+      hasSystemPrompt: messages.length > 0 && messages[0] instanceof SystemMessage
+    };
+  }
+}
+
+// Create singleton instance
+export const conversationalAgent = new ConversationalAgent();
