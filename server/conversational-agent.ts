@@ -58,8 +58,9 @@ ${recipesGenerated ?
 - Show your reasoning process when helpful
 - Offer alternatives when users reject suggestions
 - Maintain a warm, culinary-focused tone
-- Automatically add missing recipe ingredients to Instacart cart when appropriate
+- When missing ingredients are added to Instacart, mention this helpfully in your response
 - NEVER include full recipe details in your text response when recipes are generated separately
+- Focus on being conversational and encouraging about cooking
 
 Remember: You're not just answering individual questions - you're having an ongoing conversation with someone who trusts you to remember their preferences and provide increasingly personalized assistance.`);
 };
@@ -194,23 +195,26 @@ export class ConversationalAgent {
         }
       });
       
-      // Add missing ingredients to Instacart if needed
+      // Add missing ingredients to Instacart cart
+      const instacartResults: string[] = [];
+      
       if (missingIngredients.length > 0) {
-        reasoning.push({
-          step: "Instacart Integration",
-          reasoning: `Found ${missingIngredients.length} missing ingredients for recipes. Adding to Instacart cart while respecting your dietary preferences.`,
-          action: "Adding missing ingredients to shopping cart",
-          result: `Prepared to add: ${missingIngredients.join(', ')} to your Instacart cart`
-        });
-        
         for (const ingredient of missingIngredients) {
           try {
             const addResult = await memorySystem.addToInstacart(userId, ingredient, '1 unit', namespace);
-            enhancedIngredients.push(`${ingredient} (${addResult})`);
+            instacartResults.push(addResult);
           } catch (error) {
             console.error(`Failed to add ${ingredient} to cart:`, error);
+            instacartResults.push(`Could not add ${ingredient} to cart: ${error}`);
           }
         }
+        
+        reasoning.push({
+          step: "Smart Shopping Assistant",
+          reasoning: `Detected ${missingIngredients.length} missing ingredients: ${missingIngredients.join(', ')}. Automatically adding them to your Instacart cart while respecting your dietary preferences and food dislikes.`,
+          action: "Adding compatible ingredients to shopping cart",
+          result: instacartResults.join('; ')
+        });
       }
       
       // Extract parameters from message
@@ -238,7 +242,10 @@ export class ConversationalAgent {
         "Save recipes you like to build your collection",
         "Tell me your feedback to improve future suggestions", 
         "Ask for variations or alternative recipes",
-        "Share more preferences to enhance personalization"
+        "Share more preferences to enhance personalization",
+        ...(missingIngredients.length > 0 
+          ? [`✅ Added ${missingIngredients.length} missing ingredients to your Instacart cart`]
+          : ["🎉 All ingredients are available in your fridge!"])
       ];
     } else {
       suggestions = [
@@ -252,7 +259,11 @@ export class ConversationalAgent {
     // Get AI response using full conversation context
     // If recipes were generated, add a note to the conversation before getting AI response
     if (isRecipeRequest && recipes.length > 0) {
-      const recipeNote = new HumanMessage(`[SYSTEM NOTE: ${recipes.length} personalized recipes have been generated based on your preferences and will be displayed in recipe cards. Please acknowledge this without repeating the recipe details.]`);
+      const instacartNote = missingIngredients.length > 0 
+        ? ` I've also automatically added ${missingIngredients.join(', ')} to your Instacart cart since they weren't in your fridge.`
+        : ' All ingredients are available in your fridge!';
+      
+      const recipeNote = new HumanMessage(`[SYSTEM NOTE: ${recipes.length} personalized recipes have been generated based on your preferences and will be displayed in recipe cards below your message.${instacartNote} Please acknowledge this briefly without repeating recipe details.]`);
       messages.push(recipeNote);
     }
     
