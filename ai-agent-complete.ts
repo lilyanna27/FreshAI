@@ -632,9 +632,11 @@ Generate a concise takeaway about user preferences or recipe interactions (e.g.,
         {
           api_key: this.tavilyApiKey,
           query: enhancedQuery,
-          search_depth: 'basic',
-          max_results: 5,
+          search_depth: 'advanced',
+          max_results: 3,
           include_raw_content: true,
+          include_answer: true,
+          include_domains: ['allrecipes.com', 'food.com', 'delish.com', 'foodnetwork.com', 'epicurious.com']
         },
         { headers: { 'Content-Type': 'application/json' } }
       );
@@ -650,7 +652,7 @@ Generate a concise takeaway about user preferences or recipe interactions (e.g.,
           if (profile.dietary.length > 0 && !profile.dietary.some(diet => content.toLowerCase().includes(diet.toLowerCase()))) {
             return null;
           }
-          return `Source: ${result.url}\nTitle: ${result.title || 'Recipe'}\nContent: ${content.slice(0, 1000)}...`;
+          return `Source: ${result.url}\nTitle: ${result.title || 'Recipe'}\nContent: ${content.slice(0, 3000)}...`;
         })
         .filter((item: string | null) => item !== null)
         .join('\n\n');

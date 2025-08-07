@@ -280,46 +280,93 @@ export class ConversationalAgent {
           }
         }
         
-        // Extract ingredients from content
+        // Extract ingredients from content using multiple patterns
         let ingredients = [];
-        const ingredientMatches = webRecipeContent.match(/ingredients?:?\s*([^\n]+(?:\n[^\n]+)*)/gi);
-        if (ingredientMatches) {
-          // Parse ingredients from the matched text
-          const ingredientText = ingredientMatches[0].replace(/ingredients?:?\s*/gi, '');
-          const ingredientLines = ingredientText.split(/[,\n]/).filter(line => line.trim());
-          ingredients = ingredientLines.slice(0, 8).map(ingredient => ({ 
-            name: ingredient.trim().replace(/^\d+\s*/, '').replace(/^-\s*/, ''),
-            quantity: '1 unit' 
-          }));
+        
+        // Try multiple patterns to find ingredients
+        const ingredientPatterns = [
+          /ingredients?:?\s*\n([\s\S]*?)(?=\n\s*(?:instructions?|directions?|method|steps?):?|\n\s*#|$)/gi,
+          /ingredients?:?([\s\S]*?)(?=instructions?|directions?|method|steps?|$)/gi,
+          /(\d+(?:\/\d+)?\s*(?:cups?|tbsp|tsp|oz|lbs?|g|kg|ml|l)\s+[^\n]+)/gi,
+          /[-•*]\s*([^\n]+(?:cup|tbsp|tsp|oz|lb|gram|kg|ml|liter)[^\n]*)/gi
+        ];
+        
+        for (const pattern of ingredientPatterns) {
+          const matches = webRecipeContent.match(pattern);
+          if (matches && matches.length > 0) {
+            const text = matches[0].replace(/ingredients?:?\s*/gi, '');
+            const lines = text.split(/\n/).filter(line => {
+              const cleaned = line.trim();
+              return cleaned && 
+                     cleaned.length > 3 && 
+                     cleaned.length < 100 &&
+                     !cleaned.toLowerCase().includes('recipe') &&
+                     !cleaned.toLowerCase().includes('instruction');
+            });
+            
+            ingredients = lines.slice(0, 8).map(line => {
+              const cleaned = line.trim().replace(/^[-•*\d.\s]+/, '');
+              // Try to separate quantity and ingredient
+              const quantityMatch = cleaned.match(/^([\d\/]+\s*(?:cups?|tbsp|tsp|oz|lbs?|g|kg|ml|l)?)\s*(.+)/);
+              if (quantityMatch) {
+                return `${quantityMatch[2].trim()} - ${quantityMatch[1].trim()}`;
+              } else {
+                return cleaned;
+              }
+            }).filter(ing => ing.length > 2);
+            
+            if (ingredients.length > 0) break;
+          }
         }
         
-        // If no ingredients found, use default set
+        // If no ingredients found, extract any food-related items
         if (ingredients.length === 0) {
-          ingredients = [
-            { name: 'pasta', quantity: '200g' },
-            { name: 'olive oil', quantity: '2 tbsp' },
-            { name: 'garlic', quantity: '2 cloves' },
-            { name: 'tomatoes', quantity: '1 can' }
-          ];
+          const foodWords = webRecipeContent.match(/\b(chicken|beef|pasta|rice|onion|garlic|tomato|cheese|oil|butter|flour|sugar|salt|pepper)\b/gi);
+          if (foodWords) {
+            ingredients = [...new Set(foodWords)].slice(0, 6).map(word => `${word} - as needed`);
+          } else {
+            ingredients = ['See original recipe for ingredients'];
+          }
         }
         
-        // Extract instructions from content
+        // Extract instructions from content using multiple patterns
         let instructions = [];
-        const instructionMatches = webRecipeContent.match(/instructions?:?\s*([^\n]+(?:\n[^\n]+)*)/gi);
-        if (instructionMatches) {
-          const instructionText = instructionMatches[0].replace(/instructions?:?\s*/gi, '');
-          const instructionLines = instructionText.split(/[\n]/).filter(line => line.trim());
-          instructions = instructionLines.slice(0, 6).map(instruction => 
-            instruction.trim().replace(/^\d+\.?\s*/, '').replace(/^-\s*/, '')
-          );
+        
+        // Try multiple patterns to find instructions
+        const instructionPatterns = [
+          /(?:instructions?|directions?|method|steps?):?\s*\n([\s\S]*?)(?=\n\s*#|$)/gi,
+          /(?:instructions?|directions?|method|steps?):?([\s\S]*?)(?=notes?|tips?|$)/gi,
+          /(\d+\.\s*[^\n]{20,})/gi,
+          /[-•*]\s*([^\n]{20,})/gi
+        ];
+        
+        for (const pattern of instructionPatterns) {
+          const matches = webRecipeContent.match(pattern);
+          if (matches && matches.length > 0) {
+            const text = matches[0].replace(/(?:instructions?|directions?|method|steps?):?\s*/gi, '');
+            const lines = text.split(/\n/).filter(line => {
+              const cleaned = line.trim();
+              return cleaned && 
+                     cleaned.length > 10 && 
+                     cleaned.length < 300 &&
+                     !cleaned.toLowerCase().startsWith('ingredients') &&
+                     !cleaned.toLowerCase().includes('copyright');
+            });
+            
+            instructions = lines.slice(0, 8).map(line => 
+              line.trim().replace(/^\d+\.?\s*/, '').replace(/^[-•*]\s*/, '')
+            ).filter(inst => inst.length > 5);
+            
+            if (instructions.length > 0) break;
+          }
         }
         
-        // If no instructions found, use default set
+        // If no structured instructions found, create helpful guidance
         if (instructions.length === 0) {
           instructions = [
-            'Follow the original recipe from the source website',
-            'Adjust ingredients based on your preferences',
-            'Cook according to dietary restrictions'
+            `Visit the original recipe at ${webRecipeSource}`,
+            'Follow the detailed instructions on the source website',
+            'Adjust cooking times and ingredients to your taste'
           ];
         }
         
@@ -327,7 +374,7 @@ export class ConversationalAgent {
         recipes = [{
           id: Date.now().toString(),
           title: recipeName,
-          ingredients: ingredients.map(ing => `${ing.name} - ${ing.quantity}`),
+          ingredients: ingredients,
           instructions: instructions,
           cookTime: '30 mins',
           servings: 4,
