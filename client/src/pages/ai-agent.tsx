@@ -357,7 +357,7 @@ export default function AIAgent() {
               </div>
               <div className={`rounded-2xl p-4 ${
                 message.type === 'user'
-                  ? 'bg-apple-green text-white'
+                  ? 'bg-apple-green text-black'
                   : 'bg-[#1e3a2e] text-white border border-[#2d5a3a]'
               }`}>
                 <p className="text-sm">{message.content}</p>
@@ -382,7 +382,7 @@ export default function AIAgent() {
                 )}
                 
                 <p className={`text-xs mt-2 ${
-                  message.type === 'user' ? 'text-white/70' : 'text-gray-400'
+                  message.type === 'user' ? 'text-black/70' : 'text-gray-400'
                 }`}>
                   {message.timestamp.toLocaleTimeString([], { 
                     hour: '2-digit', 
