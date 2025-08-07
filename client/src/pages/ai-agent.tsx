@@ -392,7 +392,7 @@ export default function AIAgent() {
       </div>
 
       {/* Input */}
-      <div className="p-4 bg-[#1e3a2e] border-t border-[#2d5a3a] pb-20">
+      <div className="p-4 bg-[#1e3a2e] border-t border-[#2d5a3a]">
         <div className="flex items-center space-x-3">
           <div className="flex-1 bg-white rounded-2xl border border-green-200">
             <input
@@ -415,7 +415,7 @@ export default function AIAgent() {
       </div>
 
         {/* Quick Actions */}
-        <div className="p-4 pb-24" style={{backgroundColor: 'hsl(45, 20%, 97%)'}}>
+        <div className="p-4 pb-4" style={{backgroundColor: 'hsl(45, 20%, 97%)'}}>
           <div className="flex space-x-2 overflow-x-auto">
             {[
               "Generate recipes with my fridge ingredients",
