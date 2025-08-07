@@ -243,17 +243,18 @@ export class ConversationalAgent {
       let webRecipeContent = '';
       
       try {
-        // Build search query with user preferences
-        let searchQuery = userMessage;
+        // Build specific search query for individual recipes
+        let searchQuery = userMessage.replace(/recipe/gi, '').trim();
         if (userProfile.cuisines.length > 0) {
-          searchQuery += ` ${userProfile.cuisines[0]} cuisine`;
+          searchQuery += ` ${userProfile.cuisines[0]}`;
         }
         if (userProfile.dietary.length > 0) {
           searchQuery += ` ${userProfile.dietary.join(' ')}`;
         }
-        if (enhancedIngredients.length > 0) {
-          searchQuery += ` using ${enhancedIngredients.slice(0, 3).join(', ')}`;
-        }
+        // Add specific terms to get detailed recipes
+        searchQuery += ' recipe ingredients instructions';
+        
+        console.log('Search query for Tavily:', searchQuery);
         
         // Use Tavily to retrieve web recipes
         webRecipeContent = await memorySystem.retrieveWebRecipes(searchQuery, userId, namespace);
@@ -280,95 +281,91 @@ export class ConversationalAgent {
           }
         }
         
-        // Extract ingredients from content using multiple patterns
+        // More aggressive ingredient extraction
         let ingredients = [];
         
-        // Try multiple patterns to find ingredients
-        const ingredientPatterns = [
-          /ingredients?:?\s*\n([\s\S]*?)(?=\n\s*(?:instructions?|directions?|method|steps?):?|\n\s*#|$)/gi,
-          /ingredients?:?([\s\S]*?)(?=instructions?|directions?|method|steps?|$)/gi,
-          /(\d+(?:\/\d+)?\s*(?:cups?|tbsp|tsp|oz|lbs?|g|kg|ml|l)\s+[^\n]+)/gi,
-          /[-•*]\s*([^\n]+(?:cup|tbsp|tsp|oz|lb|gram|kg|ml|liter)[^\n]*)/gi
-        ];
+        console.log('Raw web content sample:', webRecipeContent.substring(0, 500));
         
-        for (const pattern of ingredientPatterns) {
-          const matches = webRecipeContent.match(pattern);
-          if (matches && matches.length > 0) {
-            const text = matches[0].replace(/ingredients?:?\s*/gi, '');
-            const lines = text.split(/\n/).filter(line => {
-              const cleaned = line.trim();
-              return cleaned && 
-                     cleaned.length > 3 && 
-                     cleaned.length < 100 &&
-                     !cleaned.toLowerCase().includes('recipe') &&
-                     !cleaned.toLowerCase().includes('instruction');
-            });
-            
-            ingredients = lines.slice(0, 8).map(line => {
-              const cleaned = line.trim().replace(/^[-•*\d.\s]+/, '');
-              // Try to separate quantity and ingredient
-              const quantityMatch = cleaned.match(/^([\d\/]+\s*(?:cups?|tbsp|tsp|oz|lbs?|g|kg|ml|l)?)\s*(.+)/);
-              if (quantityMatch) {
-                return `${quantityMatch[2].trim()} - ${quantityMatch[1].trim()}`;
-              } else {
-                return cleaned;
-              }
-            }).filter(ing => ing.length > 2);
-            
-            if (ingredients.length > 0) break;
+        // Look for any measurement patterns in the content
+        const measurementPattern = /(\d+(?:\/\d+|\s\d+\/\d+)?\s*(?:cups?|cup|tbsp|tablespoons?|tsp|teaspoons?|oz|ounces?|lbs?|pounds?|g|grams?|kg|ml|l|liters?)\s+[^\n\r.!?]{3,50})/gi;
+        const measurementMatches = webRecipeContent.match(measurementPattern);
+        
+        if (measurementMatches) {
+          ingredients = measurementMatches.slice(0, 10).map(match => match.trim());
+        }
+        
+        // Also look for bullet points or numbered lists that might be ingredients
+        if (ingredients.length < 3) {
+          const listPattern = /^\s*[-•*\d+\.)]\s*([^\n\r]{10,80})$/gm;
+          const listMatches = webRecipeContent.match(listPattern);
+          if (listMatches) {
+            const potentialIngredients = listMatches
+              .map(match => match.replace(/^\s*[-•*\d+\.)]\s*/, '').trim())
+              .filter(item => {
+                const lower = item.toLowerCase();
+                return (lower.includes('cup') || lower.includes('tbsp') || lower.includes('tsp') || 
+                       lower.includes('oz') || lower.includes('pound') || lower.includes('gram') ||
+                       /\b\d+\b/.test(item)) && item.length < 100;
+              });
+            ingredients.push(...potentialIngredients.slice(0, 8));
           }
         }
         
-        // If no ingredients found, extract any food-related items
+        // Last resort: extract common food words with "as needed"
         if (ingredients.length === 0) {
-          const foodWords = webRecipeContent.match(/\b(chicken|beef|pasta|rice|onion|garlic|tomato|cheese|oil|butter|flour|sugar|salt|pepper)\b/gi);
-          if (foodWords) {
-            ingredients = [...new Set(foodWords)].slice(0, 6).map(word => `${word} - as needed`);
+          const foodPattern = /\b(chicken|beef|pork|fish|salmon|pasta|rice|noodles|onion|garlic|tomato|cheese|oil|butter|flour|sugar|salt|pepper|basil|oregano|parsley)\b/gi;
+          const foodMatches = webRecipeContent.match(foodPattern);
+          if (foodMatches) {
+            ingredients = [...new Set(foodMatches)].slice(0, 6).map(word => `${word} - as needed`);
           } else {
-            ingredients = ['See original recipe for ingredients'];
+            ingredients = [`Visit ${webRecipeSource} for complete ingredients list`];
           }
         }
         
-        // Extract instructions from content using multiple patterns
+        console.log('Extracted ingredients:', ingredients);
+        
+        // Extract step-by-step instructions
         let instructions = [];
         
-        // Try multiple patterns to find instructions
-        const instructionPatterns = [
-          /(?:instructions?|directions?|method|steps?):?\s*\n([\s\S]*?)(?=\n\s*#|$)/gi,
-          /(?:instructions?|directions?|method|steps?):?([\s\S]*?)(?=notes?|tips?|$)/gi,
-          /(\d+\.\s*[^\n]{20,})/gi,
-          /[-•*]\s*([^\n]{20,})/gi
-        ];
+        // Look for numbered steps or detailed cooking instructions
+        const stepPattern = /\b(?:step\s*)?\d+[.)]\s*([^\n\r]{20,200})/gi;
+        const stepMatches = webRecipeContent.match(stepPattern);
         
-        for (const pattern of instructionPatterns) {
-          const matches = webRecipeContent.match(pattern);
-          if (matches && matches.length > 0) {
-            const text = matches[0].replace(/(?:instructions?|directions?|method|steps?):?\s*/gi, '');
-            const lines = text.split(/\n/).filter(line => {
-              const cleaned = line.trim();
-              return cleaned && 
-                     cleaned.length > 10 && 
-                     cleaned.length < 300 &&
-                     !cleaned.toLowerCase().startsWith('ingredients') &&
-                     !cleaned.toLowerCase().includes('copyright');
-            });
-            
-            instructions = lines.slice(0, 8).map(line => 
-              line.trim().replace(/^\d+\.?\s*/, '').replace(/^[-•*]\s*/, '')
-            ).filter(inst => inst.length > 5);
-            
-            if (instructions.length > 0) break;
+        if (stepMatches) {
+          instructions = stepMatches.slice(0, 8).map(match => 
+            match.replace(/\b(?:step\s*)?\d+[.)]\s*/i, '').trim()
+          );
+        }
+        
+        // Also look for cooking action words
+        if (instructions.length < 3) {
+          const cookingPattern = /([^\n\r.!?]{20,150}(?:cook|bake|fry|boil|simmer|sauté|mix|stir|add|heat|serve)[^\n\r.!?]{5,100}[.!?])/gi;
+          const cookingMatches = webRecipeContent.match(cookingPattern);
+          if (cookingMatches) {
+            instructions.push(...cookingMatches.slice(0, 6).map(match => match.trim()));
           }
         }
         
-        // If no structured instructions found, create helpful guidance
+        // Clean up instructions
+        instructions = instructions
+          .filter(inst => inst.length > 10 && inst.length < 250)
+          .filter(inst => {
+            const lower = inst.toLowerCase();
+            return !lower.includes('copyright') && !lower.includes('advertisement') && 
+                   !lower.includes('subscribe') && !lower.includes('click here');
+          })
+          .slice(0, 6);
+        
+        // Fallback if no good instructions found
         if (instructions.length === 0) {
           instructions = [
-            `Visit the original recipe at ${webRecipeSource}`,
-            'Follow the detailed instructions on the source website',
-            'Adjust cooking times and ingredients to your taste'
+            `This recipe requires visiting the original source: ${webRecipeSource}`,
+            'Follow the step-by-step instructions on the website',
+            'The recipe will include detailed cooking times and techniques'
           ];
         }
+        
+        console.log('Extracted instructions:', instructions);
         
         // Create recipe based on web content
         recipes = [{
