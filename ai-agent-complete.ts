@@ -801,8 +801,32 @@ export class ConversationalAgent {
       // Get user profile for personalization
       const profile = await memorySystem.getUserProfile(userId, namespaceTemplate);
 
-      // Check for recipe request
+      // Check for source inquiry
       const lowerMessage = userMessage.toLowerCase();
+      if (lowerMessage.includes('where') && (lowerMessage.includes('recipe') || lowerMessage.includes('from'))) {
+        // User is asking about recipe sources
+        const episodicResult = await memorySystem.searchMemories(userId, 'recipe', namespace, 'episodic', 10);
+        const recentRecipes = episodicResult.memories?.filter(m => 
+          m.content.includes('Found') && m.content.includes('from')
+        ).slice(0, 5) || [];
+        
+        if (recentRecipes.length > 0) {
+          const sourceInfo = recentRecipes.map(memory => {
+            const match = memory.content.match(/Found (.+?) from (.+?)\./); 
+            return match ? `• ${match[1]} - from ${match[2]}` : memory.content;
+          }).join('\n');
+          
+          return {
+            response: `Here are the sources for your recent recipes:\n\n${sourceInfo}\n\nI get recipes from various cooking websites through web search, plus I have some local recipe knowledge as backup. When I find recipes online, I always try to include the source so you know where they came from!`
+          };
+        } else {
+          return {
+            response: "I haven't provided you with any recipes yet! When I do find recipes, I get them from popular cooking websites like AllRecipes, Food.com, and other culinary sources through web search. I also have some local recipe knowledge as backup. I always try to tell you where each recipe comes from."
+          };
+        }
+      }
+      
+      // Check for recipe request
       if (lowerMessage.includes('recipe') || lowerMessage.includes('cook') || lowerMessage.includes('make')) {
         
         // Use Tavily to get real recipes from the web
@@ -877,7 +901,7 @@ export class ConversationalAgent {
             : '';
 
           return { 
-            response: `Perfect! I found a delicious ${recipe.name} recipe from the web that matches your ${profile.dietary.length > 0 ? profile.dietary.join(' and ') + ' ' : ''}preferences.${cartMessage}${webMessage} Check the recipe card below for full details!`, 
+            response: `Perfect! I found a delicious ${recipe.name} recipe${recipe.source && recipe.source !== 'web-search' ? ` from ${recipe.source}` : ' from the web'} that matches your ${profile.dietary.length > 0 ? profile.dietary.join(' and ') + ' ' : ''}preferences.${cartMessage}${webMessage} Check the recipe card below for full details!`, 
             recipe 
           };
         } catch (error) {
@@ -887,7 +911,7 @@ export class ConversationalAgent {
       }
 
       // Process non-recipe conversation
-      let response = "I'm your AI kitchen assistant with web recipe search! I can find real recipes from cooking websites, manage your ingredients, and add missing items to your shopping cart.";
+      let response = "I'm your AI kitchen assistant with web recipe search! I can find real recipes from cooking websites like AllRecipes and Food.com, manage your ingredients, and add missing items to your shopping cart. Just ask me for a recipe and I'll tell you where it came from!";
       
       // Personalize based on learned preferences
       if (profile.likes.length > 0) {

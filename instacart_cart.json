@@ -88,5 +88,23 @@
     "ingredient": "garlic",
     "quantity": "1 unit",
     "timestamp": "2025-08-07T20:31:04.717Z"
+  },
+  {
+    "user_id": "user-1",
+    "ingredient": "pasta",
+    "quantity": "1 unit",
+    "timestamp": "2025-08-07T20:31:38.493Z"
+  },
+  {
+    "user_id": "user-1",
+    "ingredient": "olive oil",
+    "quantity": "1 unit",
+    "timestamp": "2025-08-07T20:31:38.575Z"
+  },
+  {
+    "user_id": "user-1",
+    "ingredient": "garlic",
+    "quantity": "1 unit",
+    "timestamp": "2025-08-07T20:31:38.596Z"
   }
 ]
