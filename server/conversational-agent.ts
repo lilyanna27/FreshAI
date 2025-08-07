@@ -94,6 +94,17 @@ export class ConversationalAgent {
     const fridgeItems = await storage.getFoodItems();
     const fridgeIngredients = fridgeItems.map(item => item.name);
     
+    // Detect if this is a recipe request (moved earlier)
+    const lowerMessage = userMessage.toLowerCase();
+    const isRecipeRequest = lowerMessage.includes('recipe') || 
+                           lowerMessage.includes('cook') || 
+                           lowerMessage.includes('make') || 
+                           lowerMessage.includes('generate') ||
+                           lowerMessage.includes('create') ||
+                           lowerMessage.includes('italian') ||
+                           lowerMessage.includes('mexican') ||
+                           lowerMessage.includes('asian');
+    
     // Create context info for system prompt
     const contextInfo = {
       fridgeIngredients: fridgeIngredients.slice(0, 10).join(', '),
@@ -114,17 +125,6 @@ export class ConversationalAgent {
     // Add user message to conversation
     const humanMessage = new HumanMessage(userMessage);
     messages.push(humanMessage);
-    
-    // Detect if this is a recipe request
-    const lowerMessage = userMessage.toLowerCase();
-    const isRecipeRequest = lowerMessage.includes('recipe') || 
-                           lowerMessage.includes('cook') || 
-                           lowerMessage.includes('make') || 
-                           lowerMessage.includes('generate') ||
-                           lowerMessage.includes('create') ||
-                           lowerMessage.includes('italian') ||
-                           lowerMessage.includes('mexican') ||
-                           lowerMessage.includes('asian');
     
     // Build reasoning steps
     const allNewLearnings = [
