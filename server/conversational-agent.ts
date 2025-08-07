@@ -35,6 +35,13 @@ const getSystemPrompt = (userProfile: any, contextInfo: any, recipesGenerated: b
 - Past conversations found: ${contextInfo.episodicMemories || 0}
 - Semantic memories available: ${contextInfo.semanticMemories || 0}
 
+**Relevant Past Conversations:**
+${contextInfo.pastConversations && contextInfo.pastConversations.length > 0 ? 
+  contextInfo.pastConversations.map((conv: any, index: number) => 
+    `${index + 1}. ${conv.content}`
+  ).join('\n') : 
+  'No relevant past conversations found for this topic.'}
+
 **CRITICAL RECIPE INSTRUCTION:**
 ${recipesGenerated ? 
 'RECIPES HAVE BEEN GENERATED - Do NOT include recipe details, ingredients lists, or cooking instructions in your response. Simply acknowledge that recipes have been created and mention they will be displayed in recipe cards below your message.' : 
@@ -95,11 +102,17 @@ export class ConversationalAgent {
     // Get relevant memories for context
     const [semanticResult, episodicResult] = await Promise.all([
       memorySystem.searchMemories(userId, userMessage, namespace, 'semantic', 5),
-      memorySystem.searchMemories(userId, userMessage, namespace, 'episodic', 5)
+      memorySystem.searchMemories(userId, userMessage, namespace, 'episodic', 10)
     ]);
     
     const relevantEpisodes = episodicResult.memories || [];
     const semanticContext = semanticResult.memories || [];
+    
+    // Format past conversations for context
+    const pastConversations = relevantEpisodes.slice(0, 5).map(episode => ({
+      content: episode.content,
+      timestamp: episode.timestamp
+    }));
     
     // Mock procedural guidance for compatibility
     const proceduralGuidance = {
@@ -128,7 +141,8 @@ export class ConversationalAgent {
     const contextInfo = {
       fridgeIngredients: fridgeIngredients.slice(0, 10).join(', '),
       episodicMemories: relevantEpisodes.length,
-      semanticMemories: semanticContext.length
+      semanticMemories: semanticContext.length,
+      pastConversations: pastConversations
     };
     
     // Initialize conversation with system prompt if this is the first message
@@ -156,7 +170,7 @@ export class ConversationalAgent {
     const reasoning = [
       {
         step: "Conversational Context Analysis",
-        reasoning: `Processing your message in the context of our ongoing conversation. ${allNewLearnings.length > 0 ? `Learning: ${allNewLearnings.join(', ')}. ` : ''}Found ${relevantEpisodes.length} relevant past conversations and ${semanticContext.length} stored preferences. This is message ${messages.length - 1} in our conversation.`,
+        reasoning: `Processing your message in the context of our ongoing conversation. ${allNewLearnings.length > 0 ? `Learning: ${allNewLearnings.join(', ')}. ` : ''}Found ${relevantEpisodes.length} relevant past conversations and ${semanticContext.length} stored preferences. This is message ${messages.length - 1} in our conversation.${pastConversations.length > 0 ? ` Recent relevant interactions: ${pastConversations.slice(0, 2).map(conv => conv.content.substring(0, 100)).join('; ')}...` : ''}`,
         action: isRecipeRequest ? "Preparing personalized recipe generation" : "Providing contextual cooking assistance",
         result: `Ready to respond with full awareness of your preferences and our conversation history. Procedural guidance: ${proceduralGuidance.recommendations.slice(0, 2).join(', ')}.`
       }
@@ -293,7 +307,8 @@ export class ConversationalAgent {
       enhancedContext: {
         episodic_memories_found: relevantEpisodes.length,
         semantic_memories_found: semanticContext.length,
-        procedural_guidance_applied: proceduralGuidance.recommendations.length
+        procedural_guidance_applied: proceduralGuidance.recommendations.length,
+        past_conversations_referenced: pastConversations.length
       },
       conversationLength: messages.length - 1 // Subtract 1 for system message
     };
