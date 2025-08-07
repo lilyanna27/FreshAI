@@ -575,7 +575,7 @@ export default function AIAgent() {
                       {recipe.ingredients.map((ingredient, i) => (
                         <li key={i} className="text-sm text-gray-600 flex items-start">
                           <span className="text-orange-500 mr-2">•</span>
-                          {ingredient}
+                          {typeof ingredient === 'string' ? ingredient : `${ingredient.name} - ${ingredient.quantity}`}
                         </li>
                       ))}
                     </ul>
@@ -590,7 +590,7 @@ export default function AIAgent() {
                         {recipe.missing_ingredients.map((ingredient, i) => (
                           <li key={i} className="text-sm text-red-600 flex items-start">
                             <span className="text-red-500 mr-2">⚠</span>
-                            {ingredient}
+                            {typeof ingredient === 'string' ? ingredient : `${ingredient.name} - ${ingredient.quantity}`}
                           </li>
                         ))}
                       </ul>
