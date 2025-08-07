@@ -141,26 +141,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Query is required" });
       }
 
-      // Simplified AI response for now
-      const response = {
-        thought_process: [
-          {
-            step: "Query Analysis",
-            reasoning: "Analyzing your request to provide the best assistance",
-            action: "Processing your cooking-related question",
-            result: "Ready to provide helpful culinary advice"
-          }
-        ],
-        final_answer: `I understand you're asking: "${query}". Let me help you with that! For recipe generation, try saying "Generate recipes with my fridge ingredients" or ask me about cooking tips, storage advice, or meal planning.`,
-        suggestions: [
-          "Ask me to generate recipes with your fridge ingredients",
-          "Request cooking tips for specific ingredients", 
-          "Get advice on food storage and freshness"
-        ],
-        recipes: []
-      };
-      
-      res.json(response);
+      const lowerQuery = query.toLowerCase();
+      const isRecipeRequest = lowerQuery.includes('recipe') || 
+                             lowerQuery.includes('cook') || 
+                             lowerQuery.includes('make') || 
+                             lowerQuery.includes('generate') ||
+                             lowerQuery.includes('create');
+
+      let thoughtProcess = [
+        {
+          step: "Query Analysis",
+          reasoning: `Analyzing your request: "${query}"`,
+          action: isRecipeRequest ? "Detected recipe generation request" : "Processing general cooking question",
+          result: isRecipeRequest ? "Preparing to generate personalized recipes" : "Ready to provide cooking advice"
+        }
+      ];
+
+      if (isRecipeRequest) {
+        // Get fridge ingredients for context
+        const fridgeItems = await storage.getFoodItems();
+        const fridgeIngredients = fridgeItems.map(item => item.name);
+        
+        thoughtProcess.push({
+          step: "Ingredient Analysis",
+          reasoning: `Found ${fridgeIngredients.length} ingredients in your fridge`,
+          action: "Analyzing available ingredients for recipe compatibility",
+          result: `Available: ${fridgeIngredients.slice(0, 5).join(', ')}${fridgeIngredients.length > 5 ? '...' : ''}`
+        });
+
+        // Extract recipe parameters from query
+        const peopleMatch = query.match(/(\d+)\s*(people|person|servings?)/i);
+        const num_people = peopleMatch ? parseInt(peopleMatch[1]) : 2;
+
+        thoughtProcess.push({
+          step: "Recipe Generation Strategy",
+          reasoning: `Creating recipes for ${num_people} people using available ingredients`,
+          action: "Generating personalized recipes with nutritional balance",
+          result: "Ready to create delicious recipes using AI"
+        });
+
+        // Generate recipes using existing system
+        const recipes = await generateRecipes({
+          num_people,
+          ingredients: fridgeIngredients.length > 0 ? fridgeIngredients.join(', ') : 'general ingredients',
+          dietary: undefined,
+          fridgeIngredients
+        });
+
+        const response = {
+          thought_process: thoughtProcess,
+          final_answer: `I've analyzed your ${fridgeIngredients.length} fridge ingredients and generated ${recipes.length} personalized recipes for you! Each recipe shows exactly which ingredients you already have and which ones you'll need to buy. Click the bookmark icon to save any recipe you like to your collection.`,
+          suggestions: [
+            "Save your favorite recipes to your collection",
+            "Check which ingredients you need to buy",
+            "Ask me about cooking tips for specific ingredients"
+          ],
+          recipes: recipes
+        };
+        
+        res.json(response);
+      } else {
+        // Handle general cooking questions
+        let finalAnswer = "";
+        let suggestions = [];
+
+        if (lowerQuery.includes('storage') || lowerQuery.includes('store')) {
+          finalAnswer = "Proper food storage is crucial for freshness! Here are some key tips: Keep fruits and vegetables separate, store herbs in water like flowers, and use the crisper drawers for vegetables. Most leftovers stay fresh for 3-4 days in the refrigerator.";
+          suggestions = ["Ask about storage for specific foods", "Get tips on extending food freshness", "Learn about freezer storage techniques"];
+        } else if (lowerQuery.includes('expir') || lowerQuery.includes('fresh')) {
+          finalAnswer = "Managing expiration dates helps reduce waste! Use the 'first in, first out' principle - use older items first. Check your fridge regularly and prioritize ingredients expiring soon in your meal planning.";
+          suggestions = ["Generate recipes with expiring ingredients", "Learn food safety guidelines", "Get tips on meal planning"];
+        } else if (lowerQuery.includes('tip') || lowerQuery.includes('advice')) {
+          finalAnswer = "I'd love to share cooking tips! For better flavors, always taste as you cook and season gradually. Prep ingredients before you start cooking (mise en place). Let meat rest after cooking for juicier results.";
+          suggestions = ["Ask about specific cooking techniques", "Get ingredient-specific tips", "Learn about kitchen organization"];
+        } else {
+          finalAnswer = `I understand you're asking about: "${query}". As your AI kitchen assistant, I can help with recipes, cooking tips, food storage advice, meal planning, and more. What specific aspect of cooking would you like help with?`;
+          suggestions = ["Generate recipes with your fridge ingredients", "Ask for cooking tips", "Get food storage advice"];
+        }
+
+        const response = {
+          thought_process: thoughtProcess,
+          final_answer: finalAnswer,
+          suggestions: suggestions,
+          recipes: []
+        };
+        
+        res.json(response);
+      }
     } catch (error) {
       console.error("AI chat error:", error);
       res.status(500).json({ error: "Failed to process AI query" });

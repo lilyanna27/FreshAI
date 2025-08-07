@@ -180,7 +180,6 @@ export default function AIAgent() {
       }
 
       const aiData = await response.json();
-      console.log('AI Response data:', aiData); // Debug log
       
       const aiResponse: Message = {
         id: (Date.now() + 1).toString(),
