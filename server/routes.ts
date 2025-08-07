@@ -132,41 +132,114 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User preferences storage (in production, use database)
+  const userPreferences = new Map();
+  
+  const extractUserPreferences = (query: string, userId: string) => {
+    const lowerQuery = query.toLowerCase();
+    const prefs = userPreferences.get(userId) || { dislikedIngredients: [], preferredCuisines: [], dietaryRestrictions: [] };
+    
+    // Extract dislikes
+    const dislikePatterns = [
+      /i don't like ([^,.!?]+)/g,
+      /i hate ([^,.!?]+)/g,
+      /no ([^,.!?]+)/g,
+      /not a fan of ([^,.!?]+)/g,
+      /avoid ([^,.!?]+)/g
+    ];
+    
+    let foundDislikes: string[] = [];
+    dislikePatterns.forEach(pattern => {
+      let match;
+      while ((match = pattern.exec(lowerQuery)) !== null) {
+        const disliked = match[1].trim();
+        if (!prefs.dislikedIngredients.includes(disliked)) {
+          prefs.dislikedIngredients.push(disliked);
+          foundDislikes.push(disliked);
+        }
+      }
+    });
+    
+    // Extract cuisine preferences
+    const cuisineTypes = ['italian', 'asian', 'chinese', 'japanese', 'mexican', 'indian', 'thai', 'mediterranean', 'french', 'american', 'korean', 'vietnamese'];
+    cuisineTypes.forEach(cuisine => {
+      if (lowerQuery.includes(cuisine)) {
+        if (!prefs.preferredCuisines.includes(cuisine)) {
+          prefs.preferredCuisines.push(cuisine);
+        }
+      }
+    });
+    
+    // Extract dietary preferences
+    if (lowerQuery.includes('vegetarian') && !prefs.dietaryRestrictions.includes('vegetarian')) {
+      prefs.dietaryRestrictions.push('vegetarian');
+    }
+    if (lowerQuery.includes('vegan') && !prefs.dietaryRestrictions.includes('vegan')) {
+      prefs.dietaryRestrictions.push('vegan');
+    }
+    if ((lowerQuery.includes('gluten-free') || lowerQuery.includes('gluten free')) && !prefs.dietaryRestrictions.includes('gluten-free')) {
+      prefs.dietaryRestrictions.push('gluten-free');
+    }
+    
+    userPreferences.set(userId, prefs);
+    return { preferences: prefs, newDislikes: foundDislikes };
+  };
+  
+  const detectCuisineRequest = (query: string) => {
+    const lowerQuery = query.toLowerCase();
+    const cuisineTypes = ['italian', 'asian', 'chinese', 'japanese', 'mexican', 'indian', 'thai', 'mediterranean', 'french', 'american', 'korean', 'vietnamese'];
+    return cuisineTypes.find(cuisine => lowerQuery.includes(cuisine)) || null;
+  };
+
   // Enhanced AI Chat Route
   app.post("/api/ai-chat", async (req, res) => {
     try {
-      const { query, userId } = req.body;
+      const { query, userId = 'default' } = req.body;
       
       if (!query) {
         return res.status(400).json({ error: "Query is required" });
       }
 
+      // Extract and save user preferences
+      const { preferences, newDislikes } = extractUserPreferences(query, userId);
+      const requestedCuisine = detectCuisineRequest(query);
+      
       const lowerQuery = query.toLowerCase();
       const isRecipeRequest = lowerQuery.includes('recipe') || 
                              lowerQuery.includes('cook') || 
                              lowerQuery.includes('make') || 
                              lowerQuery.includes('generate') ||
-                             lowerQuery.includes('create');
+                             lowerQuery.includes('create') ||
+                             requestedCuisine !== null;
 
       let thoughtProcess = [
         {
-          step: "Query Analysis",
-          reasoning: `Analyzing your request: "${query}"`,
+          step: "Query Analysis & Learning",
+          reasoning: `Analyzing your request: "${query}". ${newDislikes.length > 0 ? `Learned that you don't like: ${newDislikes.join(', ')}. ` : ''}${requestedCuisine ? `Detected ${requestedCuisine} cuisine request. ` : ''}`,
           action: isRecipeRequest ? "Detected recipe generation request" : "Processing general cooking question",
-          result: isRecipeRequest ? "Preparing to generate personalized recipes" : "Ready to provide cooking advice"
+          result: `${isRecipeRequest ? 'Preparing to generate personalized recipes' : 'Ready to provide cooking advice'}. Current preferences: ${preferences.dislikedIngredients.length} dislikes, ${preferences.dietaryRestrictions.length} dietary restrictions.`
         }
       ];
 
       if (isRecipeRequest) {
         // Get fridge ingredients for context
         const fridgeItems = await storage.getFoodItems();
-        const fridgeIngredients = fridgeItems.map(item => item.name);
+        let fridgeIngredients = fridgeItems.map(item => item.name);
+        
+        // Filter out disliked ingredients
+        const originalCount = fridgeIngredients.length;
+        fridgeIngredients = fridgeIngredients.filter(ingredient => 
+          !preferences.dislikedIngredients.some((disliked: string) => 
+            ingredient.toLowerCase().includes(disliked.toLowerCase())
+          )
+        );
+        const filteredCount = originalCount - fridgeIngredients.length;
         
         thoughtProcess.push({
-          step: "Ingredient Analysis",
-          reasoning: `Found ${fridgeIngredients.length} ingredients in your fridge`,
-          action: "Analyzing available ingredients for recipe compatibility",
-          result: `Available: ${fridgeIngredients.slice(0, 5).join(', ')}${fridgeIngredients.length > 5 ? '...' : ''}`
+          step: "Intelligent Ingredient Analysis",
+          reasoning: `Found ${originalCount} ingredients in your fridge. ${filteredCount > 0 ? `Filtered out ${filteredCount} items you don't like. ` : ''}${requestedCuisine ? `Focusing on ${requestedCuisine} cuisine compatibility. ` : ''}`,
+          action: "Analyzing available ingredients for recipe compatibility while respecting your preferences",
+          result: `Available for recipes: ${fridgeIngredients.slice(0, 5).join(', ')}${fridgeIngredients.length > 5 ? '...' : ''}${preferences.dislikedIngredients.length > 0 ? ` (avoiding: ${preferences.dislikedIngredients.join(', ')})` : ''}`
         });
 
         // Extract recipe parameters from query
@@ -174,29 +247,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const num_people = peopleMatch ? parseInt(peopleMatch[1]) : 2;
 
         thoughtProcess.push({
-          step: "Recipe Generation Strategy",
-          reasoning: `Creating recipes for ${num_people} people using available ingredients`,
-          action: "Generating personalized recipes with nutritional balance",
-          result: "Ready to create delicious recipes using AI"
+          step: "Personalized Recipe Strategy",
+          reasoning: `Creating ${requestedCuisine || 'diverse'} recipes for ${num_people} people using your preferences and available ingredients`,
+          action: `Generating personalized recipes ${requestedCuisine ? `in ${requestedCuisine} style ` : ''}while avoiding ingredients you dislike`,
+          result: `Ready to create delicious ${requestedCuisine || 'personalized'} recipes tailored to your taste`
         });
 
-        // Generate recipes using existing system
+        // Enhanced recipe generation with preferences
+        let ingredients = fridgeIngredients.length > 0 ? fridgeIngredients.join(', ') : 'general ingredients';
+        if (requestedCuisine) {
+          ingredients += `, focusing on ${requestedCuisine} cuisine`;
+        }
+        if (preferences.dislikedIngredients.length > 0) {
+          ingredients += `, avoiding: ${preferences.dislikedIngredients.join(', ')}`;
+        }
+        
         const recipes = await generateRecipes({
           num_people,
-          ingredients: fridgeIngredients.length > 0 ? fridgeIngredients.join(', ') : 'general ingredients',
-          dietary: undefined,
+          ingredients,
+          dietary: preferences.dietaryRestrictions.join(', ') || undefined,
           fridgeIngredients
         });
 
+        let finalAnswer = `I've analyzed your ${originalCount} fridge ingredients and generated ${recipes.length} ${requestedCuisine || 'personalized'} recipes for you!`;
+        if (filteredCount > 0) {
+          finalAnswer += ` I've excluded ${filteredCount} ingredients you don't like.`;
+        }
+        if (newDislikes.length > 0) {
+          finalAnswer += ` I've learned your new preferences and will remember them for future recipes.`;
+        }
+        finalAnswer += ` Each recipe shows exactly which ingredients you have and what you'll need to buy. Click the bookmark to save favorites!`;
+        
+        const suggestions = [
+          "Save your favorite recipes to your collection",
+          "Tell me about more foods you like or dislike",
+          requestedCuisine ? `Ask for more ${requestedCuisine} recipes` : "Try requesting a specific cuisine type"
+        ];
+        
         const response = {
           thought_process: thoughtProcess,
-          final_answer: `I've analyzed your ${fridgeIngredients.length} fridge ingredients and generated ${recipes.length} personalized recipes for you! Each recipe shows exactly which ingredients you already have and which ones you'll need to buy. Click the bookmark icon to save any recipe you like to your collection.`,
-          suggestions: [
-            "Save your favorite recipes to your collection",
-            "Check which ingredients you need to buy",
-            "Ask me about cooking tips for specific ingredients"
-          ],
-          recipes: recipes
+          final_answer: finalAnswer,
+          suggestions,
+          recipes: recipes,
+          user_preferences: {
+            dislikes: preferences.dislikedIngredients,
+            cuisines: preferences.preferredCuisines,
+            dietary: preferences.dietaryRestrictions
+          }
         };
         
         res.json(response);

@@ -11,6 +11,12 @@ interface ReasoningStep {
   result?: string;
 }
 
+interface UserPreferences {
+  dislikes: string[];
+  cuisines: string[];
+  dietary: string[];
+}
+
 interface Message {
   id: string;
   type: 'user' | 'ai';
@@ -18,6 +24,7 @@ interface Message {
   timestamp: Date;
   reasoning?: ReasoningStep[];
   suggestions?: string[];
+  userPreferences?: UserPreferences;
 }
 
 interface GeneratedRecipe {
@@ -187,7 +194,8 @@ export default function AIAgent() {
         content: aiData.final_answer || 'No response content',
         timestamp: new Date(),
         reasoning: aiData.thought_process || [],
-        suggestions: aiData.suggestions || []
+        suggestions: aiData.suggestions || [],
+        userPreferences: aiData.user_preferences
       };
 
       setMessages(prev => [...prev, aiResponse]);
@@ -328,6 +336,33 @@ export default function AIAgent() {
                         ))}
                       </div>
                     )}
+                  </div>
+                )}
+                
+                {/* User Preferences Learned */}
+                {message.type === 'ai' && message.userPreferences && (
+                  <div className="mt-3 pt-3 border-t border-green-600/30">
+                    <div className="text-xs text-green-300 mb-2">🧠 What I've Learned About You:</div>
+                    <div className="grid grid-cols-1 gap-2">
+                      {message.userPreferences.dislikes.length > 0 && (
+                        <div className="text-xs">
+                          <span className="text-red-300">❌ Dislikes:</span>
+                          <span className="text-green-200 ml-2">{message.userPreferences.dislikes.join(', ')}</span>
+                        </div>
+                      )}
+                      {message.userPreferences.cuisines.length > 0 && (
+                        <div className="text-xs">
+                          <span className="text-yellow-300">🍜 Cuisines:</span>
+                          <span className="text-green-200 ml-2">{message.userPreferences.cuisines.join(', ')}</span>
+                        </div>
+                      )}
+                      {message.userPreferences.dietary.length > 0 && (
+                        <div className="text-xs">
+                          <span className="text-blue-300">🥗 Dietary:</span>
+                          <span className="text-green-200 ml-2">{message.userPreferences.dietary.join(', ')}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
                 
