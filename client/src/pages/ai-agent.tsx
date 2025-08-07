@@ -180,14 +180,15 @@ export default function AIAgent() {
       }
 
       const aiData = await response.json();
+      console.log('AI Response data:', aiData); // Debug log
       
       const aiResponse: Message = {
         id: (Date.now() + 1).toString(),
         type: 'ai',
-        content: aiData.final_answer,
+        content: aiData.final_answer || 'No response content',
         timestamp: new Date(),
-        reasoning: aiData.thought_process,
-        suggestions: aiData.suggestions
+        reasoning: aiData.thought_process || [],
+        suggestions: aiData.suggestions || []
       };
 
       setMessages(prev => [...prev, aiResponse]);
