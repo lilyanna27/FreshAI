@@ -26,6 +26,11 @@ interface Message {
   reasoning?: ReasoningStep[];
   suggestions?: string[];
   userPreferences?: UserPreferences;
+  enhancedContext?: {
+    episodic_memories_found: number;
+    semantic_memories_found: number;
+    procedural_guidance_applied: number;
+  };
 }
 
 interface GeneratedRecipe {
@@ -47,7 +52,7 @@ export default function AIAgent() {
     {
       id: '1',
       type: 'ai',
-      content: "Hello! I'm your advanced AI kitchen assistant with permanent memory! I learn and remember your food preferences, dietary restrictions, and favorite cuisines forever. Tell me things like 'I love pasta' or 'I don't like mushrooms' and I'll personalize all future recipes. I show my reasoning process and apply intelligent substitutions for your dietary needs. Let's start cooking together!",
+      content: "Hello! I'm your enhanced AI kitchen assistant with semantic, episodic, and procedural memory! I remember your food preferences (semantic), past conversations (episodic), and apply proven interaction rules (procedural). Tell me things like 'I love pasta' or 'I don't like mushrooms' and I'll personalize all future recipes using my complete memory system. I show my reasoning process and provide contextually-aware responses. Let's start cooking together!",
       timestamp: new Date()
     }
   ]);
@@ -196,7 +201,8 @@ export default function AIAgent() {
         timestamp: new Date(),
         reasoning: aiData.thought_process || [],
         suggestions: aiData.suggestions || [],
-        userPreferences: aiData.user_preferences
+        userPreferences: aiData.user_preferences,
+        enhancedContext: aiData.enhanced_context
       };
 
       setMessages(prev => [...prev, aiResponse]);
@@ -369,6 +375,27 @@ export default function AIAgent() {
                           <span className="text-green-200 ml-2">{message.userPreferences.dietary.join(', ')}</span>
                         </div>
                       )}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Enhanced Memory Context */}
+                {message.type === 'ai' && message.enhancedContext && (
+                  <div className="mt-3 pt-3 border-t border-green-600/30">
+                    <div className="text-xs text-purple-300 mb-2">🧠 Enhanced Memory System:</div>
+                    <div className="grid grid-cols-3 gap-2 text-xs">
+                      <div className="bg-purple-900/30 rounded p-2">
+                        <div className="text-purple-300 font-semibold">Semantic</div>
+                        <div className="text-green-200">{message.enhancedContext.semantic_memories_found} memories</div>
+                      </div>
+                      <div className="bg-blue-900/30 rounded p-2">
+                        <div className="text-blue-300 font-semibold">Episodic</div>
+                        <div className="text-green-200">{message.enhancedContext.episodic_memories_found} episodes</div>
+                      </div>
+                      <div className="bg-orange-900/30 rounded p-2">
+                        <div className="text-orange-300 font-semibold">Procedural</div>
+                        <div className="text-green-200">{message.enhancedContext.procedural_guidance_applied} rules</div>
+                      </div>
                     </div>
                   </div>
                 )}

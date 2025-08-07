@@ -210,4 +210,17 @@ Preferred communication style: Simple, everyday language.
   - Added "AI Generated" badges for recipes created by the AI agent
   - Toast notifications confirm successful recipe saves
 
+### August 7, 2025
+- **Enhanced Memory System**: Complete overhaul to semantic, episodic, and procedural memory architecture
+  - **Semantic Memory**: ChromaDB-based vector storage for user preferences, likes, dislikes, cuisines, and dietary restrictions
+  - **Episodic Memory**: Stores complete conversation episodes with context for learning from past interactions
+  - **Procedural Memory**: 10 proven interaction rules for recipe assistance and user engagement
+  - **Vector Embeddings**: OpenAI embeddings for semantic similarity search across all memory types
+  - **Memory Persistence**: ChromaDB replaces SQLite for more sophisticated memory retrieval and storage
+  - **Context-Aware Responses**: AI now references past conversations and applies learned interaction patterns
+  - **Enhanced Reasoning Display**: Shows semantic, episodic, and procedural memory usage in AI responses
+  - **Conversation Continuity**: System remembers and references previous recipe requests and feedback
+  - **Adaptive Learning**: Memory system improves over time through episodic learning and takeaway extraction
+  - **Procedural Guidance**: Applies rules like confirming dietary preferences, personalizing by history, and offering alternatives
+
 The application follows a clean separation of concerns with a shared schema between frontend and backend, enabling type-safe development across the full stack. The mobile-first approach ensures optimal user experience on smartphones while maintaining desktop compatibility.

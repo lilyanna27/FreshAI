@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { insertFoodItemSchema, insertRecipeSchema } from "@shared/schema";
 import { z } from "zod";
 import { generateRecipes } from "./ai-chef";
-import { memorySystem, getSubstitutions } from "./memory-system.js";
+import { enhancedMemorySystem, getSubstitutions } from "./enhanced-memory-fallback.js";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Food Items Routes
@@ -149,9 +149,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Query is required" });
       }
 
-      // Extract and save user preferences using persistent memory
-      const learningResult = memorySystem.extractAndSavePreferences(userId, query);
-      const userProfile = memorySystem.getUserProfile(userId);
+      // Get enhanced conversation context with semantic, episodic, and procedural memory
+      const conversationContext = await enhancedMemorySystem.getConversationContext(userId, query);
+      const { userProfile, relevantEpisodes, proceduralGuidance, semanticContext } = conversationContext;
+      
+      // Extract and save new preferences
+      const learningResult = await enhancedMemorySystem.extractAndSavePreferences(userId, query);
       const requestedCuisine = detectCuisineRequest(query);
       
       // Combine all new learnings
@@ -172,10 +175,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       let thoughtProcess = [
         {
-          step: "Advanced Learning & Analysis",
-          reasoning: `Analyzing your request: "${query}". ${allNewLearnings.length > 0 ? `Learned: ${allNewLearnings.join(', ')}. ` : 'Using stored knowledge about your preferences. '}${requestedCuisine ? `Detected ${requestedCuisine} cuisine request. ` : ''}`,
-          action: isRecipeRequest ? "Detected recipe generation request with personalization" : "Processing general cooking question",
-          result: `${isRecipeRequest ? 'Preparing to generate personalized recipes' : 'Ready to provide cooking advice'}. Memory: ${userProfile.dislikes.length} dislikes, ${userProfile.likes.length} likes, ${userProfile.dietary.length} dietary restrictions, ${userProfile.cuisines.length} preferred cuisines.`
+          step: "Enhanced Memory Analysis",
+          reasoning: `Analyzing your request: "${query}" using semantic, episodic, and procedural memory. ${allNewLearnings.length > 0 ? `Learned: ${allNewLearnings.join(', ')}. ` : 'Using stored knowledge about your preferences. '}${requestedCuisine ? `Detected ${requestedCuisine} cuisine request. ` : ''}Found ${relevantEpisodes.length} relevant past conversations and ${semanticContext.length} semantic memories.`,
+          action: isRecipeRequest ? "Applying procedural memory rules for recipe generation" : "Processing general cooking question with context",
+          result: `${isRecipeRequest ? 'Preparing to generate personalized recipes' : 'Ready to provide cooking advice'}. Memory: ${userProfile.dislikes.length} dislikes, ${userProfile.likes.length} likes, ${userProfile.dietary.length} dietary restrictions, ${userProfile.cuisines.length} preferred cuisines. Procedural guidance: ${proceduralGuidance.recommendations.join(', ')}.`
         }
       ];
 
@@ -206,9 +209,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const filteredCount = originalCount - fridgeIngredients.length;
         
         thoughtProcess.push({
-          step: "Intelligent Ingredient Analysis",
-          reasoning: `Found ${originalCount} ingredients in your fridge. ${filteredCount > 0 ? `Filtered out ${filteredCount} items you don't like. ` : ''}${userProfile.dietary.length > 0 ? `Applied ${userProfile.dietary.join(', ')} substitutions. ` : ''}${requestedCuisine ? `Focusing on ${requestedCuisine} cuisine compatibility. ` : ''}`,
-          action: "Analyzing available ingredients for recipe compatibility while respecting your preferences and dietary needs",
+          step: "Procedural Memory-Guided Ingredient Analysis",
+          reasoning: `Found ${originalCount} ingredients in your fridge. ${filteredCount > 0 ? `Filtered out ${filteredCount} items you don't like. ` : ''}${userProfile.dietary.length > 0 ? `Applied ${userProfile.dietary.join(', ')} substitutions. ` : ''}${requestedCuisine ? `Focusing on ${requestedCuisine} cuisine compatibility. ` : ''}Applying procedural memory rules: ${proceduralGuidance.recommendations.slice(0, 2).join(', ')}.`,
+          action: "Analyzing available ingredients using procedural memory rules for recipe compatibility while respecting learned preferences",
           result: `Available: ${fridgeIngredients.slice(0, 3).join(', ')}${fridgeIngredients.length > 3 ? '...' : ''}${userProfile.dislikes.length > 0 ? ` (avoiding: ${userProfile.dislikes.slice(0, 3).join(', ')})` : ''}${userProfile.dietary.length > 0 ? ` (${userProfile.dietary.join(', ')} adaptations applied)` : ''}`
         });
 
@@ -217,10 +220,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const num_people = peopleMatch ? parseInt(peopleMatch[1]) : 2;
 
         thoughtProcess.push({
-          step: "Personalized Recipe Strategy",
-          reasoning: `Creating ${requestedCuisine || 'diverse'} recipes for ${num_people} people using your preferences and available ingredients`,
-          action: `Generating personalized recipes ${requestedCuisine ? `in ${requestedCuisine} style ` : ''}while avoiding ingredients you dislike`,
-          result: `Ready to create delicious ${requestedCuisine || 'personalized'} recipes tailored to your taste`
+          step: "Episodic Memory-Enhanced Recipe Strategy",
+          reasoning: `Creating ${requestedCuisine || 'diverse'} recipes for ${num_people} people using your preferences, available ingredients, and ${relevantEpisodes.length} relevant past conversations. ${proceduralGuidance.shouldPersonalizeByHistory ? 'Personalizing based on recipe history. ' : ''}${proceduralGuidance.shouldConfirmDietary ? 'Confirming dietary preferences. ' : ''}${proceduralGuidance.shouldOfferAlternatives ? 'Preparing alternatives. ' : ''}`,
+          action: `Generating episodic memory-informed recipes ${requestedCuisine ? `in ${requestedCuisine} style ` : ''}while applying all procedural memory rules`,
+          result: `Ready to create contextually-aware ${requestedCuisine || 'personalized'} recipes based on your complete interaction history`
         });
 
         // Enhanced recipe generation with persistent memory
@@ -261,6 +264,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
           userProfile.dietary.length > 0 ? "Ask about ingredient substitutions for your diet" : "Tell me about any dietary restrictions"
         ];
         
+        // Save this conversation episode to episodic memory
+        await enhancedMemorySystem.saveEpisode(userId, {
+          user: query,
+          assistant: finalAnswer,
+          timestamp: new Date().toISOString(),
+          context: {
+            requestedCuisine,
+            num_people,
+            fridgeIngredientsCount: originalCount,
+            recipesGenerated: recipes.length,
+            proceduralGuidance: proceduralGuidance.recommendations
+          }
+        });
+
+        // Save any important takeaways
+        if (allNewLearnings.length > 0) {
+          await enhancedMemorySystem.saveTakeaway(userId, `User expressed new preferences: ${allNewLearnings.join(', ')}`);
+        }
+
         const response = {
           thought_process: thoughtProcess,
           final_answer: finalAnswer,
@@ -271,6 +293,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             likes: userProfile.likes,
             cuisines: userProfile.cuisines,
             dietary: userProfile.dietary
+          },
+          enhanced_context: {
+            episodic_memories_found: relevantEpisodes.length,
+            semantic_memories_found: semanticContext.length,
+            procedural_guidance_applied: proceduralGuidance.recommendations.length
           }
         };
         
@@ -294,11 +321,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
           suggestions = ["Generate recipes with your fridge ingredients", "Ask for cooking tips", "Get food storage advice"];
         }
 
+        // Save this general conversation episode to episodic memory
+        await enhancedMemorySystem.saveEpisode(userId, {
+          user: query,
+          assistant: finalAnswer,
+          timestamp: new Date().toISOString(),
+          context: {
+            queryType: 'general',
+            topicDetected: lowerQuery.includes('storage') ? 'storage' : lowerQuery.includes('expir') ? 'expiration' : 'general',
+            proceduralGuidance: proceduralGuidance.recommendations
+          }
+        });
+
         const response = {
           thought_process: thoughtProcess,
           final_answer: finalAnswer,
           suggestions: suggestions,
-          recipes: []
+          recipes: [],
+          enhanced_context: {
+            episodic_memories_found: relevantEpisodes.length,
+            semantic_memories_found: semanticContext.length,
+            procedural_guidance_applied: proceduralGuidance.recommendations.length
+          }
         };
         
         res.json(response);
