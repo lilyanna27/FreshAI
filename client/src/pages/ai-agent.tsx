@@ -4,11 +4,20 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
+interface ReasoningStep {
+  step: string;
+  reasoning: string;
+  action?: string;
+  result?: string;
+}
+
 interface Message {
   id: string;
   type: 'user' | 'ai';
   content: string;
   timestamp: Date;
+  reasoning?: ReasoningStep[];
+  suggestions?: string[];
 }
 
 interface GeneratedRecipe {
@@ -30,7 +39,7 @@ export default function AIAgent() {
     {
       id: '1',
       type: 'ai',
-      content: "Hello! I'm your AI kitchen assistant. I can help you with recipes, meal planning, food storage tips, and more. Try asking me to generate recipes with your available ingredients!",
+      content: "Hello! I'm your enhanced AI kitchen assistant with advanced reasoning capabilities. I can analyze your ingredients, learn your preferences, create personalized recipes, and provide intelligent cooking advice. I'll show you my thought process so you can see how I make decisions. Try asking me to generate recipes with your fridge ingredients or ask any cooking question!",
       timestamp: new Date()
     }
   ]);
@@ -38,6 +47,7 @@ export default function AIAgent() {
   const [isTyping, setIsTyping] = useState(false);
   const [generatedRecipes, setGeneratedRecipes] = useState<GeneratedRecipe[]>([]);
   const [savedRecipes, setSavedRecipes] = useState<Set<string>>(new Set());
+  const [showReasoning, setShowReasoning] = useState<{ [key: string]: boolean }>({});
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -154,34 +164,51 @@ export default function AIAgent() {
     setInputMessage("");
     setIsTyping(true);
 
-    // Check if the message is requesting recipe generation
-    if (isRecipeGenerationRequest(currentInput)) {
-      const recipeParams = parseRecipeRequest(currentInput);
-      if (recipeParams) {
-        // Check if they want to use fridge ingredients
-        const useFridge = currentInput.toLowerCase().includes('fridge') || 
-                         currentInput.toLowerCase().includes('what i have') ||
-                         currentInput.toLowerCase().includes('available ingredients');
-        
-        recipeGenerationMutation.mutate({
-          ...recipeParams,
-          useFridgeIngredients: useFridge
-        });
-        return;
-      }
-    }
+    try {
+      // Use enhanced AI agent
+      const response = await fetch('/api/ai-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: currentInput,
+          userId: 'user-1' // In production, use actual user ID
+        })
+      });
 
-    // Simulate AI response for other queries
-    setTimeout(() => {
+      if (!response.ok) {
+        throw new Error('Failed to get AI response');
+      }
+
+      const aiData = await response.json();
+      
       const aiResponse: Message = {
         id: (Date.now() + 1).toString(),
         type: 'ai',
-        content: getAIResponse(currentInput),
+        content: aiData.final_answer,
+        timestamp: new Date(),
+        reasoning: aiData.thought_process,
+        suggestions: aiData.suggestions
+      };
+
+      setMessages(prev => [...prev, aiResponse]);
+      
+      // If recipes were generated, update the recipes state
+      if (aiData.recipes && aiData.recipes.length > 0) {
+        setGeneratedRecipes(aiData.recipes);
+      }
+      
+    } catch (error) {
+      console.error('AI chat error:', error);
+      const errorResponse: Message = {
+        id: (Date.now() + 1).toString(),
+        type: 'ai',
+        content: "I apologize, but I encountered an issue processing your request. Could you please try again?",
         timestamp: new Date()
       };
-      setMessages(prev => [...prev, aiResponse]);
+      setMessages(prev => [...prev, errorResponse]);
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
 
   const isRecipeGenerationRequest = (input: string): boolean => {
@@ -262,6 +289,63 @@ export default function AIAgent() {
                   : 'bg-[#1e3a2e] text-white border border-[#2d5a3a]'
               }`}>
                 <p className="text-sm">{message.content}</p>
+                
+                {/* AI Reasoning Process */}
+                {message.type === 'ai' && message.reasoning && message.reasoning.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-green-600/30">
+                    <button
+                      onClick={() => setShowReasoning(prev => ({
+                        ...prev,
+                        [message.id]: !prev[message.id]
+                      }))}
+                      className="flex items-center space-x-2 text-xs text-green-300 hover:text-green-200 transition-colors"
+                    >
+                      <span>💭</span>
+                      <span>{showReasoning[message.id] ? 'Hide' : 'Show'} AI Reasoning Process</span>
+                    </button>
+                    
+                    {showReasoning[message.id] && (
+                      <div className="mt-2 space-y-2">
+                        {message.reasoning.map((step, index) => (
+                          <div key={index} className="bg-green-900/30 rounded-lg p-3 text-xs">
+                            <div className="font-semibold text-green-300 mb-1">
+                              Step {index + 1}: {step.step}
+                            </div>
+                            <div className="text-green-100 mb-1">
+                              💡 <strong>Reasoning:</strong> {step.reasoning}
+                            </div>
+                            {step.action && (
+                              <div className="text-green-200">
+                                🎯 <strong>Action:</strong> {step.action}
+                              </div>
+                            )}
+                            {step.result && (
+                              <div className="text-green-200 mt-1">
+                                ✅ <strong>Result:</strong> {step.result}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {/* AI Suggestions */}
+                {message.type === 'ai' && message.suggestions && message.suggestions.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-green-600/30">
+                    <div className="text-xs text-green-300 mb-2">💡 Smart Suggestions:</div>
+                    <div className="space-y-1">
+                      {message.suggestions.map((suggestion, index) => (
+                        <div key={index} className="text-xs text-green-200 flex items-start">
+                          <span className="text-green-400 mr-2 mt-0.5">•</span>
+                          <span>{suggestion}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
                 <p className={`text-xs mt-2 ${
                   message.type === 'user' ? 'text-white/70' : 'text-gray-400'
                 }`}>

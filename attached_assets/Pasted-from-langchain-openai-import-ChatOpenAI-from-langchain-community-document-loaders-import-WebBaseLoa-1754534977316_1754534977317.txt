@@ -1,0 +1,86 @@
+from langchain_openai import ChatOpenAI
+from langchain_community.document_loaders import WebBaseLoader
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_community.vectorstores import Chroma
+from langchain.prompts import PromptTemplate
+from langchain.agents import create_react_agent, AgentExecutor
+from langchain.tools import Tool
+from langchain_community.utilities import GoogleSerpAPIWrapper
+import os
+import json
+import requests
+from dotenv import load_dotenv
+from typing import List, Dict, Optional
+from pydantic import BaseModel, Field
+from fuzzywuzzy import fuzz
+import sqlite3
+from datetime import datetime
+
+load_dotenv()
+client = ChatOpenAI(api_key=os.getenv("OPENAI_API_KEY"), model="gpt-4", temperature=0.7)
+SERPAPI_KEY = os.getenv("SERPAPI_KEY")
+SPOONACULAR_API_KEY = os.getenv("SPOONACULAR_API_KEY")
+EDAMAM_APP_ID = os.getenv("EDAMAM_APP_ID")
+EDAMAM_APP_KEY = os.getenv("EDAMAM_APP_KEY")
+
+# Pydantic models for structured output
+class Recipe(BaseModel):
+    title: str = Field(description="Recipe title")
+    ingredients: List[str] = Field(description="List of ingredients")
+    instructions: List[str] = Field(description="Step-by-step instructions")
+    missing_ingredients: List[str] = Field(description="Ingredients not provided by user")
+    nutritional_info: Optional[Dict] = Field(default=None, description="Nutritional information")
+    suggestions: Optional[List[str]] = Field(default=None, description="Complementary suggestions")
+    estimated_cost: Optional[float] = Field(default=None, description="Estimated cost of missing ingredients")
+
+class RecipeOutput(BaseModel):
+    recipes: List[Recipe] = Field(description="List of generated recipes")
+    cart_additions: List[Dict] = Field(description="Items added to grocery cart")
+    feedback: Optional[str] = Field(default=None, description="Agent feedback or errors")
+
+# Memory tool for user preferences
+def init_memory_db():
+    """Initialize SQLite database for user preferences."""
+    conn = sqlite3.connect("user_memory.db")
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS user_preferences (
+            user_id TEXT,
+            preference_key TEXT,
+            preference_value TEXT,
+            timestamp TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+def save_preference(user_id: str, key: str, value: str) -> Dict:
+    """Save user preference to database."""
+    try:
+        conn = sqlite3.connect("user_memory.db")
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT OR REPLACE INTO user_preferences (user_id, preference_key, preference_value, timestamp) VALUES (?, ?, ?, ?)",
+            (user_id, key, value, datetime.now().isoformat())
+        )
+        conn.commit()
+        conn.close()
+        return {"status": "success", "message": f"Saved {key}={value} for user {user_id}"}
+    except sqlite3.Error as e:
+        return {"status": "error", "message": f"Failed to save preference: {e}"}
+
+def get_preferences(user_id: str) -> Dict:
+    """Retrieve user preferences."""
+    try:
+        conn = sqlite3.connect("user_memory.db")
+        cursor = conn.cursor()
+        cursor.execute("SELECT preference_key, preference_value FROM user_preferences WHERE user_id = ?", (user_id,))
+        preferences = {row[0]: row[1] for row in cursor.fetchall()}
+        conn.close()
+        return {"status": "success", "preferences": preferences}
+    except sqlite3.Error as e:
+        return {"status": "error", "message": f"Failed to retrieve preferences: {e}"}
+
+# Ingredient substitution logic
+SUBSTITUTIONS = {
+    "gluten-free": {

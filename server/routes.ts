@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { insertFoodItemSchema, insertRecipeSchema } from "@shared/schema";
 import { z } from "zod";
 import { generateRecipes } from "./ai-chef";
+import { EnhancedAIAgent } from "./enhanced-ai-agent.js";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Food Items Routes
@@ -132,7 +133,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // AI Recipe Generation Route
+  // Enhanced AI Chat Route
+  app.post("/api/ai-chat", async (req, res) => {
+    try {
+      const { query, userId } = req.body;
+      
+      if (!query) {
+        return res.status(400).json({ error: "Query is required" });
+      }
+
+      // Get fridge ingredients for context
+      const fridgeItems = await storage.getFoodItems();
+      const fridgeIngredients = fridgeItems.map(item => item.name);
+
+      const agent = new EnhancedAIAgent(userId || 'default');
+      const response = await agent.processQuery(query, { fridgeIngredients });
+      
+      res.json(response);
+    } catch (error) {
+      console.error("AI chat error:", error);
+      res.status(500).json({ error: "Failed to process AI query" });
+    }
+  });
+
+  // AI Recipe Generation Route (Legacy)
   app.post("/api/generate-recipes", async (req, res) => {
     try {
       const { num_people, ingredients, dietary, fridgeIngredients } = req.body;
