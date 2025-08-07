@@ -16,7 +16,7 @@ const llm = new ChatOpenAI({
 const conversationSessions = new Map<string, any[]>();
 
 // Define comprehensive system prompt for the AI kitchen assistant
-const getSystemPrompt = (userProfile: any, contextInfo: any) => {
+const getSystemPrompt = (userProfile: any, contextInfo: any, recipesGenerated: boolean = false) => {
   return new SystemMessage(`You are an advanced AI kitchen assistant with enhanced memory capabilities. Your name is Fresh AI, and you help users manage their food inventory, create recipes, and provide cooking guidance.
 
 **Your Capabilities:**
@@ -34,6 +34,11 @@ const getSystemPrompt = (userProfile: any, contextInfo: any) => {
 - Available fridge ingredients: ${contextInfo.fridgeIngredients || 'Will check when needed'}
 - Past conversations found: ${contextInfo.episodicMemories || 0}
 - Semantic memories available: ${contextInfo.semanticMemories || 0}
+
+**CRITICAL RECIPE INSTRUCTION:**
+${recipesGenerated ? 
+'RECIPES HAVE BEEN GENERATED - Do NOT include recipe details, ingredients lists, or cooking instructions in your response. Simply acknowledge that recipes have been created and mention they will be displayed in recipe cards below your message.' : 
+'If the user requests recipes, acknowledge the request and mention that you will generate personalized recipes for them.'}
 
 **Your Personality & Behavior:**
 - Be friendly, conversational, and helpful
@@ -53,6 +58,7 @@ const getSystemPrompt = (userProfile: any, contextInfo: any) => {
 - Show your reasoning process when helpful
 - Offer alternatives when users reject suggestions
 - Maintain a warm, culinary-focused tone
+- NEVER include full recipe details in your text response when recipes are generated separately
 
 Remember: You're not just answering individual questions - you're having an ongoing conversation with someone who trusts you to remember their preferences and provide increasingly personalized assistance.`);
 };
@@ -97,11 +103,11 @@ export class ConversationalAgent {
     
     // Initialize conversation with system prompt if this is the first message
     if (messages.length === 0) {
-      const systemPrompt = getSystemPrompt(userProfile, contextInfo);
+      const systemPrompt = getSystemPrompt(userProfile, contextInfo, isRecipeRequest);
       messages.push(systemPrompt);
     } else {
       // Update system prompt with latest user profile
-      const updatedSystemPrompt = getSystemPrompt(userProfile, contextInfo);
+      const updatedSystemPrompt = getSystemPrompt(userProfile, contextInfo, isRecipeRequest);
       messages[0] = updatedSystemPrompt;
     }
     
@@ -202,7 +208,18 @@ export class ConversationalAgent {
     }
     
     // Get AI response using full conversation context
+    // If recipes were generated, add a note to the conversation before getting AI response
+    if (isRecipeRequest && recipes.length > 0) {
+      const recipeNote = new HumanMessage(`[SYSTEM NOTE: ${recipes.length} personalized recipes have been generated based on your preferences and will be displayed in recipe cards. Please acknowledge this without repeating the recipe details.]`);
+      messages.push(recipeNote);
+    }
+    
     const response = await llm.invoke(messages);
+    
+    // Remove the system note from conversation history
+    if (isRecipeRequest && recipes.length > 0) {
+      messages.pop(); // Remove the system note
+    }
     
     // Add AI response to conversation
     const aiMessage = new AIMessage(response.content);
