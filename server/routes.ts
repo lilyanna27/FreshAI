@@ -4,7 +4,6 @@ import { storage } from "./storage";
 import { insertFoodItemSchema, insertRecipeSchema } from "@shared/schema";
 import { z } from "zod";
 import { generateRecipes } from "./ai-chef";
-import { EnhancedAIAgent } from "./enhanced-ai-agent.js";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Food Items Routes
@@ -142,12 +141,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Query is required" });
       }
 
-      // Get fridge ingredients for context
-      const fridgeItems = await storage.getFoodItems();
-      const fridgeIngredients = fridgeItems.map(item => item.name);
-
-      const agent = new EnhancedAIAgent(userId || 'default');
-      const response = await agent.processQuery(query, { fridgeIngredients });
+      // Simplified AI response for now
+      const response = {
+        thought_process: [
+          {
+            step: "Query Analysis",
+            reasoning: "Analyzing your request to provide the best assistance",
+            action: "Processing your cooking-related question",
+            result: "Ready to provide helpful culinary advice"
+          }
+        ],
+        final_answer: `I understand you're asking: "${query}". Let me help you with that! For recipe generation, try saying "Generate recipes with my fridge ingredients" or ask me about cooking tips, storage advice, or meal planning.`,
+        suggestions: [
+          "Ask me to generate recipes with your fridge ingredients",
+          "Request cooking tips for specific ingredients", 
+          "Get advice on food storage and freshness"
+        ],
+        recipes: []
+      };
       
       res.json(response);
     } catch (error) {
