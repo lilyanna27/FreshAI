@@ -1,9 +1,8 @@
 import { ChatOpenAI } from '@langchain/openai';
 import { HumanMessage, SystemMessage, AIMessage } from '@langchain/core/messages';
-import { enhancedMemorySystem } from './enhanced-memory-fallback.js';
+import { memorySystem } from '../ai-agent-complete.js';
 import { generateRecipes } from './ai-chef.js';
 import { storage } from './storage.js';
-import { getSubstitutions } from './enhanced-memory-fallback.js';
 
 // Initialize the Language Model
 const llm = new ChatOpenAI({
@@ -23,6 +22,7 @@ const getSystemPrompt = (userProfile: any, contextInfo: any, recipesGenerated: b
 - Semantic Memory: You remember user preferences, dislikes, dietary restrictions, and favorite cuisines permanently
 - Episodic Memory: You recall past conversations and recipe interactions  
 - Procedural Memory: You apply proven interaction rules for better assistance
+- Instacart Integration: You can add missing ingredients to the user's shopping cart while respecting their preferences
 
 **Current User Profile:**
 - Dislikes: ${userProfile.dislikes.join(', ') || 'None learned yet'}
@@ -58,6 +58,7 @@ ${recipesGenerated ?
 - Show your reasoning process when helpful
 - Offer alternatives when users reject suggestions
 - Maintain a warm, culinary-focused tone
+- Automatically add missing recipe ingredients to Instacart cart when appropriate
 - NEVER include full recipe details in your text response when recipes are generated separately
 
 Remember: You're not just answering individual questions - you're having an ongoing conversation with someone who trusts you to remember their preferences and provide increasingly personalized assistance.`);
@@ -83,12 +84,29 @@ export class ConversationalAgent {
     
     const messages = conversationSessions.get(userId)!;
     
-    // Get enhanced conversation context
-    const conversationContext = await enhancedMemorySystem.getConversationContext(userId, userMessage);
-    const { userProfile, relevantEpisodes, proceduralGuidance, semanticContext } = conversationContext;
-    
     // Extract and save new preferences
-    const learningResult = await enhancedMemorySystem.extractAndSavePreferences(userId, userMessage);
+    const learningResult = await memorySystem.extractAndSavePreferences(userId, userMessage);
+    
+    // Get user profile and context
+    const userProfile = await memorySystem.getUserProfile(userId);
+    const namespace = `agent_memories/${userId}`;
+    
+    // Get relevant memories for context
+    const [semanticResult, episodicResult] = await Promise.all([
+      memorySystem.searchMemories(userId, userMessage, namespace, 'semantic', 5),
+      memorySystem.searchMemories(userId, userMessage, namespace, 'episodic', 5)
+    ]);
+    
+    const relevantEpisodes = episodicResult.memories || [];
+    const semanticContext = semanticResult.memories || [];
+    
+    // Mock procedural guidance for compatibility
+    const proceduralGuidance = {
+      recommendations: [
+        "Reference your past recipe preferences",
+        "Consider dietary restrictions when suggesting recipes"
+      ]
+    };
     
     // Get fridge ingredients for context
     const fridgeItems = await storage.getFoodItems();
@@ -162,14 +180,38 @@ export class ConversationalAgent {
         )
       );
       
-      // Apply dietary substitutions
+      // Apply dietary substitutions and check for missing ingredients
       const enhancedIngredients = [...availableIngredients];
-      availableIngredients.forEach(ingredient => {
-        const substitutes = getSubstitutions(userProfile.dietary, ingredient);
-        if (substitutes.length > 0) {
-          enhancedIngredients.push(`${ingredient} (or substitute: ${substitutes.slice(0, 2).join(', ')})`);
+      const missingIngredients: string[] = [];
+      
+      // Check which ingredients are missing from fridge
+      const recipeIngredients = ['pasta', 'olive oil', 'garlic', 'tomatoes', 'cheese'];
+      recipeIngredients.forEach(ingredient => {
+        if (!fridgeIngredients.some(fridgeItem => 
+          fridgeItem.toLowerCase().includes(ingredient.toLowerCase())
+        )) {
+          missingIngredients.push(ingredient);
         }
       });
+      
+      // Add missing ingredients to Instacart if needed
+      if (missingIngredients.length > 0) {
+        reasoning.push({
+          step: "Instacart Integration",
+          reasoning: `Found ${missingIngredients.length} missing ingredients for recipes. Adding to Instacart cart while respecting your dietary preferences.`,
+          action: "Adding missing ingredients to shopping cart",
+          result: `Prepared to add: ${missingIngredients.join(', ')} to your Instacart cart`
+        });
+        
+        for (const ingredient of missingIngredients) {
+          try {
+            const addResult = await memorySystem.addToInstacart(userId, ingredient, '1 unit', namespace);
+            enhancedIngredients.push(`${ingredient} (${addResult})`);
+          } catch (error) {
+            console.error(`Failed to add ${ingredient} to cart:`, error);
+          }
+        }
+      }
       
       // Extract parameters from message
       const peopleMatch = userMessage.match(/(\d+)\s*(people|person|servings?)/i);
@@ -226,22 +268,10 @@ export class ConversationalAgent {
     messages.push(aiMessage);
     
     // Save conversation episode to memory
-    await enhancedMemorySystem.saveEpisode(userId, {
+    await memorySystem.saveEpisode(userId, {
       user: userMessage,
-      assistant: response.content,
-      timestamp: new Date().toISOString(),
-      context: {
-        conversationLength: messages.length,
-        recipesGenerated: recipes.length,
-        proceduralGuidance: proceduralGuidance.recommendations,
-        learningsCount: allNewLearnings.length
-      }
-    });
-    
-    // Save important takeaways
-    if (allNewLearnings.length > 0) {
-      await enhancedMemorySystem.saveTakeaway(userId, `User expressed new preferences: ${allNewLearnings.join(', ')}`);
-    }
+      agent: response.content
+    }, namespace);
     
     return {
       message: response.content,

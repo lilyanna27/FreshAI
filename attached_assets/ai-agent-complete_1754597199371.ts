@@ -1,15 +1,22 @@
 import { ChromaClient } from 'chromadb';
 import { OpenAIEmbeddings } from '@langchain/openai';
-import Database from 'better-sqlite3';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs/promises';
 
-// Tool interface for memory operations
+// Hypothetical LangChain-like framework for TypeScript
 interface Tool {
   name: string;
   description: string;
   func: (input: any) => Promise<any>;
+}
+
+interface AgentExecutor {
+  invoke(input: any): Promise<any>;
+}
+
+interface ReactAgent {
+  constructor(config: { model: string; tools: Tool[]; systemPrompt: string; preSteps: Array<(input: any) => Promise<any>> });
 }
 
 // Interface for memory entries
@@ -56,86 +63,32 @@ interface CartItem {
 }
 
 class MemorySystem {
-  private chroma: ChromaClient | null = null;
-  private db: Database.Database | null = null;
+  private chroma: ChromaClient;
   private embeddings: OpenAIEmbeddings;
-  private useChroma: boolean = false;
   private semanticCollection: string = 'semantic_memories';
   private episodicCollection: string = 'episodic_memories';
   private defaultNamespace: string = 'agent_memories';
   private cartFile: string = path.join(process.cwd(), 'instacart_cart.json');
 
   constructor() {
+    const dbPath = path.join(process.cwd(), 'chroma_db');
+    this.chroma = new ChromaClient({ path: dbPath });
     this.embeddings = new OpenAIEmbeddings({
       openAIApiKey: process.env.OPENAI_API_KEY,
     });
-    this.initializeStorage();
+    this.initializeCollections();
     this.initializeCart();
   }
 
-  private async initializeStorage(): Promise<void> {
-    try {
-      // Try ChromaDB first
-      this.chroma = new ChromaClient();
-      await this.initializeCollections();
-      this.useChroma = true;
-      console.log('Using ChromaDB for memory storage');
-    } catch (error) {
-      console.log('ChromaDB failed, falling back to SQLite:', error.message);
-      // Fall back to SQLite
-      const dbPath = path.join(process.cwd(), 'enhanced_memory.db');
-      this.db = new Database(dbPath);
-      this.initializeDatabase();
-      this.useChroma = false;
-      console.log('Using SQLite for memory storage');
-    }
-  }
-
-  private initializeDatabase(): void {
-    if (!this.db) return;
-    try {
-      this.db.exec(`
-        CREATE TABLE IF NOT EXISTS semantic_memory (
-          id TEXT PRIMARY KEY,
-          user_id TEXT,
-          namespace TEXT,
-          content TEXT,
-          timestamp TEXT,
-          type TEXT DEFAULT 'semantic'
-        )
-      `);
-
-      this.db.exec(`
-        CREATE TABLE IF NOT EXISTS episodic_memory (
-          id TEXT PRIMARY KEY,
-          user_id TEXT,
-          namespace TEXT,
-          content TEXT,
-          timestamp TEXT,
-          type TEXT DEFAULT 'episodic',
-          context TEXT
-        )
-      `);
-
-      this.db.exec(`
-        CREATE INDEX IF NOT EXISTS idx_semantic_user_namespace ON semantic_memory(user_id, namespace);
-        CREATE INDEX IF NOT EXISTS idx_episodic_user_namespace ON episodic_memory(user_id, namespace);
-      `);
-    } catch (error) {
-      console.error('Failed to initialize SQLite database:', error);
-    }
-  }
-
   private async initializeCollections(): Promise<void> {
-    if (!this.chroma) return;
     try {
       await this.chroma.createCollection({ name: this.semanticCollection });
       await this.chroma.createCollection({ name: this.episodicCollection });
     } catch (error) {
-      if ((error as any).message?.includes('already exists')) {
+      if ((error as any).message.includes('already exists')) {
         // Collections already exist
       } else {
-        throw error; // Re-throw to trigger SQLite fallback
+        console.error('Failed to initialize collections:', error);
       }
     }
   }
@@ -228,35 +181,16 @@ class MemorySystem {
   async saveMemory(userId: string, content: string, namespace: string, type: 'semantic' | 'episodic' | 'takeaway'): Promise<MemoryResult> {
     try {
       const id = uuidv4();
-      const timestamp = new Date().toISOString();
+      const embedding = await this.embeddings.embedQuery(content);
+      const collection = type === 'semantic' ? this.semanticCollection : this.episodicCollection;
 
-      if (this.useChroma && this.chroma) {
-        const embedding = await this.embeddings.embedQuery(content);
-        const collection = type === 'semantic' ? this.semanticCollection : this.episodicCollection;
-
-        await this.chroma.add({
-          collectionName: collection,
-          ids: [id],
-          embeddings: [embedding],
-          documents: [content],
-          metadatas: [{ user_id: userId, namespace, timestamp, type }],
-        });
-      } else if (this.db) {
-        // SQLite fallback
-        if (type === 'semantic' || type === 'takeaway') {
-          const stmt = this.db.prepare(`
-            INSERT INTO semantic_memory (id, user_id, namespace, content, timestamp, type)
-            VALUES (?, ?, ?, ?, ?, ?)
-          `);
-          stmt.run(id, userId, namespace, content, timestamp, type);
-        } else {
-          const stmt = this.db.prepare(`
-            INSERT INTO episodic_memory (id, user_id, namespace, content, timestamp, type)
-            VALUES (?, ?, ?, ?, ?, ?)
-          `);
-          stmt.run(id, userId, namespace, content, timestamp, type);
-        }
-      }
+      await this.chroma.add({
+        collectionName: collection,
+        ids: [id],
+        embeddings: [embedding],
+        documents: [content],
+        metadatas: [{ user_id: userId, namespace, timestamp: new Date().toISOString(), type }],
+      });
 
       return { status: 'success', message: `Saved ${type} memory: ${content}` };
     } catch (error) {
@@ -267,45 +201,15 @@ class MemorySystem {
   // Save an episodic memory (conversation)
   async saveEpisode(userId: string, conversation: { user: string; agent: string }, namespace: string): Promise<MemoryResult> {
     const content = `User: ${conversation.user}\nAgent: ${conversation.agent}`;
+    const result = await this.saveMemory(userId, content, namespace, 'episodic');
     
-    try {
-      const id = uuidv4();
-      const timestamp = new Date().toISOString();
-
-      if (this.useChroma && this.chroma) {
-        // ChromaDB version
-        const embedding = await this.embeddings.embedQuery(content);
-        await this.chroma.add({
-          collectionName: this.episodicCollection,
-          ids: [id],
-          embeddings: [embedding],
-          documents: [content],
-          metadatas: [{ user_id: userId, namespace, timestamp, type: 'episodic' }],
-        });
-      } else if (this.db) {
-        // SQLite fallback
-        const stmt = this.db.prepare(`
-          INSERT INTO episodic_memory (id, user_id, namespace, content, timestamp, type, context)
-          VALUES (?, ?, ?, ?, ?, ?, ?)
-        `);
-        stmt.run(id, userId, namespace, content, timestamp, 'episodic', JSON.stringify({}));
-      }
-
-      // Try to reflect on the conversation (optional)
-      try {
-        const takeaway = await this.reflect(userId, conversation, namespace);
-        if (takeaway.status === 'success' && takeaway.message) {
-          await this.saveMemory(userId, takeaway.message, namespace, 'takeaway');
-        }
-      } catch (reflectionError) {
-        console.log('Reflection failed, but episode saved:', reflectionError);
-      }
-      
-      return { status: 'success', message: 'Saved conversation episode' };
-    } catch (error) {
-      console.error('Failed to save episode:', error);
-      return { status: 'error', message: `Failed to save episode: ${error}` };
+    // Reflect on the conversation to generate a takeaway
+    const takeaway = await this.reflect(userId, conversation, namespace);
+    if (takeaway.status === 'success' && takeaway.message) {
+      await this.saveMemory(userId, takeaway.message, namespace, 'takeaway');
     }
+    
+    return result;
   }
 
   // Reflect on a conversation to generate takeaways
@@ -364,137 +268,48 @@ Generate a concise takeaway about user preferences or recipe interactions (e.g.,
   // Search memories (semantic or episodic)
   async searchMemories(userId: string, query: string, namespace: string, type: 'semantic' | 'episodic' | 'takeaway', limit: number = 5): Promise<MemoryResult> {
     try {
-      const memories: MemoryEntry[] = [];
+      const embedding = await this.embeddings.embedQuery(query);
+      const collection = type === 'semantic' ? this.semanticCollection : this.episodicCollection;
+      
+      const results = await this.chroma.query({
+        collectionName: collection,
+        queryEmbeddings: [embedding],
+        nResults: limit,
+        where: { user_id: userId, namespace, type },
+      });
 
-      if (this.useChroma && this.chroma) {
-        const embedding = await this.embeddings.embedQuery(query);
-        const collection = type === 'semantic' ? this.semanticCollection : this.episodicCollection;
-        
-        const results = await this.chroma.query({
-          collectionName: collection,
-          queryEmbeddings: [embedding],
-          nResults: limit,
-          where: { user_id: userId, namespace, type },
-        });
+      const memories: MemoryEntry[] = results.documents[0].map((content, i) => ({
+        id: results.ids[0][i],
+        user_id: userId,
+        namespace,
+        content,
+        timestamp: results.metadatas[0][i].timestamp,
+        type,
+      }));
 
-        memories.push(...results.documents[0].map((content, i) => ({
-          id: results.ids[0][i],
-          user_id: userId,
-          namespace,
-          content,
-          timestamp: results.metadatas[0][i].timestamp,
-          type,
-        })));
-      } else if (this.db) {
-        // SQLite fallback with text search
-        if (type === 'semantic' || type === 'all') {
-          const stmt = this.db.prepare(`
-            SELECT * FROM semantic_memory 
-            WHERE user_id = ? AND namespace = ? AND content LIKE ?
-            ORDER BY timestamp DESC LIMIT ?
-          `);
-          const rows = stmt.all(userId, namespace, `%${query}%`, limit) as any[];
-          memories.push(...rows.map(row => ({
-            id: row.id,
-            user_id: row.user_id,
-            namespace: row.namespace,
-            content: row.content,
-            timestamp: row.timestamp,
-            type: row.type
-          })));
-        }
-
-        if (type === 'episodic' || type === 'all') {
-          const stmt = this.db.prepare(`
-            SELECT * FROM episodic_memory 
-            WHERE user_id = ? AND namespace = ? AND content LIKE ?
-            ORDER BY timestamp DESC LIMIT ?
-          `);
-          const rows = stmt.all(userId, namespace, `%${query}%`, limit) as any[];
-          memories.push(...rows.map(row => ({
-            id: row.id,
-            user_id: row.user_id,
-            namespace: row.namespace,
-            content: row.content,
-            timestamp: row.timestamp,
-            type: row.type
-          })));
-        }
-      }
-
-      return { status: 'success', memories: memories.slice(0, limit) };
+      return { status: 'success', memories };
     } catch (error) {
-      return { status: 'error', message: `Failed to search ${type} memories: ${error}`, memories: [] };
+      return { status: 'error', message: `Failed to search ${type} memories: ${error}` };
     }
   }
 
   // Get organized user profile
   async getUserProfile(userId: string, namespace: string = `${this.defaultNamespace}/{user_id}`): Promise<UserProfile> {
     const namespaceResolved = namespace.replace('{user_id}', userId);
-    
-    const profile: UserProfile = {
-      dislikes: [],
-      likes: [],
-      cuisines: [],
-      dietary: []
-    };
+    const dislikes = (await this.searchMemories(userId, 'dislike', namespaceResolved, 'semantic')).memories
+      ?.filter(m => m.content.startsWith('User dislikes'))
+      .map(m => m.content.replace('User dislikes ', '')) || [];
+    const likes = (await this.searchMemories(userId, 'like', namespaceResolved, 'semantic')).memories
+      ?.filter(m => m.content.startsWith('User likes'))
+      .map(m => m.content.replace('User likes ', '')) || [];
+    const cuisines = (await this.searchMemories(userId, 'cuisine', namespaceResolved, 'semantic')).memories
+      ?.filter(m => m.content.startsWith('User prefers'))
+      .map(m => m.content.replace('User prefers ', '').replace(' cuisine', '')) || [];
+    const dietary = (await this.searchMemories(userId, 'dietary', namespaceResolved, 'semantic')).memories
+      ?.filter(m => m.content.startsWith('User has'))
+      .map(m => m.content.replace('User has ', '').replace(' dietary restriction', '')) || [];
 
-    try {
-      if (this.useChroma && this.chroma) {
-        // ChromaDB version
-        const [dislikeResult, likeResult, cuisineResult, dietaryResult] = await Promise.all([
-          this.searchMemories(userId, 'dislike', namespaceResolved, 'semantic'),
-          this.searchMemories(userId, 'like', namespaceResolved, 'semantic'),
-          this.searchMemories(userId, 'cuisine', namespaceResolved, 'semantic'),
-          this.searchMemories(userId, 'dietary', namespaceResolved, 'semantic')
-        ]);
-
-        profile.dislikes = dislikeResult.memories?.filter(m => m.content.startsWith('User dislikes'))
-          .map(m => m.content.replace('User dislikes ', '')) || [];
-        profile.likes = likeResult.memories?.filter(m => m.content.startsWith('User likes'))
-          .map(m => m.content.replace('User likes ', '')) || [];
-        profile.cuisines = cuisineResult.memories?.filter(m => m.content.startsWith('User prefers'))
-          .map(m => m.content.replace('User prefers ', '').replace(' cuisine', '')) || [];
-        profile.dietary = dietaryResult.memories?.filter(m => m.content.startsWith('User has'))
-          .map(m => m.content.replace('User has ', '').replace(' dietary restriction', '')) || [];
-      } else if (this.db) {
-        // SQLite fallback
-        const stmt = this.db.prepare(`
-          SELECT content FROM semantic_memory 
-          WHERE user_id = ? AND namespace = ?
-          ORDER BY timestamp DESC
-        `);
-        const rows = stmt.all(userId, namespaceResolved) as any[];
-
-        rows.forEach(row => {
-          const content = row.content;
-          
-          const dislikeMatch = content.match(/User dislikes (.+)/);
-          if (dislikeMatch && !profile.dislikes.includes(dislikeMatch[1])) {
-            profile.dislikes.push(dislikeMatch[1]);
-          }
-
-          const likeMatch = content.match(/User likes (.+)/);
-          if (likeMatch && !profile.likes.includes(likeMatch[1])) {
-            profile.likes.push(likeMatch[1]);
-          }
-
-          const cuisineMatch = content.match(/User prefers (.+) cuisine/);
-          if (cuisineMatch && !profile.cuisines.includes(cuisineMatch[1])) {
-            profile.cuisines.push(cuisineMatch[1]);
-          }
-
-          const dietaryMatch = content.match(/User has (.+) dietary restriction/);
-          if (dietaryMatch && !profile.dietary.includes(dietaryMatch[1])) {
-            profile.dietary.push(dietaryMatch[1]);
-          }
-        });
-      }
-    } catch (error) {
-      console.error('Failed to get user profile:', error);
-    }
-
-    return profile;
+    return { dislikes, likes, cuisines, dietary };
   }
 
   // Load procedural memory from file
@@ -627,104 +442,111 @@ export function getSubstitutions(dietary: string[], ingredient: string): string[
 // Create singleton instance
 export const memorySystem = new MemorySystem();
 
-// Simplified conversational agent that integrates with existing system
+// Agent setup with memory
 export class ConversationalAgent {
+  private agent: AgentExecutor;
+
+  constructor(config: { model: string } = { model: 'gpt-4o' }) {
+    this.initializeAgent(config.model);
+  }
+
+  private async initializeAgent(model: string): Promise<void> {
+    const proceduralMemory = await memorySystem.loadProceduralMemory();
+
+    const systemPrompt = `You are a recipe recommendation assistant. Follow these procedural rules:\n${proceduralMemory}\nUse the provided context from memory searches to personalize responses. If an ingredient is missing for a recipe, use the AddToInstacart tool to add it to the cart. Context: {context}`;
+
+    this.agent = new AgentExecutor({
+      agent: new ReactAgent({
+        model,
+        tools: [], // Will be set per user in processConversation
+        systemPrompt,
+        preSteps: [],
+      }),
+    });
+  }
+
   async processConversation(userId: string, userMessage: string, fridgeInventory: string[] = [], namespaceTemplate: string = 'agent_memories/{user_id}'): Promise<{ response: string; recipe?: Recipe }> {
     const namespace = namespaceTemplate.replace('{user_id}', userId);
 
-    try {
-      // Extract preferences from user message
-      await memorySystem.extractAndSavePreferences(userId, userMessage, namespaceTemplate);
+    // Extract preferences from user message
+    await memorySystem.extractAndSavePreferences(userId, userMessage, namespaceTemplate);
 
-      // Get user profile for personalization
+    // Pre-search step for context
+    const preSearchStep = async (input: { message: string }) => {
+      const [semanticResult, episodicResult, takeawayResult] = await Promise.all([
+        memorySystem.searchMemories(userId, input.message, namespace, 'semantic'),
+        memorySystem.searchMemories(userId, input.message, namespace, 'episodic'),
+        memorySystem.searchMemories(userId, input.message, namespace, 'takeaway'),
+      ]);
+      return {
+        context: [
+          'Semantic Memories:',
+          semanticResult.memories?.map(m => m.content).join('\n') || 'No semantic memories found.',
+          'Episodic Memories:',
+          episodicResult.memories?.map(m => m.content).join('\n') || 'No episodic memories found.',
+          'Takeaways:',
+          takeawayResult.memories?.map(m => m.content).join('\n') || 'No takeaways found.',
+        ].join('\n'),
+      };
+    };
+
+    // Update agent with user-specific tools
+    this.agent = new AgentExecutor({
+      agent: new ReactAgent({
+        model: 'gpt-4o',
+        tools: memorySystem.getMemoryTools(userId, namespaceTemplate),
+        systemPrompt: (await memorySystem.loadProceduralMemory()) + '\nUse the provided context from memory searches to personalize responses. If an ingredient is missing for a recipe, use the AddToInstacart tool to add it to the cart. Context: {context}',
+        preSteps: [preSearchStep],
+      }),
+    });
+
+    // Check for recipe request
+    const lowerMessage = userMessage.toLowerCase();
+    if (lowerMessage.includes('recipe') || lowerMessage.includes('cook')) {
       const profile = await memorySystem.getUserProfile(userId, namespaceTemplate);
+      const availableIngredients = new Set(fridgeInventory.map(i => i.toLowerCase()));
+      const preferredCuisine = profile.cuisines.length > 0 ? profile.cuisines[0] : 'italian';
 
-      // Check for recipe request
-      const lowerMessage = userMessage.toLowerCase();
-      if (lowerMessage.includes('recipe') || lowerMessage.includes('cook') || lowerMessage.includes('make')) {
-        const availableIngredients = new Set(fridgeInventory.map(i => i.toLowerCase()));
-        const preferredCuisine = profile.cuisines.length > 0 ? profile.cuisines[0] : 'italian';
+      // Mock recipe generation (replace with actual LLM call if needed)
+      let recipe: Recipe = {
+        name: `${preferredCuisine.charAt(0).toUpperCase() + preferredCuisine.slice(1)} Dish`,
+        cuisine: preferredCuisine,
+        ingredients: [
+          { name: 'pasta', quantity: '200g' },
+          { name: 'olive oil', quantity: '2 tbsp' },
+          { name: 'garlic', quantity: '2 cloves' },
+        ],
+        instructions: [
+          'Boil pasta until al dente.',
+          'Sauté garlic in olive oil.',
+          'Toss pasta with garlic and oil.',
+        ],
+        dietary: profile.dietary,
+      };
 
-        // Generate recipe based on preferences
-        let recipe: Recipe = {
-          name: `${preferredCuisine.charAt(0).toUpperCase() + preferredCuisine.slice(1)} ${lowerMessage.includes('pasta') ? 'Pasta' : 'Dish'}`,
-          cuisine: preferredCuisine,
-          ingredients: [
-            { name: 'pasta', quantity: '200g' },
-            { name: 'olive oil', quantity: '2 tbsp' },
-            { name: 'garlic', quantity: '2 cloves' },
-            { name: 'tomatoes', quantity: '1 can' },
-          ],
-          instructions: [
-            'Boil pasta until al dente.',
-            'Sauté garlic in olive oil.',
-            'Add tomatoes and simmer.',
-            'Toss pasta with sauce.',
-          ],
-          dietary: profile.dietary,
-        };
-
-        // Filter out disliked ingredients
-        recipe.ingredients = recipe.ingredients.filter(ingredient => 
-          !profile.dislikes.some(disliked => 
-            ingredient.name.toLowerCase().includes(disliked.toLowerCase())
-          )
-        );
-
-        // Check for missing ingredients and add to cart
-        const missingIngredients: string[] = [];
-        for (const ingredient of recipe.ingredients) {
-          if (!availableIngredients.has(ingredient.name.toLowerCase())) {
-            missingIngredients.push(ingredient.name);
-            try {
-              const addResult = await memorySystem.addToInstacart(userId, ingredient.name, ingredient.quantity, namespace);
-              console.log('Added to cart:', addResult);
-            } catch (error) {
-              console.error(`Failed to add ${ingredient.name} to cart:`, error);
-            }
-          }
+      // Check for missing ingredients and add to cart
+      for (const ingredient of recipe.ingredients) {
+        if (!availableIngredients.has(ingredient.name.toLowerCase())) {
+          const addResult = await this.addToInstacart(userId, ingredient.name, ingredient.quantity, namespace);
+          recipe.instructions.unshift(addResult); // Add cart action to instructions
         }
-
-        // Save recipe request to episodic memory
-        await memorySystem.saveEpisode(userId, { 
-          user: userMessage, 
-          agent: `Generated ${recipe.name} recipe with ${recipe.ingredients.length} ingredients. Added ${missingIngredients.length} missing items to Instacart cart.` 
-        }, namespace);
-
-        const cartMessage = missingIngredients.length > 0 
-          ? ` I've added ${missingIngredients.join(', ')} to your Instacart cart since they weren't in your fridge.`
-          : '';
-
-        return { 
-          response: `Perfect! I've created a delicious ${recipe.name} recipe tailored to your ${profile.dietary.length > 0 ? profile.dietary.join(' and ') + ' ' : ''}preferences.${cartMessage} Check the recipe card below for full details!`, 
-          recipe 
-        };
       }
 
-      // Process non-recipe conversation
-      let response = "I'm your AI kitchen assistant! I can help you create personalized recipes, manage your ingredients, and even add missing items to your shopping cart.";
-      
-      // Personalize based on learned preferences
-      if (profile.likes.length > 0) {
-        response += ` I remember you like ${profile.likes.slice(0, 3).join(', ')}.`;
-      }
-      if (profile.dislikes.length > 0) {
-        response += ` I'll avoid ${profile.dislikes.slice(0, 3).join(', ')} in my suggestions.`;
-      }
-      if (profile.dietary.length > 0) {
-        response += ` I'll make sure recipes follow your ${profile.dietary.join(' and ')} dietary preferences.`;
-      }
+      // Save recipe request to episodic memory
+      await memorySystem.saveEpisode(userId, { user: userMessage, agent: `Generated recipe: ${recipe.name}` }, namespace);
 
-      response += " Ask me to create a recipe and I'll personalize it just for you!";
-
-      // Save conversation to memory
-      await memorySystem.saveEpisode(userId, { user: userMessage, agent: response }, namespace);
-
-      return { response };
-    } catch (error) {
-      console.error('Error in processConversation:', error);
-      return { response: "I apologize, but I encountered an issue processing your request. Could you please try again?" };
+      return { response: `Here's your ${recipe.name} recipe! Check the recipe card for details.`, recipe };
     }
+
+    // Process non-recipe conversation
+    const response = await this.agent.invoke({ message: userMessage });
+    await memorySystem.saveEpisode(userId, { user: userMessage, agent: response.content }, namespace);
+
+    return { response: response.content };
+  }
+
+  private async addToInstacart(userId: string, ingredient: string, quantity: string, namespace: string): Promise<string> {
+    return await memorySystem.addToInstacart(userId, ingredient, quantity, namespace);
   }
 }
 
