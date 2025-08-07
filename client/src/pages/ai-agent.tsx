@@ -248,7 +248,7 @@ export default function AIAgent() {
               <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                 message.type === 'user' 
                   ? 'bg-apple-green' 
-                  : 'bg-gradient-to-br from-purple-500 to-blue-500'
+                  : 'bg-[#1e3a2e]'
               }`}>
                 {message.type === 'user' ? (
                   <User className="text-white" size={20} />
@@ -259,7 +259,7 @@ export default function AIAgent() {
               <div className={`rounded-2xl p-4 ${
                 message.type === 'user'
                   ? 'bg-apple-green text-white'
-                  : 'bg-gray-800 text-white border border-gray-700'
+                  : 'bg-[#1e3a2e] text-white border border-[#2d5a3a]'
               }`}>
                 <p className="text-sm">{message.content}</p>
                 <p className={`text-xs mt-2 ${
@@ -278,17 +278,17 @@ export default function AIAgent() {
         {isTyping && (
           <div className="flex justify-start">
             <div className="flex items-start space-x-3 max-w-[80%]">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-[#1e3a2e] flex items-center justify-center">
                 <Bot className="text-white" size={20} />
               </div>
-              <div className="bg-gray-800 text-white border border-gray-700 rounded-2xl p-4">
+              <div className="bg-[#1e3a2e] text-white border border-[#2d5a3a] rounded-2xl p-4">
                 <div className="flex items-center space-x-2">
                   <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
                   </div>
-                  <span className="text-xs text-gray-400">AI is thinking...</span>
+                  <span className="text-xs text-green-300">AI is thinking...</span>
                 </div>
               </div>
             </div>
@@ -392,22 +392,22 @@ export default function AIAgent() {
       </div>
 
       {/* Input */}
-      <div className="p-4 bg-gray-900 border-t border-gray-800 pb-20">
+      <div className="p-4 bg-[#1e3a2e] border-t border-[#2d5a3a] pb-20">
         <div className="flex items-center space-x-3">
-          <div className="flex-1 bg-gray-800 rounded-2xl border border-gray-700">
+          <div className="flex-1 bg-white rounded-2xl border border-green-200">
             <input
               type="text"
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
               placeholder="Ask me anything about cooking, recipes, or food..."
-              className="w-full bg-transparent text-white placeholder-gray-400 p-4 rounded-2xl outline-none"
+              className="w-full bg-transparent text-black placeholder-gray-500 p-4 rounded-2xl outline-none"
             />
           </div>
           <button
             onClick={handleSendMessage}
             disabled={!inputMessage.trim() || isTyping}
-            className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:from-purple-600 hover:to-blue-600 transition-all"
+            className="w-12 h-12 bg-apple-green rounded-2xl flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-green-600 transition-all"
           >
             <Send className="text-white" size={20} />
           </button>
@@ -426,7 +426,7 @@ export default function AIAgent() {
               <button
                 key={suggestion}
                 onClick={() => setInputMessage(suggestion)}
-                className="flex-shrink-0 bg-gray-800 text-gray-300 px-4 py-2 rounded-full text-sm border border-gray-700 hover:bg-gray-700 transition-colors"
+                className="flex-shrink-0 bg-[#1e3a2e] text-white px-4 py-2 rounded-full text-sm border border-[#2d5a3a] hover:bg-green-600 transition-colors"
               >
                 <Sparkles className="inline mr-2" size={14} />
                 {suggestion}
