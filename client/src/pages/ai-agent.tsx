@@ -357,7 +357,7 @@ export default function AIAgent() {
               </div>
               <div className={`rounded-2xl p-4 ${
                 message.type === 'user'
-                  ? 'bg-apple-green text-black'
+                  ? 'bg-gray-200 text-black'
                   : 'bg-[#1e3a2e] text-white border border-[#2d5a3a]'
               }`}>
                 <p className="text-sm">{message.content}</p>
