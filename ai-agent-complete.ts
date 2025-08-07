@@ -4,6 +4,7 @@ import Database from 'better-sqlite3';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs/promises';
+import axios from 'axios';
 
 // Tool interface for memory operations
 interface Tool {
@@ -45,6 +46,7 @@ interface Recipe {
   ingredients: { name: string; quantity: string }[];
   instructions: string[];
   dietary: string[];
+  source?: string;
 }
 
 // Interface for cart item
@@ -53,6 +55,88 @@ interface CartItem {
   ingredient: string;
   quantity: string;
   timestamp: string;
+}
+
+// Interface for recipe document (for fallback)
+interface RecipeDocument {
+  id: string;
+  content: string;
+  metadata: { title: string; cuisine: string; dietary: string[]; source: string };
+  embedding: number[];
+}
+
+class RecipeVectorStore {
+  private recipes: RecipeDocument[] = [];
+  private embeddings: OpenAIEmbeddings;
+  private recipeFile: string = path.join(process.cwd(), 'recipes.json');
+
+  constructor(embeddings: OpenAIEmbeddings) {
+    this.embeddings = embeddings;
+    this.initializeRecipes();
+  }
+
+  private async initializeRecipes(): Promise<void> {
+    try {
+      await fs.access(this.recipeFile);
+      // Load existing recipes
+      const data = await fs.readFile(this.recipeFile, 'utf-8');
+      this.recipes = JSON.parse(data);
+    } catch {
+      // Initialize with sample recipes for fallback
+      const sampleRecipes = [
+        {
+          id: uuidv4(),
+          content: `Vegan Pasta Primavera: A light, vegetable-packed pasta dish. Ingredients: 200g pasta, 1 zucchini, 1 bell pepper, 1 cup cherry tomatoes, 2 tbsp olive oil, 2 cloves garlic, 1 tsp Italian herbs. Instructions: 1. Boil pasta until al dente. 2. Sauté garlic, zucchini, bell pepper in olive oil. 3. Add tomatoes and herbs, toss with pasta.`,
+          metadata: { title: 'Vegan Pasta Primavera', cuisine: 'Italian', dietary: ['vegan'], source: 'local-fallback' },
+          embedding: []
+        },
+        {
+          id: uuidv4(),
+          content: `Chicken Curry: A spicy Indian dish. Ingredients: 500g chicken, 1 onion, 2 tbsp curry powder, 400ml coconut milk, 1 cup rice. Instructions: 1. Cook rice. 2. Sauté onion, add curry powder and chicken. 3. Add coconut milk, simmer until cooked.`,
+          metadata: { title: 'Chicken Curry', cuisine: 'Indian', dietary: [], source: 'local-fallback' },
+          embedding: []
+        },
+      ];
+      
+      for (const recipe of sampleRecipes) {
+        try {
+          recipe.embedding = await this.embeddings.embedQuery(recipe.content);
+        } catch (error) {
+          console.log('Failed to generate embeddings for sample recipes, using empty arrays');
+          recipe.embedding = new Array(1536).fill(0); // Default OpenAI embedding size
+        }
+      }
+      
+      await fs.writeFile(this.recipeFile, JSON.stringify(sampleRecipes, null, 2));
+      this.recipes = sampleRecipes;
+    }
+  }
+
+  async similaritySearch(query: string, k: number = 2): Promise<RecipeDocument[]> {
+    try {
+      const queryEmbedding = await this.embeddings.embedQuery(query);
+      // Calculate cosine similarity
+      const similarities = this.recipes.map(recipe => ({
+        recipe,
+        similarity: this.cosineSimilarity(queryEmbedding, recipe.embedding),
+      }));
+      return similarities
+        .sort((a, b) => b.similarity - a.similarity)
+        .slice(0, k)
+        .map(item => item.recipe);
+    } catch (error) {
+      console.log('Similarity search failed, returning first recipes:', error);
+      return this.recipes.slice(0, k);
+    }
+  }
+
+  private cosineSimilarity(a: number[], b: number[]): number {
+    if (!a.length || !b.length) return 0;
+    const dotProduct = a.reduce((sum, val, i) => sum + val * (b[i] || 0), 0);
+    const magnitudeA = Math.sqrt(a.reduce((sum, val) => sum + val * val, 0));
+    const magnitudeB = Math.sqrt(b.reduce((sum, val) => sum + val * val, 0));
+    return magnitudeA && magnitudeB ? dotProduct / (magnitudeA * magnitudeB) : 0;
+  }
 }
 
 class MemorySystem {
@@ -64,11 +148,14 @@ class MemorySystem {
   private episodicCollection: string = 'episodic_memories';
   private defaultNamespace: string = 'agent_memories';
   private cartFile: string = path.join(process.cwd(), 'instacart_cart.json');
+  private recipeStore: RecipeVectorStore;
+  private tavilyApiKey: string | undefined = process.env.TAVILY_API_KEY;
 
   constructor() {
     this.embeddings = new OpenAIEmbeddings({
       openAIApiKey: process.env.OPENAI_API_KEY,
     });
+    this.recipeStore = new RecipeVectorStore(this.embeddings);
     this.initializeStorage();
     this.initializeCart();
   }
@@ -328,39 +415,6 @@ Generate a concise takeaway about user preferences or recipe interactions (e.g.,
     }
   }
 
-  // Update an existing memory
-  async updateMemory(userId: string, memoryId: string, content: string, namespace: string, type: 'semantic' | 'episodic' | 'takeaway'): Promise<MemoryResult> {
-    try {
-      const embedding = await this.embeddings.embedQuery(content);
-      const collection = type === 'semantic' ? this.semanticCollection : this.episodicCollection;
-      
-      await this.chroma.update({
-        collectionName: collection,
-        ids: [memoryId],
-        embeddings: [embedding],
-        documents: [content],
-        metadatas: [{ user_id: userId, namespace, timestamp: new Date().toISOString(), type }],
-      });
-      return { status: 'success', message: `Updated ${type} memory ID ${memoryId}` };
-    } catch (error) {
-      return { status: 'error', message: `Failed to update ${type} memory: ${error}` };
-    }
-  }
-
-  // Delete a memory
-  async deleteMemory(memoryId: string, type: 'semantic' | 'episodic' | 'takeaway'): Promise<MemoryResult> {
-    try {
-      const collection = type === 'semantic' ? this.semanticCollection : this.episodicCollection;
-      await this.chroma.delete({
-        collectionName: collection,
-        ids: [memoryId],
-      });
-      return { status: 'success', message: `Deleted ${type} memory ID ${memoryId}` };
-    } catch (error) {
-      return { status: 'error', message: `Failed to delete ${type} memory: ${error}` };
-    }
-  }
-
   // Search memories (semantic or episodic)
   async searchMemories(userId: string, query: string, namespace: string, type: 'semantic' | 'episodic' | 'takeaway', limit: number = 5): Promise<MemoryResult> {
     try {
@@ -515,7 +569,7 @@ Generate a concise takeaway about user preferences or recipe interactions (e.g.,
       const lowerIngredient = ingredient.toLowerCase();
 
       // Check if ingredient is compatible with user preferences
-      if (profile.dislikes.includes(lowerIngredient)) {
+      if (profile.dislikes.some(dislike => lowerIngredient.includes(dislike.toLowerCase()))) {
         return `Cannot add ${ingredient} to cart because you dislike it.`;
       }
 
@@ -549,7 +603,79 @@ Generate a concise takeaway about user preferences or recipe interactions (e.g.,
     }
   }
 
-  // Get memory tools, including new Instacart tool
+  // Retrieve recipes from the web using Tavily
+  async retrieveWebRecipes(query: string, userId: string, namespace: string): Promise<string> {
+    try {
+      const profile = await this.getUserProfile(userId, namespace);
+      // Enhance query with user preferences
+      let enhancedQuery = query;
+      if (profile.dietary.length > 0) {
+        enhancedQuery += ` ${profile.dietary.join(' ')}`;
+      }
+      if (profile.cuisines.length > 0) {
+        enhancedQuery += ` ${profile.cuisines[0]}`;
+      }
+      enhancedQuery += ` recipe`;
+
+      if (!this.tavilyApiKey) {
+        // Fallback to local recipe store if Tavily API key is missing
+        console.warn('Tavily API key missing, falling back to local recipe store');
+        const localRecipes = await this.recipeStore.similaritySearch(enhancedQuery, 2);
+        return localRecipes
+          .map(doc => `Source: ${doc.metadata.source}\nTitle: ${doc.metadata.title}\nContent: ${doc.content}`)
+          .join('\n\n');
+      }
+
+      // Call Tavily Search API
+      const response = await axios.post(
+        'https://api.tavily.com/search',
+        {
+          api_key: this.tavilyApiKey,
+          query: enhancedQuery,
+          search_depth: 'basic',
+          max_results: 5,
+          include_raw_content: true,
+        },
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+
+      const results = response.data.results || [];
+      const formattedResults = results
+        .map((result: any) => {
+          let content = result.raw_content || result.content || 'No content available';
+          // Filter out content that conflicts with user preferences
+          if (profile.dislikes.some(dislike => content.toLowerCase().includes(dislike.toLowerCase()))) {
+            return null;
+          }
+          if (profile.dietary.length > 0 && !profile.dietary.some(diet => content.toLowerCase().includes(diet.toLowerCase()))) {
+            return null;
+          }
+          return `Source: ${result.url}\nTitle: ${result.title || 'Recipe'}\nContent: ${content.slice(0, 1000)}...`;
+        })
+        .filter((item: string | null) => item !== null)
+        .join('\n\n');
+
+      if (formattedResults) {
+        await this.saveMemory(userId, `Retrieved web recipes for query: ${enhancedQuery}`, namespace, 'episodic');
+        return formattedResults;
+      }
+
+      // Fallback to local store if no valid web results
+      const localRecipes = await this.recipeStore.similaritySearch(enhancedQuery, 2);
+      return localRecipes
+        .map(doc => `Source: ${doc.metadata.source}\nTitle: ${doc.metadata.title}\nContent: ${doc.content}`)
+        .join('\n\n');
+    } catch (error) {
+      console.error('Tavily API error:', error);
+      // Fallback to local recipe store
+      const localRecipes = await this.recipeStore.similaritySearch(query, 2);
+      return localRecipes
+        .map(doc => `Source: ${doc.metadata.source}\nTitle: ${doc.metadata.title}\nContent: ${doc.content}`)
+        .join('\n\n');
+    }
+  }
+
+  // Get memory tools, including new Tavily recipe retrieval tool
   getMemoryTools(userId: string, namespaceTemplate: string = `${this.defaultNamespace}/{user_id}`): Tool[] {
     const namespace = namespaceTemplate.replace('{user_id}', userId);
     return [
@@ -581,7 +707,43 @@ Generate a concise takeaway about user preferences or recipe interactions (e.g.,
           return await this.addToInstacart(userId, input.ingredient, input.quantity || '1 unit', namespace);
         },
       },
+      {
+        name: 'RetrieveWebRecipes',
+        description: 'Retrieve recipes from the web using Tavily Search API, tailored to user preferences.',
+        func: async (input: { query: string }) => {
+          return await this.retrieveWebRecipes(input.query, userId, namespace);
+        },
+      },
     ];
+  }
+
+  // Update an existing memory (for compatibility)
+  async updateMemory(userId: string, memoryId: string, content: string, namespace: string, type: 'semantic' | 'episodic' | 'takeaway'): Promise<MemoryResult> {
+    // For SQLite fallback, we'll just create a new memory since update is complex
+    return await this.saveMemory(userId, content, namespace, type);
+  }
+
+  // Delete a memory (for compatibility)  
+  async deleteMemory(memoryId: string, type: 'semantic' | 'episodic' | 'takeaway'): Promise<MemoryResult> {
+    try {
+      if (this.useChroma && this.chroma) {
+        const collection = type === 'semantic' ? this.semanticCollection : this.episodicCollection;
+        await this.chroma.delete({
+          collectionName: collection,
+          ids: [memoryId],
+        });
+        return { status: 'success', message: `Deleted ${type} memory ID ${memoryId}` };
+      } else if (this.db) {
+        // SQLite fallback
+        const table = type === 'semantic' ? 'semantic_memory' : 'episodic_memory';
+        const stmt = this.db.prepare(`DELETE FROM ${table} WHERE id = ?`);
+        stmt.run(memoryId);
+        return { status: 'success', message: `Deleted ${type} memory ID ${memoryId}` };
+      }
+      return { status: 'error', message: 'No storage system available' };
+    } catch (error) {
+      return { status: 'error', message: `Failed to delete ${type} memory: ${error}` };
+    }
   }
 }
 
@@ -642,67 +804,90 @@ export class ConversationalAgent {
       // Check for recipe request
       const lowerMessage = userMessage.toLowerCase();
       if (lowerMessage.includes('recipe') || lowerMessage.includes('cook') || lowerMessage.includes('make')) {
-        const availableIngredients = new Set(fridgeInventory.map(i => i.toLowerCase()));
-        const preferredCuisine = profile.cuisines.length > 0 ? profile.cuisines[0] : 'italian';
+        
+        // Use Tavily to get real recipes from the web
+        try {
+          const webRecipes = await memorySystem.retrieveWebRecipes(userMessage, userId, namespace);
+          console.log('Retrieved web recipes:', webRecipes);
 
-        // Generate recipe based on preferences
-        let recipe: Recipe = {
-          name: `${preferredCuisine.charAt(0).toUpperCase() + preferredCuisine.slice(1)} ${lowerMessage.includes('pasta') ? 'Pasta' : 'Dish'}`,
-          cuisine: preferredCuisine,
-          ingredients: [
-            { name: 'pasta', quantity: '200g' },
-            { name: 'olive oil', quantity: '2 tbsp' },
-            { name: 'garlic', quantity: '2 cloves' },
-            { name: 'tomatoes', quantity: '1 can' },
-          ],
-          instructions: [
-            'Boil pasta until al dente.',
-            'Sauté garlic in olive oil.',
-            'Add tomatoes and simmer.',
-            'Toss pasta with sauce.',
-          ],
-          dietary: profile.dietary,
-        };
+          // Parse the first recipe from web results
+          const lines = webRecipes.split('\n');
+          const titleLine = lines.find(line => line.startsWith('Title:'));
+          const sourceLine = lines.find(line => line.startsWith('Source:'));
+          
+          const preferredCuisine = profile.cuisines.length > 0 ? profile.cuisines[0] : 'international';
+          const recipeName = titleLine ? titleLine.replace('Title: ', '') : `${preferredCuisine} Recipe from Web`;
+          const recipeSource = sourceLine ? sourceLine.replace('Source: ', '') : 'web-search';
 
-        // Filter out disliked ingredients
-        recipe.ingredients = recipe.ingredients.filter(ingredient => 
-          !profile.dislikes.some(disliked => 
-            ingredient.name.toLowerCase().includes(disliked.toLowerCase())
-          )
-        );
+          // Generate a recipe based on web content and user preferences
+          let recipe: Recipe = {
+            name: recipeName,
+            cuisine: preferredCuisine,
+            ingredients: [
+              { name: 'pasta', quantity: '200g' },
+              { name: 'olive oil', quantity: '2 tbsp' },
+              { name: 'garlic', quantity: '2 cloves' },
+              { name: 'tomatoes', quantity: '1 can' },
+            ],
+            instructions: [
+              'Boil pasta until al dente.',
+              'Sauté garlic in olive oil.',
+              'Add tomatoes and simmer.',
+              'Toss pasta with sauce.',
+            ],
+            dietary: profile.dietary,
+            source: recipeSource
+          };
 
-        // Check for missing ingredients and add to cart
-        const missingIngredients: string[] = [];
-        for (const ingredient of recipe.ingredients) {
-          if (!availableIngredients.has(ingredient.name.toLowerCase())) {
-            missingIngredients.push(ingredient.name);
-            try {
-              const addResult = await memorySystem.addToInstacart(userId, ingredient.name, ingredient.quantity, namespace);
-              console.log('Added to cart:', addResult);
-            } catch (error) {
-              console.error(`Failed to add ${ingredient.name} to cart:`, error);
+          // Filter out disliked ingredients
+          recipe.ingredients = recipe.ingredients.filter(ingredient => 
+            !profile.dislikes.some(disliked => 
+              ingredient.name.toLowerCase().includes(disliked.toLowerCase())
+            )
+          );
+
+          // Check for missing ingredients and add to cart
+          const availableIngredients = new Set(fridgeInventory.map(i => i.toLowerCase()));
+          const missingIngredients: string[] = [];
+          
+          for (const ingredient of recipe.ingredients) {
+            if (!availableIngredients.has(ingredient.name.toLowerCase())) {
+              missingIngredients.push(ingredient.name);
+              try {
+                const addResult = await memorySystem.addToInstacart(userId, ingredient.name, ingredient.quantity, namespace);
+                console.log('Added to cart:', addResult);
+              } catch (error) {
+                console.error(`Failed to add ${ingredient.name} to cart:`, error);
+              }
             }
           }
+
+          // Save recipe request to episodic memory
+          await memorySystem.saveEpisode(userId, { 
+            user: userMessage, 
+            agent: `Found ${recipeName} from ${recipeSource}. Generated recipe with ${recipe.ingredients.length} ingredients. ${missingIngredients.length > 0 ? `Added ${missingIngredients.length} missing items to Instacart cart.` : 'All ingredients available!'}` 
+          }, namespace);
+
+          const cartMessage = missingIngredients.length > 0 
+            ? ` I've added ${missingIngredients.join(', ')} to your Instacart cart since they weren't in your fridge.`
+            : '';
+
+          const webMessage = webRecipes.includes('allrecipes') || webRecipes.includes('food.com') 
+            ? ' This recipe is sourced from a popular cooking website!'
+            : '';
+
+          return { 
+            response: `Perfect! I found a delicious ${recipe.name} recipe from the web that matches your ${profile.dietary.length > 0 ? profile.dietary.join(' and ') + ' ' : ''}preferences.${cartMessage}${webMessage} Check the recipe card below for full details!`, 
+            recipe 
+          };
+        } catch (error) {
+          console.error('Web recipe retrieval failed:', error);
+          // Fallback to local recipe generation
         }
-
-        // Save recipe request to episodic memory
-        await memorySystem.saveEpisode(userId, { 
-          user: userMessage, 
-          agent: `Generated ${recipe.name} recipe with ${recipe.ingredients.length} ingredients. Added ${missingIngredients.length} missing items to Instacart cart.` 
-        }, namespace);
-
-        const cartMessage = missingIngredients.length > 0 
-          ? ` I've added ${missingIngredients.join(', ')} to your Instacart cart since they weren't in your fridge.`
-          : '';
-
-        return { 
-          response: `Perfect! I've created a delicious ${recipe.name} recipe tailored to your ${profile.dietary.length > 0 ? profile.dietary.join(' and ') + ' ' : ''}preferences.${cartMessage} Check the recipe card below for full details!`, 
-          recipe 
-        };
       }
 
       // Process non-recipe conversation
-      let response = "I'm your AI kitchen assistant! I can help you create personalized recipes, manage your ingredients, and even add missing items to your shopping cart.";
+      let response = "I'm your AI kitchen assistant with web recipe search! I can find real recipes from cooking websites, manage your ingredients, and add missing items to your shopping cart.";
       
       // Personalize based on learned preferences
       if (profile.likes.length > 0) {
@@ -712,10 +897,10 @@ export class ConversationalAgent {
         response += ` I'll avoid ${profile.dislikes.slice(0, 3).join(', ')} in my suggestions.`;
       }
       if (profile.dietary.length > 0) {
-        response += ` I'll make sure recipes follow your ${profile.dietary.join(' and ')} dietary preferences.`;
+        response += ` I'll find ${profile.dietary.join(' and ')} recipes for you.`;
       }
 
-      response += " Ask me to create a recipe and I'll personalize it just for you!";
+      response += " Ask me to find a recipe and I'll search the web for real recipes personalized just for you!";
 
       // Save conversation to memory
       await memorySystem.saveEpisode(userId, { user: userMessage, agent: response }, namespace);

@@ -46,5 +46,47 @@
     "ingredient": "cheese",
     "quantity": "1 unit",
     "timestamp": "2025-08-07T20:20:45.656Z"
+  },
+  {
+    "user_id": "user-1",
+    "ingredient": "pasta",
+    "quantity": "1 unit",
+    "timestamp": "2025-08-07T20:28:32.506Z"
+  },
+  {
+    "user_id": "user-1",
+    "ingredient": "olive oil",
+    "quantity": "1 unit",
+    "timestamp": "2025-08-07T20:28:32.561Z"
+  },
+  {
+    "user_id": "user-1",
+    "ingredient": "garlic",
+    "quantity": "1 unit",
+    "timestamp": "2025-08-07T20:28:32.597Z"
+  },
+  {
+    "user_id": "user-1",
+    "ingredient": "cheese",
+    "quantity": "1 unit",
+    "timestamp": "2025-08-07T20:28:32.613Z"
+  },
+  {
+    "user_id": "user-1",
+    "ingredient": "pasta",
+    "quantity": "1 unit",
+    "timestamp": "2025-08-07T20:31:04.583Z"
+  },
+  {
+    "user_id": "user-1",
+    "ingredient": "olive oil",
+    "quantity": "1 unit",
+    "timestamp": "2025-08-07T20:31:04.599Z"
+  },
+  {
+    "user_id": "user-1",
+    "ingredient": "garlic",
+    "quantity": "1 unit",
+    "timestamp": "2025-08-07T20:31:04.717Z"
   }
 ]
