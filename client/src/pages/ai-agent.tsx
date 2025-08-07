@@ -56,7 +56,7 @@ export default function AIAgent() {
     {
       id: '1',
       type: 'ai',
-      content: "Hello! I'm Fresh AI, your conversational kitchen assistant powered by LangChain! I maintain persistent conversation history and build context over our entire chat. I have semantic memory (your preferences), episodic memory (our conversations), and procedural memory (proven interaction patterns). Each message builds on our previous discussion, making me increasingly personalized and helpful. Tell me about your food preferences and let's have a natural cooking conversation!",
+      content: "Hello! I'm Fresh AI, your conversational kitchen assistant! Tell me about your food preferences and let me help you create delicious recipes!",
       timestamp: new Date()
     }
   ]);
@@ -298,7 +298,7 @@ export default function AIAgent() {
       setMessages([{
         id: '1',
         type: 'ai',
-        content: "Hello! I'm Fresh AI, your conversational kitchen assistant powered by LangChain! I maintain persistent conversation history and build context over our entire chat. I have semantic memory (your preferences), episodic memory (our conversations), and procedural memory (proven interaction patterns). Each message builds on our previous discussion, making me increasingly personalized and helpful. Tell me about your food preferences and let's have a natural cooking conversation!",
+        content: "Hello! I'm Fresh AI, your conversational kitchen assistant! Tell me about your food preferences and let me help you create delicious recipes!",
         timestamp: new Date()
       }]);
       
@@ -325,11 +325,6 @@ export default function AIAgent() {
       <div className="bg-[#1e3a2e] text-white p-3 flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <h1 className="font-bold" style={{fontFamily: 'Times New Roman, serif'}}>Fresh AI - Conversational Assistant</h1>
-          {conversationStats && (
-            <div className="text-xs bg-green-800/50 px-3 py-1 rounded-full">
-              🔗 {conversationStats.conversation_type} • {conversationStats.message_count} messages
-            </div>
-          )}
         </div>
         <button
           onClick={clearConversation}
@@ -367,112 +362,9 @@ export default function AIAgent() {
               }`}>
                 <p className="text-sm">{message.content}</p>
                 
-                {/* AI Reasoning Process */}
-                {message.type === 'ai' && message.reasoning && message.reasoning.length > 0 && (
-                  <div className="mt-3 pt-3 border-t border-green-600/30">
-                    <button
-                      onClick={() => setShowReasoning(prev => ({
-                        ...prev,
-                        [message.id]: !prev[message.id]
-                      }))}
-                      className="flex items-center space-x-2 text-xs text-green-300 hover:text-green-200 transition-colors"
-                    >
-                      <span>💭</span>
-                      <span>{showReasoning[message.id] ? 'Hide' : 'Show'} AI Reasoning Process</span>
-                    </button>
-                    
-                    {showReasoning[message.id] && (
-                      <div className="mt-2 space-y-2">
-                        {message.reasoning.map((step, index) => (
-                          <div key={index} className="bg-green-900/30 rounded-lg p-3 text-xs">
-                            <div className="font-semibold text-green-300 mb-1">
-                              Step {index + 1}: {step.step}
-                            </div>
-                            <div className="text-green-100 mb-1">
-                              💡 <strong>Reasoning:</strong> {step.reasoning}
-                            </div>
-                            {step.action && (
-                              <div className="text-green-200">
-                                🎯 <strong>Action:</strong> {step.action}
-                              </div>
-                            )}
-                            {step.result && (
-                              <div className="text-green-200 mt-1">
-                                ✅ <strong>Result:</strong> {step.result}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
                 
-                {/* User Preferences Learned */}
-                {message.type === 'ai' && message.userPreferences && (
-                  <div className="mt-3 pt-3 border-t border-green-600/30">
-                    <div className="text-xs text-green-300 mb-2">🧠 What I've Learned About You:</div>
-                    <div className="grid grid-cols-1 gap-2">
-                      {message.userPreferences.likes && message.userPreferences.likes.length > 0 && (
-                        <div className="text-xs">
-                          <span className="text-green-300">❤️ Loves:</span>
-                          <span className="text-green-200 ml-2">{message.userPreferences.likes.join(', ')}</span>
-                        </div>
-                      )}
-                      {message.userPreferences.dislikes.length > 0 && (
-                        <div className="text-xs">
-                          <span className="text-red-300">❌ Dislikes:</span>
-                          <span className="text-green-200 ml-2">{message.userPreferences.dislikes.join(', ')}</span>
-                        </div>
-                      )}
-                      {message.userPreferences.cuisines.length > 0 && (
-                        <div className="text-xs">
-                          <span className="text-yellow-300">🍜 Cuisines:</span>
-                          <span className="text-green-200 ml-2">{message.userPreferences.cuisines.join(', ')}</span>
-                        </div>
-                      )}
-                      {message.userPreferences.dietary.length > 0 && (
-                        <div className="text-xs">
-                          <span className="text-blue-300">🥗 Dietary:</span>
-                          <span className="text-green-200 ml-2">{message.userPreferences.dietary.join(', ')}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
                 
-                {/* Enhanced Memory Context */}
-                {message.type === 'ai' && message.enhancedContext && (
-                  <div className="mt-3 pt-3 border-t border-green-600/30">
-                    <div className="text-xs text-purple-300 mb-2">🧠 Enhanced Memory System:</div>
-                    <div className="grid grid-cols-3 gap-2 text-xs">
-                      <div className="bg-purple-900/30 rounded p-2">
-                        <div className="text-purple-300 font-semibold">Semantic</div>
-                        <div className="text-green-200">{message.enhancedContext.semantic_memories_found} memories</div>
-                      </div>
-                      <div className="bg-blue-900/30 rounded p-2">
-                        <div className="text-blue-300 font-semibold">Episodic</div>
-                        <div className="text-green-200">{message.enhancedContext.episodic_memories_found} episodes</div>
-                      </div>
-                      <div className="bg-orange-900/30 rounded p-2">
-                        <div className="text-orange-300 font-semibold">Procedural</div>
-                        <div className="text-green-200">{message.enhancedContext.procedural_guidance_applied} rules</div>
-                      </div>
-                    </div>
-                  </div>
-                )}
                 
-                {/* Conversation Context */}
-                {message.type === 'ai' && message.conversationStats && (
-                  <div className="mt-3 pt-3 border-t border-green-600/30">
-                    <div className="text-xs text-blue-300 mb-2">💬 Conversation Context:</div>
-                    <div className="bg-blue-900/30 rounded p-2 text-xs">
-                      <div className="text-blue-300 font-semibold">LangChain Flow</div>
-                      <div className="text-green-200">Message #{message.conversationStats.message_count} in persistent conversation</div>
-                      <div className="text-green-200">Type: {message.conversationStats.conversation_type}</div>
-                    </div>
-                  </div>
-                )}
                 
                 {/* AI Suggestions */}
                 {message.type === 'ai' && message.suggestions && message.suggestions.length > 0 && (
