@@ -322,29 +322,38 @@ class EnhancedMemorySystem {
       `);
       const rows = stmt.all(userId, namespaceResolved) as any[];
 
+      console.log(`Getting user profile for ${userId}, namespace: ${namespaceResolved}, found ${rows.length} memories`);
+
       rows.forEach(row => {
         const content = row.content;
+        console.log(`Processing memory: ${content}`);
         
         const dislikeMatch = content.match(/User dislikes (.+)/);
         if (dislikeMatch && !profile.dislikes.includes(dislikeMatch[1])) {
           profile.dislikes.push(dislikeMatch[1]);
+          console.log(`Added dislike: ${dislikeMatch[1]}`);
         }
 
         const likeMatch = content.match(/User likes (.+)/);
         if (likeMatch && !profile.likes.includes(likeMatch[1])) {
           profile.likes.push(likeMatch[1]);
+          console.log(`Added like: ${likeMatch[1]}`);
         }
 
         const cuisineMatch = content.match(/User prefers (.+) cuisine/);
         if (cuisineMatch && !profile.cuisines.includes(cuisineMatch[1])) {
           profile.cuisines.push(cuisineMatch[1]);
+          console.log(`Added cuisine: ${cuisineMatch[1]}`);
         }
 
         const dietaryMatch = content.match(/User has (.+) dietary restriction/);
         if (dietaryMatch && !profile.dietary.includes(dietaryMatch[1])) {
           profile.dietary.push(dietaryMatch[1]);
+          console.log(`Added dietary: ${dietaryMatch[1]}`);
         }
       });
+
+      console.log(`Final profile: dislikes=${profile.dislikes.length}, likes=${profile.likes.length}, cuisines=${profile.cuisines.length}, dietary=${profile.dietary.length}`);
 
     } catch (error) {
       console.error('Failed to get user profile:', error);

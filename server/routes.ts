@@ -338,6 +338,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           final_answer: finalAnswer,
           suggestions: suggestions,
           recipes: [],
+          user_preferences: {
+            dislikes: userProfile.dislikes,
+            likes: userProfile.likes,
+            cuisines: userProfile.cuisines,
+            dietary: userProfile.dietary
+          },
           enhanced_context: {
             episodic_memories_found: relevantEpisodes.length,
             semantic_memories_found: semanticContext.length,
