@@ -4,7 +4,7 @@ Throughout this summer, our team, Team K created a mobile app called FreshAI to 
 
 Built in just a few weeks, our prototype allows users to scan receipts, view what’s in their fridge, and smartly receive AI-generated recipe ideas tailored to their preference(dietary restrictions, cuisine, servings). We also implemented an expiration tracker and explored how LLMs could expand features like a smart meal planner, predictive grocery lists, and spending insights.
 
-We faced technical challenges like distinguishing our AI agent from a chatbot, integrating LangChain’s tool calling, and improving our OCR scanner’s accuracy. While it’s still a work in progress, we’re proud of how user’s interviews helped give us clear insights into the real problem of people not just concerned about waste, but about knowing what to cook and when their food would expire. 
+We faced technical challenges like distinguishing our AI agent from a chatbot and improving our OCR scanner’s accuracy. While it’s still a work in progress, we’re proud of how user’s interviews helped give us clear insights into the real problem of people not just concerned about waste, but about knowing what to cook and when their food would expire. 
 
 If we could go back, we'd spend more time aligning our team’s code early on to avoid integration issues later. Still, the experience taught us how to build, test and refine a user-centered AI product.
 
