@@ -8,4 +8,4 @@ We faced technical challenges like distinguishing our AI agent from a chatbot an
 
 If we could go back, we'd spend more time aligning our team’s code early on to avoid integration issues later. Still, the experience taught us how to build, test and refine a user-centered AI product.
 
-SEEDS-2025 equipped us with practical skills in AI agent’s prompt engineering, LangChain, and human-centered design. It transformed how we approach problem solving and gave us tools to keep building beyond the program.
+SEEDS-2025 equipped us with practical skills in AI agent’s prompt engineering, human-centered design, and more. It transformed how we approach problem solving and gave us tools to keep building beyond the program.
